@@ -99,13 +99,16 @@ public class StarSystemGenerator : MonoBehaviour
 
             // Calculate Ring System anomalies
             bool hasRings;
-            int ringCount;
-            CalculateRings(selectedClass.className, planetPrng, out hasRings, out ringCount);
+            int ringDivisions;
+            CalculateRings(selectedClass.className, planetPrng, out hasRings, out ringDivisions);
 
-            // Format the ring output string for the console
-            string ringData = hasRings ? $"Yes ({ringCount})" : "No";
+            // Calculate Satellite generation scaled by planetary radius
+            int moonCount = CalculateMoons(planetaryRadius, planetPrng);
 
-            Debug.Log($"-> Planet [{i + 1}] | Dist: {orbitalDistance:F2} AU | Class: {selectedClass.className} | Rad: {planetaryRadius:F2} RE | Rings: {ringData}");
+            // Format the final output string for the console
+            string ringData = hasRings ? $"Yes ({ringDivisions})" : "No";
+
+            Debug.Log($"-> Planet [{i + 1}] | Dist: {orbitalDistance:F2} AU | Class: {selectedClass.className} | Rad: {planetaryRadius:F2} RE | Rings: {ringData} | Moons: {moonCount}");
         }
     }
 
@@ -260,5 +263,26 @@ public class StarSystemGenerator : MonoBehaviour
                 ringCount = 1; // Usually just a single faint debris ring
             }
         }
+    }
+
+    /// <summary>
+    /// Calculates the number of moons orbiting the planet.
+    /// The maximum possible number of moons scales linearly with the planet's radius 
+    /// (acting as a proxy for the Hill sphere and gravitational mass).
+    /// </summary>
+    /// <param name="planetaryRadius">The generated radius of the planet in Earth Radii (RE).</param>
+    /// <param name="prng">The isolated PRNG for this specific planet.</param>
+    /// <returns>An integer representing the number of moons.</returns>
+    private int CalculateMoons(float planetaryRadius, System.Random prng)
+    {
+        // Determine the theoretical maximum number of moons.
+        // A scaling factor of 3.0 means a massive 11 RE Gas Giant could have up to 33 major moons,
+        // while a 1 RE Terrestrial planet is capped at 3.
+        float scalingFactor = 3.0f;
+        int maxMoons = Mathf.FloorToInt(planetaryRadius * scalingFactor);
+
+        // Generate a deterministic number between 0 and the calculated maximum.
+        // The upper bound is exclusive in System.Random.Next, so we add 1.
+        return prng.Next(0, maxMoons + 1);
     }
 }
