@@ -6,7 +6,7 @@ using UnityEngine;
 using TMPro;
 
 /// <summary>
-/// This class serves as a dummy interface for interacting with an Ethereum smart contract using Nethereum.
+/// Dummy interface for interacting with an Ethereum smart contract using Nethereum.
 /// </summary>
 public class NethereumDummy : MonoBehaviour
 {
