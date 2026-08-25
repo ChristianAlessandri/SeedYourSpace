@@ -118,6 +118,7 @@ public class StarSystemGenerator : MonoBehaviour
     /// </summary>
     /// <param name="planetIndex">The index of the planet in the system.</param>
     /// <param name="prng">The isolated PRNG for this planet.</param>
+    /// <returns>A float representing the orbital distance in Astronomical Units (AU).</returns>
     private float CalculateOrbitalDistance(int planetIndex, System.Random prng)
     {
         // Classic Titius-Bode formula base: a = 0.4 + 0.3 * 2^n
@@ -144,6 +145,7 @@ public class StarSystemGenerator : MonoBehaviour
     /// <param name="prng">The isolated PRNG for this planet.</param>
     /// <param name="mean">The mean value for the distribution.</param>
     /// <param name="stdDev">The standard deviation for the distribution.</param>
+    /// <returns>A float representing the generated value, clamped to a minimum of 0.1 to avoid non-physical results.</returns>
     private float CalculatePlanetaryRadius(System.Random prng, float mean, float stdDev)
     {
         // U1 must be strictly greater than 0 to avoid Math.Log(0) error
@@ -164,6 +166,7 @@ public class StarSystemGenerator : MonoBehaviour
     /// Cryptographically secure and stable string-to-integer conversion method.
     /// </summary>
     /// <param name="input">The input string to be hashed and converted.</param>
+    /// <returns>An integer derived from the SHA256 hash of the input string.</returns>
     private int DeriveNumericalSeed(string input)
     {
         using (SHA256 sha256Hash = SHA256.Create())
@@ -177,6 +180,7 @@ public class StarSystemGenerator : MonoBehaviour
     /// Maps an index to Harvard Spectral Classifications.
     /// </summary>
     /// <param name="index">The index of the spectral class.</param>
+    /// <returns>The string representation of the spectral class.</returns>
     private string GetSpectralClassName(int index)
     {
         string[] classes = { "O (Blue)", "B (Blue-White)", "A (White)", "F (Yellow-White)", "G (Yellow - Solar)", "K (Orange)", "M (Red Dwarf)" };
@@ -189,6 +193,7 @@ public class StarSystemGenerator : MonoBehaviour
     /// <param name="distance">The orbital distance of the planet.</param>
     /// <param name="prng">The isolated PRNG for this planet.</param>
     /// <param name="systemFrostLine">The Frost Line of the star system.</param>
+    /// <returns>A PlanetProfile object representing the classified planetary taxonomy.</returns>
     PlanetProfile ClassifyPlanet(float distance, System.Random prng, float systemFrostLine)
     {
         // Base profiles: Name, Mean Radius (RE), StdDev, Base Weight
