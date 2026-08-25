@@ -4,17 +4,16 @@ using System.Text;
 using System.Security.Cryptography;
 
 /// <summary>
-/// Core procedural generator responsible for deterministic star system generation 
-/// based on cryptographic sub-seeding and a Separation of Concerns architecture.
+/// Core procedural generator responsible for deterministic star system generation.
+/// Implements Box-Muller normal distributions and weighted statistical probabilities.
 /// </summary>
 public class StarSystemGenerator : MonoBehaviour
 {
     [Header("Generation Settings")]
-    [Tooltip("The Master Seed derived from the blockchain (On-Chain VRF layer).")]
     public string masterSeed = "0xF5a9b2323e7f1C0C40843B33E7cEB2Ef4caAB895";
     
     [HideInInspector]
-    public int algorithmVersion = 1; // Algorithm versioning for future-proofing and backward compatibility
+    public int algorithmVersion = 2; // Incremented version for the new statistical engine
 
     private float currentSystemFrostLine;
 
@@ -24,58 +23,59 @@ public class StarSystemGenerator : MonoBehaviour
     }
 
     /// <summary>
-    /// Executes the full generation pipeline for the star system.
+    /// Generates a complete star system, including the central star and its planetary bodies, based on the provided seed.
     /// </summary>
-    /// <param name="seed">The incoming master seed string.</param>
+    /// <param name="seed">The seed for the star system.</param>
     public void GenerateCompleteStarSystem(string seed)
     {
         Debug.Log($"=== STARTING STAR SYSTEM GENERATION (Algorithm v{algorithmVersion}) ===");
-        Debug.Log($"Master Seed: {seed}");
-
-        // Central Star Generation via Sub-Seeding
         GenerateCentralStar(seed);
-
-        // Orbital Layout and Planetary Taxonomy via Sub-Seeding
         GeneratePlanetarySystem(seed);
     }
 
     /// <summary>
-    /// Generates the central star parameters using an isolated cryptographic sub-seed.
-    /// Calculates the dynamic Frost Line based on the stellar class.
+    /// Generates the central star using realistic astrophysics distributions.
+    /// Red Dwarfs (M) are vastly more common than massive Blue (O) stars.
     /// </summary>
-    /// <param name="baseSeed">The master seed for the star system.</param>
+    /// <param name="baseSeed">The base seed for the star system.</param>
     private void GenerateCentralStar(string baseSeed)
     {
         string starSubSeedInput = baseSeed + "_Star_Entity";
         int starNumericalSeed = DeriveNumericalSeed(starSubSeedInput);
         System.Random starPrng = new System.Random(starNumericalSeed);
 
-        // 0: O, 1: B, 2: A, 3: F, 4: G(Solar), 5: K, 6: M(Red Dwarf)
-        int spectralIndex = starPrng.Next(0, 7);
+        // Stellar distribution weights reflecting actual universe demographics
+        // O(Blue), B, A, F, G(Solar), K, M(Red Dwarf)
+        float[] stellarWeights = { 0.1f, 1.0f, 2.0f, 4.0f, 8.0f, 15.0f, 70.0f };
+        int spectralIndex = GetWeightedIndex(stellarWeights, starPrng);
         string spectralClass = GetSpectralClassName(spectralIndex);
 
-        // Base Frost Line distances in AU based on standard astrophysics estimates
+        // Base Frost Line distances in AU
         float[] baseFrostLines = { 15.0f, 10.0f, 6.0f, 4.0f, 2.7f, 1.5f, 0.5f };
         float baseLine = baseFrostLines[spectralIndex];
 
-        // Apply a deterministic oscillation/jitter between -15% and +15%
-        float oscillation = (float)(starPrng.NextDouble() * 0.30 - 0.15);
+        // Apply NORMAL DISTRIBUTION to the Frost Line oscillation (Mean: 0, StdDev: 0.05)
+        float oscillation = GetNormalValue(starPrng, 0f, 0.05f);
+        oscillation = Mathf.Clamp(oscillation, -0.20f, 0.20f); // Cap extreme outliers
         currentSystemFrostLine = baseLine * (1f + oscillation);
 
         Debug.Log($"[Star Module] Class: {spectralClass} | Dynamic Frost Line: {currentSystemFrostLine:F2} AU");
     }
 
     /// <summary>
-    /// Generates the orbital layout and individual planets using dedicated entity sub-seeds.
+    /// Generates the planetary system based on the central star's properties and the provided seed.
     /// </summary>
-    /// <param name="baseSeed">The master seed for the star system.</param>
+    /// <param name="baseSeed">The base seed for the planetary system.</param>
     private void GeneratePlanetarySystem(string baseSeed)
     {
         string layoutSubSeedInput = baseSeed + "_Planets_Layout";
         int layoutNumericalSeed = DeriveNumericalSeed(layoutSubSeedInput);
         System.Random layoutPrng = new System.Random(layoutNumericalSeed);
 
-        int planetCount = layoutPrng.Next(3, 9); // Generates between 3 and 8 planets
+        // Apply NORMAL DISTRIBUTION for planet count (Mean: 5.5, StdDev: 2.0)
+        float rawPlanetCount = GetNormalValue(layoutPrng, 5.5f, 2.0f);
+        int planetCount = Mathf.Clamp(Mathf.RoundToInt(rawPlanetCount), 1, 12);
+        
         Debug.Log($"[Layout Module] Total Planets Scheduled: {planetCount}");
 
         for (int i = 0; i < planetCount; i++)
@@ -84,96 +84,124 @@ public class StarSystemGenerator : MonoBehaviour
             int planetNumericalSeed = DeriveNumericalSeed(planetSubSeedInput);
             System.Random planetPrng = new System.Random(planetNumericalSeed);
 
-            // Calculate Spatial Layout
             float orbitalDistance = CalculateOrbitalDistance(i, planetPrng);
-            
-            // Determine Taxonomy based on distance
             PlanetProfile selectedClass = ClassifyPlanet(orbitalDistance, planetPrng, currentSystemFrostLine);
+            
+            // Planetary radius uses Box-Muller via the generic helper now
+            float planetaryRadius = GetNormalValue(planetPrng, selectedClass.radiusMean, selectedClass.radiusStdDev);
+            planetaryRadius = Mathf.Max(planetaryRadius, 0.1f); // Minimum size safety
 
-            // Calculate Physical Constraints via Box-Muller using the class parameters
-            float planetaryRadius = CalculatePlanetaryRadius(
-                planetPrng, 
-                selectedClass.radiusMean, 
-                selectedClass.radiusStdDev
-            );
-
-            // Calculate Ring System anomalies
-            bool hasRings;
-            int ringDivisions;
-            CalculateRings(selectedClass.className, planetPrng, out hasRings, out ringDivisions);
-
-            // Calculate Satellite generation scaled by planetary radius
+            CalculateRings(selectedClass.className, planetPrng, out bool hasRings, out int ringDivisions);
             int moonCount = CalculateMoons(planetaryRadius, planetPrng);
 
-            // Format the final output string for the console
             string ringData = hasRings ? $"Yes ({ringDivisions})" : "No";
-
             Debug.Log($"-> Planet [{i + 1}] | Dist: {orbitalDistance:F2} AU | Class: {selectedClass.className} | Rad: {planetaryRadius:F2} RE | Rings: {ringData} | Moons: {moonCount}");
         }
     }
 
     /// <summary>
-    /// Calculates the orbital distance using an adapted Titius-Bode law.
-    /// Incorporates deterministic PRNG noise to ensure unique but physically safe distributions.
+    /// Calculates orbital distance applying a Normal Distribution variance.
+    /// Most planets will stay close to the Titius-Bode prediction.
     /// </summary>
     /// <param name="planetIndex">The index of the planet in the system.</param>
     /// <param name="prng">The isolated PRNG for this planet.</param>
-    /// <returns>A float representing the orbital distance in Astronomical Units (AU).</returns>
+    /// <returns>A float representing the orbital distance in AU.</returns>
     private float CalculateOrbitalDistance(int planetIndex, System.Random prng)
     {
-        // Classic Titius-Bode formula base: a = 0.4 + 0.3 * 2^n
-        // For index 0, n is usually treated as negative infinity (0.3 * 0 = 0)
-        float baseDistance = 0.4f;
-        if (planetIndex > 0)
-        {
-            baseDistance = 0.4f + 0.3f * Mathf.Pow(2, planetIndex - 1);
-        }
+        float baseDistance = (planetIndex > 0) ? (0.4f + 0.3f * Mathf.Pow(2, planetIndex - 1)) : 0.4f;
 
-        // Generate a deterministic variance between -15% and +15% using the planet's isolated PRNG
-        float varianceModifier = (float)(prng.NextDouble() * 0.30 - 0.15); // Range: [-0.15, 0.15]
+        // Apply Box-Muller jitter (Mean: 0, StdDev: 0.05)
+        float varianceModifier = GetNormalValue(prng, 0f, 0.05f);
+        varianceModifier = Mathf.Clamp(varianceModifier, -0.15f, 0.15f); 
         
-        // Apply variance to the base distance
-        float finalDistance = baseDistance * (1f + varianceModifier);
-        
-        return finalDistance;
+        return baseDistance * (1f + varianceModifier);
     }
 
     /// <summary>
-    /// Generates a normally distributed value using the Box-Muller transform.
-    /// Perfect for calculating physical attributes like Mass and Radius.
+    /// Generic helper applying the Box-Muller transform to generate normally distributed variables.
     /// </summary>
     /// <param name="prng">The isolated PRNG for this planet.</param>
     /// <param name="mean">The mean value for the distribution.</param>
     /// <param name="stdDev">The standard deviation for the distribution.</param>
-    /// <returns>A float representing the generated value, clamped to a minimum of 0.1 to avoid non-physical results.</returns>
-    private float CalculatePlanetaryRadius(System.Random prng, float mean, float stdDev)
+    /// <returns>A float value sampled from the specified normal distribution.</returns>
+    private float GetNormalValue(System.Random prng, float mean, float stdDev)
     {
-        // U1 must be strictly greater than 0 to avoid Math.Log(0) error
         double u1 = 1.0 - prng.NextDouble(); 
         double u2 = 1.0 - prng.NextDouble();
-
-        // Box-Muller Transformation Formula
-        double standardNormalDistribution = Math.Sqrt(-2.0 * Math.Log(u1)) * Math.Cos(2.0 * Math.PI * u2);
-
-        // Shift the standard normal distribution to our desired mean and standard deviation
-        float generatedRadius = mean + stdDev * (float)standardNormalDistribution;
-
-        // Clamp the radius to prevent physically impossible negative or microscopic planets
-        return Mathf.Max(generatedRadius, 0.1f);
+        double standardNormal = Math.Sqrt(-2.0 * Math.Log(u1)) * Math.Cos(2.0 * Math.PI * u2);
+        
+        return mean + stdDev * (float)standardNormal;
     }
 
     /// <summary>
-    /// Cryptographically secure and stable string-to-integer conversion method.
+    /// Helper for Roulette Wheel Selection on arrays of raw weights.
     /// </summary>
-    /// <param name="input">The input string to be hashed and converted.</param>
-    /// <returns>An integer derived from the SHA256 hash of the input string.</returns>
-    private int DeriveNumericalSeed(string input)
+    /// <param name="weights">Array of weights for selection.</param>
+    /// <param name="prng">The isolated PRNG for this selection.</param>
+    /// <returns>The index of the selected weight.</returns>
+    private int GetWeightedIndex(float[] weights, System.Random prng)
     {
-        using (SHA256 sha256Hash = SHA256.Create())
+        float totalWeight = 0f;
+        foreach (float w in weights) totalWeight += w;
+
+        float randomSpin = (float)(prng.NextDouble() * totalWeight);
+        float cumulative = 0f;
+
+        for (int i = 0; i < weights.Length; i++)
         {
-            byte[] bytes = sha256Hash.ComputeHash(Encoding.UTF8.GetBytes(input));
-            return BitConverter.ToInt32(bytes, 0);
+            cumulative += weights[i];
+            if (randomSpin <= cumulative) return i;
         }
+        return weights.Length - 1;
+    }
+
+    /// <summary>
+    /// Calculates whether a planet has rings and how many divisions it has based on its class and a probabilistic model.
+    /// </summary>
+    /// <param name="planetClass">The class of the planet.</param>
+    /// <param name="prng">The isolated PRNG for this planet.</param>
+    /// <param name="hasRings">Indicates whether the planet has rings.</param>
+    /// <param name="ringCount">The number of ring divisions.</param>
+    private void CalculateRings(string planetClass, System.Random prng, out bool hasRings, out int ringCount)
+    {
+        hasRings = false;
+        ringCount = 0;
+        double ringChance = prng.NextDouble();
+
+        if (planetClass == "Gas Giant" || planetClass == "Ice Giant")
+        {
+            if (ringChance <= 0.85)
+            {
+                hasRings = true;
+                // Normal Distribution for rings (Mean 3, StdDev 1)
+                ringCount = Mathf.Clamp(Mathf.RoundToInt(GetNormalValue(prng, 3f, 1f)), 1, 6);
+            }
+        }
+        else if (ringChance <= 0.04)
+        {
+            hasRings = true;
+            ringCount = 1;
+        }
+    }
+
+    /// <summary>
+    /// Executes a deterministic Roulette Wheel Selection to classify the planet.
+    /// </summary>
+    /// <param name="planetaryRadius">The radius of the planet.</param>
+    /// <param name="prng">The isolated PRNG for this planet.</param>
+    /// <returns>An integer representing the number of moons for the planet.</returns>
+    private int CalculateMoons(float planetaryRadius, System.Random prng)
+    {
+        float scalingFactor = 3.0f;
+        float maxTheoreticalMoons = planetaryRadius * scalingFactor;
+        
+        // Normal Distribution centered around a logical mean (e.g. 30% of theoretical max)
+        float meanMoons = maxTheoreticalMoons * 0.3f;
+        float stdDevMoons = maxTheoreticalMoons * 0.2f;
+
+        int moonCount = Mathf.RoundToInt(GetNormalValue(prng, meanMoons, stdDevMoons));
+        
+        return Mathf.Clamp(moonCount, 0, Mathf.FloorToInt(maxTheoreticalMoons));
     }
 
     /// <summary>
@@ -194,7 +222,7 @@ public class StarSystemGenerator : MonoBehaviour
     /// <param name="prng">The isolated PRNG for this planet.</param>
     /// <param name="systemFrostLine">The Frost Line of the star system.</param>
     /// <returns>A PlanetProfile object representing the classified planetary taxonomy.</returns>
-    PlanetProfile ClassifyPlanet(float distance, System.Random prng, float systemFrostLine)
+    private PlanetProfile ClassifyPlanet(float distance, System.Random prng, float systemFrostLine)
     {
         // Base profiles: Name, Mean Radius (RE), StdDev, Base Weight
         PlanetProfile terrestrial = new PlanetProfile("Terrestrial", 1.0f, 0.3f, 10f);
@@ -235,59 +263,16 @@ public class StarSystemGenerator : MonoBehaviour
     }
 
     /// <summary>
-    /// Calculates the probability of a planet having a ring system based on its taxonomy.
-    /// Gas and Ice Giants have a very high probability, while rocky planets have a rare anomaly chance.
+    /// Cryptographically secure and stable string-to-integer conversion method.
     /// </summary>
-    /// <param name="planetClass">The assigned taxonomy class of the planet.</param>
-    /// <param name="prng">The isolated PRNG for this specific planet.</param>
-    /// <param name="hasRings">Output boolean indicating if rings are present.</param>
-    /// <param name="ringCount">Output integer indicating the number of major ring divisions.</param>
-    private void CalculateRings(string planetClass, System.Random prng, out bool hasRings, out int ringCount)
+    /// <param name="input">The input string to be hashed and converted.</param>
+    /// <returns>An integer derived from the SHA256 hash of the input string.</returns>
+    private int DeriveNumericalSeed(string input)
     {
-        hasRings = false;
-        ringCount = 0;
-        
-        // Extract a uniform probability float between 0.0 and 1.0
-        double ringChance = prng.NextDouble();
-
-        if (planetClass == "Gas Giant" || planetClass == "Ice Giant")
+        using (SHA256 sha256Hash = SHA256.Create())
         {
-            // 85% chance for massive gaseous bodies to develop ring systems
-            if (ringChance <= 0.85)
-            {
-                hasRings = true;
-                ringCount = prng.Next(1, 5); // Generates between 1 and 4 distinct ring divisions
-            }
+            byte[] bytes = sha256Hash.ComputeHash(Encoding.UTF8.GetBytes(input));
+            return BitConverter.ToInt32(bytes, 0);
         }
-        else // Terrestrial or Super-Earth
-        {
-            // 4% anomaly chance for rocky planets (e.g., destroyed moon debris)
-            if (ringChance <= 0.04)
-            {
-                hasRings = true;
-                ringCount = 1; // Usually just a single faint debris ring
-            }
-        }
-    }
-
-    /// <summary>
-    /// Calculates the number of moons orbiting the planet.
-    /// The maximum possible number of moons scales linearly with the planet's radius 
-    /// (acting as a proxy for the Hill sphere and gravitational mass).
-    /// </summary>
-    /// <param name="planetaryRadius">The generated radius of the planet in Earth Radii (RE).</param>
-    /// <param name="prng">The isolated PRNG for this specific planet.</param>
-    /// <returns>An integer representing the number of moons.</returns>
-    private int CalculateMoons(float planetaryRadius, System.Random prng)
-    {
-        // Determine the theoretical maximum number of moons.
-        // A scaling factor of 3.0 means a massive 11 RE Gas Giant could have up to 33 major moons,
-        // while a 1 RE Terrestrial planet is capped at 3.
-        float scalingFactor = 3.0f;
-        int maxMoons = Mathf.FloorToInt(planetaryRadius * scalingFactor);
-
-        // Generate a deterministic number between 0 and the calculated maximum.
-        // The upper bound is exclusive in System.Random.Next, so we add 1.
-        return prng.Next(0, maxMoons + 1);
     }
 }
