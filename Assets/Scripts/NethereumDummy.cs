@@ -21,6 +21,9 @@ public class NethereumDummy : MonoBehaviour
 
     private readonly string abi = @"[{'inputs':[],'name':'lastMessage','outputs':[{'internalType':'string','name':'','type':'string'}],'stateMutability':'view','type':'function'},{'inputs':[{'internalType':'string','name':'_newMessage','type':'string'}],'name':'updateMessage','outputs':[],'stateMutability':'nonpayable','type':'function'}]";
 
+    /// <summary>
+    /// Establishes a connection to the Ethereum blockchain using the provided private key and initializes the contract instance.
+    /// </summary>
     public void ConnectWallet()
     {
         string pk = privateKeyInputField.text.Trim();
@@ -40,7 +43,7 @@ public class NethereumDummy : MonoBehaviour
             
             Debug.Log($"Connected successfully! Wallet Address: {account.Address}");
             
-            // Optional: Clear the input field for security after login
+            // Clear the input field for security after login
             privateKeyInputField.text = ""; 
         }
         catch (System.Exception e)
@@ -49,6 +52,9 @@ public class NethereumDummy : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Reads the last message stored in the smart contract on the blockchain and logs it to the console.
+    /// </summary>
     public async void ReadMessageFromBlockchain()
     {
         if (contract == null) { Debug.LogError("Error: You must connect first!"); return; }
@@ -66,6 +72,10 @@ public class NethereumDummy : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Writes a new message to the smart contract on the blockchain, signing the transaction with the connected wallet's private key.
+    /// </summary>
+    /// <param name="textToWrite">The new message string to be stored on-chain.</param>
     public async void WriteMessageToBlockchain(string textToWrite)
     {
         if (contract == null) { Debug.LogError("Error: You must connect first!"); return; }
@@ -90,6 +100,9 @@ public class NethereumDummy : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Triggered by the UI button, this method captures the input from the message field and initiates a blockchain write operation.
+    /// </summary>
     public void OnWriteButtonClicked()
     {
         string newText = messageInputField.text;
