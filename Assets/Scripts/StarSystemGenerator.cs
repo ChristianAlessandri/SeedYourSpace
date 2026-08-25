@@ -1,63 +1,108 @@
 using UnityEngine;
 using System;
+using System.Text;
+using System.Security.Cryptography;
 
+/// <summary>
+/// Core procedural generator responsible for deterministic star system generation 
+/// based on cryptographic sub-seeding and a Separation of Concerns architecture.
+/// </summary>
 public class StarSystemGenerator : MonoBehaviour
 {
-    [Header("Test Seed")]
-    public string hexSeed = "0xF5a9b2323e7f1C0C40843B33E7cEB2Ef4caAB895";
+    [Header("Generation Settings")]
+    [Tooltip("The Master Seed derived from the blockchain (On-Chain VRF layer).")]
+    public string masterSeed = "0xF5a9b2323e7f1C0C40843B33E7cEB2Ef4caAB895";
+    
+    [Tooltip("Algorithm version for retrocompatibility and version control.")]
+    public int algorithmVersion = 1;
 
-    // Using System.Random for deterministic random number generation
-    private System.Random prng;
-
-    void Start()
+    private void Start()
     {
-        GenerateStarSystem(hexSeed);
+        GenerateCompleteStarSystem(masterSeed);
     }
 
-    public void GenerateStarSystem(string seed)
+    /// <summary>
+    /// Executes the full generation pipeline for the star system.
+    /// </summary>
+    /// <param name="seed">The incoming master seed string.</param>
+    public void GenerateCompleteStarSystem(string seed)
     {
-        // Converts the hex seed to a numerical seed for the PRNG
-        int numericalSeed = GetStableHash(seed);
-        
-        // Initialize the PRNG with the numerical seed
-        prng = new System.Random(numericalSeed);
+        Debug.Log($"=== STARTING STAR SYSTEM GENERATION (Algorithm v{algorithmVersion}) ===");
+        Debug.Log($"Master Seed: {seed}");
 
-        Debug.Log($"--- STAR SYSTEM GENERATION ---");
-        Debug.Log($"Original Seed: {seed} | Numerical Seed: {numericalSeed}");
+        // Central Star Generation via Sub-Seeding
+        GenerateCentralStar(seed);
 
-        // Generate the central star type
-        int starTypeIndex = prng.Next(1, 5); // Es. 1: Nana Rossa, 2: Gialla, 3: Gigante Blu, 4: Nana Bianca
-        Debug.Log($"Central Star Generated: Type {starTypeIndex}");
+        // Orbital Layout and Planetary Taxonomy via Sub-Seeding
+        GeneratePlanetarySystem(seed);
+    }
 
-        // Generate the number of planets
-        int planetCount = prng.Next(3, 9); // Between 3 and 8 planets
-        Debug.Log($"Planets in orbit: {planetCount}");
+    /// <summary>
+    /// Generates the central star parameters using an isolated cryptographic sub-seed.
+    /// </summary>
+    private void GenerateCentralStar(string baseSeed)
+    {
+        // Derive an isolated sub-seed for the star
+        string starSubSeedInput = baseSeed + "_Star_Entity";
+        int starNumericalSeed = DeriveNumericalSeed(starSubSeedInput);
+        System.Random starPrng = new System.Random(starNumericalSeed);
 
-        // Generate each planet's properties
+        // Placeholder for Harvard Spectral Classification (O, B, A, F, G, K, M)
+        int spectralIndex = starPrng.Next(0, 7);
+        string spectralClass = GetSpectralClassName(spectralIndex);
+
+        Debug.Log($"[Star Module] Sub-Seed Input: '{starSubSeedInput}' | Numerical: {starNumericalSeed}");
+        Debug.Log($"[Star Module] Central Star Class: {spectralClass}");
+    }
+
+    /// <summary>
+    /// Generates the orbital layout and individual planets using dedicated entity sub-seeds.
+    /// </summary>
+    private void GeneratePlanetarySystem(string baseSeed)
+    {
+        // Derive a sub-seed specifically for layout distribution
+        string layoutSubSeedInput = baseSeed + "_Planets_Layout";
+        int layoutNumericalSeed = DeriveNumericalSeed(layoutSubSeedInput);
+        System.Random layoutPrng = new System.Random(layoutNumericalSeed);
+
+        int planetCount = layoutPrng.Next(3, 9); // Generates between 3 and 8 planets
+        Debug.Log($"[Layout Module] Total Planets Scheduled: {planetCount}");
+
         for (int i = 0; i < planetCount; i++)
         {
-            // Generate a float for the distance (between 10.0 and 100.0)
-            float distance = (float)(prng.NextDouble() * (100.0 - 10.0) + 10.0);
-            
-            // Generate a float for the radius (between 0.5 and 3.0)
-            float radius = (float)(prng.NextDouble() * (3.0 - 0.5) + 0.5);
+            // Derive an isolated sub-seed for each individual planet (Prevents cascading changes)
+            string planetSubSeedInput = baseSeed + $"_Planet_Entity_{i}";
+            int planetNumericalSeed = DeriveNumericalSeed(planetSubSeedInput);
+            System.Random planetPrng = new System.Random(planetNumericalSeed);
 
-            Debug.Log($"Planet {i+1} | Distance: {distance:F2} | Radius: {radius:F2}");
+            // Mock calculations for preliminary testing
+            float simulatedDistance = (float)(planetPrng.NextDouble() * (100.0 - 10.0) + 10.0);
+            float simulatedRadius = (float)(planetPrng.NextDouble() * (3.0 - 0.5) + 0.5);
+
+            Debug.Log($"-> Planet [{i + 1}] | Sub-Seed: {planetNumericalSeed} | Distance: {simulatedDistance:F2} AU | Radius: {simulatedRadius:F2} RE");
         }
     }
 
-    // Custom hash function to convert a string into a stable integer seed to avoid the PRNG.
-    // This ensures that the same string always produces the same integer.
-    private int GetStableHash(string text)
+    /// <summary>
+    /// Cryptographically secure and stable string-to-integer conversion method 
+    /// ensuring cross-platform determinism for the PRNG.
+    /// </summary>
+    private int DeriveNumericalSeed(string input)
     {
-        unchecked // Disable overflow checking for the hash calculation
+        using (SHA256 sha256Hash = SHA256.Create())
         {
-            int hash = 23;
-            foreach (char c in text)
-            {
-                hash = hash * 31 + c;
-            }
-            return hash;
+            byte[] bytes = sha256Hash.ComputeHash(Encoding.UTF8.GetBytes(input));
+            // Convert the first 4 bytes of the cryptographic hash into a stable integer
+            return BitConverter.ToInt32(bytes, 0);
         }
+    }
+
+    /// <summary>
+    /// Maps an index to Harvard Spectral Classifications.
+    /// </summary>
+    private string GetSpectralClassName(int index)
+    {
+        string[] classes = { "O (Blue)", "B (Blue-White)", "A (White)", "F (Yellow-White)", "G (Yellow - Solar)", "K (Orange)", "M (Red Dwarf)" };
+        return classes[Mathf.Clamp(index, 0, classes.Length - 1)];
     }
 }
