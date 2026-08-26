@@ -13,7 +13,7 @@ public class StarSystemGenerator : MonoBehaviour
     public string masterSeed = "0xF5a9b2323e7f1C0C40843B33E7cEB2Ef4caAB895";
     
     [HideInInspector]
-    public int algorithmVersion = 2; // Incremented version for the new statistical engine
+    public int algorithmVersion = 1; // Incremented version for the new statistical engine
 
     private float currentSystemFrostLine;
 
@@ -91,12 +91,13 @@ public class StarSystemGenerator : MonoBehaviour
             float planetaryRadius = GetNormalValue(planetPrng, selectedClass.radiusMean, selectedClass.radiusStdDev);
             planetaryRadius = Mathf.Max(planetaryRadius, 0.1f); // Minimum size safety
 
+            float orbitalEccentricity = CalculateEccentricity(planetPrng);
+
             CalculateRings(selectedClass.className, planetPrng, out bool hasRings, out int ringDivisions);
             int moonCount = CalculateMoons(planetaryRadius, planetPrng);
 
             string ringData = hasRings ? $"Yes ({ringDivisions})" : "No";
-            Debug.Log($"-> Planet [{i + 1}] | Dist: {orbitalDistance:F2} AU | Class: {selectedClass.className} | Rad: {planetaryRadius:F2} RE | Rings: {ringData} | Moons: {moonCount}");
-        }
+            Debug.Log($"-> Planet [{i + 1}] | Dist: {orbitalDistance:F2} AU | Eccentricity: {orbitalEccentricity:F3} | Class: {selectedClass.className} | Rad: {planetaryRadius:F2} RE | Rings: {ringData} | Moons: {moonCount}");        }
     }
 
     /// <summary>
@@ -202,6 +203,27 @@ public class StarSystemGenerator : MonoBehaviour
         int moonCount = Mathf.RoundToInt(GetNormalValue(prng, meanMoons, stdDevMoons));
         
         return Mathf.Clamp(moonCount, 0, Mathf.FloorToInt(maxTheoreticalMoons));
+    }
+
+    /// <summary>
+    /// Calculates the orbital eccentricity of a planet using a Normal Distribution.
+    /// Most planets have near-circular orbits (e ~ 0), with high eccentricities being rare anomalies.
+    /// </summary>
+    /// <param name="prng">The isolated PRNG for this specific planet.</param>
+    /// <returns>A float representing the orbital eccentricity, strictly clamped between 0.0 and 0.99.</returns>
+    private float CalculateEccentricity(System.Random prng)
+    {
+        // A mean of 0.05 and stdDev of 0.08 models a realistic distribution where
+        // most planets are circular (e < 0.1), but allows for rare, highly elliptical orbits.
+        float meanEccentricity = 0.05f;
+        float stdDevEccentricity = 0.08f;
+
+        float eccentricity = GetNormalValue(prng, meanEccentricity, stdDevEccentricity);
+
+        // Eccentricity must be >= 0. 
+        // We cap it at 0.99 to prevent parabolic/hyperbolic orbits (e >= 1.0) 
+        // which would mean the planet escapes the star system entirely.
+        return Mathf.Clamp(eccentricity, 0f, 0.99f);
     }
 
     /// <summary>
