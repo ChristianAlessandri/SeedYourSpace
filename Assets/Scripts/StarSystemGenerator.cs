@@ -15,6 +15,7 @@ public class StarSystemGenerator : MonoBehaviour
     [HideInInspector]
     public int algorithmVersion = 1; // Incremented version for the new statistical engine
 
+    private MarkovNameGenerator nameGenerator;
     private float currentSystemFrostLine;
 
     private void Start()
@@ -29,8 +30,18 @@ public class StarSystemGenerator : MonoBehaviour
     public void GenerateCompleteStarSystem(string seed)
     {
         Debug.Log($"=== STARTING STAR SYSTEM GENERATION (Algorithm v{algorithmVersion}) ===");
-        GenerateCentralStar(seed);
-        GeneratePlanetarySystem(seed);
+        
+        // Initialize the semantic generator
+        nameGenerator = new MarkovNameGenerator();
+
+        // Generate the root name for the entire system using the Master Seed
+        System.Random systemPrng = new System.Random(DeriveNumericalSeed(seed));
+        string rootSystemName = nameGenerator.GenerateSystemName(systemPrng);
+        
+        Debug.Log($"[Semantic Module] Root System Name: {rootSystemName}");
+
+        GenerateCentralStar(seed, rootSystemName);
+        GeneratePlanetarySystem(seed, rootSystemName);
     }
 
     /// <summary>
@@ -38,7 +49,8 @@ public class StarSystemGenerator : MonoBehaviour
     /// Red Dwarfs (M) are vastly more common than massive Blue (O) stars.
     /// </summary>
     /// <param name="baseSeed">The base seed for the star system.</param>
-    private void GenerateCentralStar(string baseSeed)
+    /// <param name="rootName">The root name for the star system.</param>
+    private void GenerateCentralStar(string baseSeed, string rootName)
     {
         string starSubSeedInput = baseSeed + "_Star_Entity";
         int starNumericalSeed = DeriveNumericalSeed(starSubSeedInput);
@@ -59,14 +71,16 @@ public class StarSystemGenerator : MonoBehaviour
         oscillation = Mathf.Clamp(oscillation, -0.20f, 0.20f); // Cap extreme outliers
         currentSystemFrostLine = baseLine * (1f + oscillation);
 
-        Debug.Log($"[Star Module] Class: {spectralClass} | Dynamic Frost Line: {currentSystemFrostLine:F2} AU");
+        string starName = rootName + " Prime";
+        Debug.Log($"[Star Module] Name: {starName} | Class: {spectralClass} | Frost Line: {currentSystemFrostLine:F2} AU");
     }
 
     /// <summary>
     /// Generates the planetary system based on the central star's properties and the provided seed.
     /// </summary>
     /// <param name="baseSeed">The base seed for the planetary system.</param>
-    private void GeneratePlanetarySystem(string baseSeed)
+    /// <param name="rootName">The root name for the star system.</param>
+    private void GeneratePlanetarySystem(string baseSeed, string rootName)
     {
         string layoutSubSeedInput = baseSeed + "_Planets_Layout";
         int layoutNumericalSeed = DeriveNumericalSeed(layoutSubSeedInput);
@@ -93,11 +107,17 @@ public class StarSystemGenerator : MonoBehaviour
 
             float orbitalEccentricity = CalculateEccentricity(planetPrng);
 
+            // Generate semantic name for the planet
+            string planetName = rootName + " " + nameGenerator.ToRoman(i + 1);
+
             CalculateRings(selectedClass.className, planetPrng, out bool hasRings, out int ringDivisions);
             int moonCount = CalculateMoons(planetaryRadius, planetPrng);
 
             string ringData = hasRings ? $"Yes ({ringDivisions})" : "No";
-            Debug.Log($"-> Planet [{i + 1}] | Dist: {orbitalDistance:F2} AU | Eccentricity: {orbitalEccentricity:F3} | Class: {selectedClass.className} | Rad: {planetaryRadius:F2} RE | Rings: {ringData} | Moons: {moonCount}");        }
+            
+            // Print planet data
+            Debug.Log($"-> {planetName} | Dist: {orbitalDistance:F2} AU | Ecc: {orbitalEccentricity:F3} | Class: {selectedClass.className} | Rad: {planetaryRadius:F2} RE | Rings: {ringData} | Moons: {moonCount}");
+        }
     }
 
     /// <summary>
