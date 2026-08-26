@@ -31,8 +31,16 @@ public class StarSystemGenerator : MonoBehaviour
     {
         Debug.Log($"=== STARTING STAR SYSTEM GENERATION (Algorithm v{algorithmVersion}) ===");
         
-        // Initialize the semantic generator
-        nameGenerator = new MarkovNameGenerator();
+        // Load the JSON file dynamically from the Resources folder
+        TextAsset jsonFile = Resources.Load<TextAsset>("markov_data");
+        if (jsonFile == null)
+        {
+            Debug.LogError("Markov data file not found! Ensure 'markov_data.json' is inside a 'Resources' folder.");
+            return;
+        }
+
+        // Initialize the semantic generator with the loaded JSON
+        nameGenerator = new MarkovNameGenerator(jsonFile.text);
 
         // Generate the root name for the entire system using the Master Seed
         System.Random systemPrng = new System.Random(DeriveNumericalSeed(seed));

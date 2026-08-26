@@ -1,59 +1,62 @@
 using System.Collections.Generic;
+using UnityEngine;
+
+// Data wrappers required by Unity's JsonUtility to parse nested objects
+[System.Serializable]
+public class MarkovData
+{
+    public string[] startNodes;
+    public MarkovTransition[] transitions;
+}
+
+[System.Serializable]
+public struct MarkovTransition
+{
+    public string node;
+    public string[] nextNodes;
+}
 
 /// <summary>
 /// Deterministic Markov Chain generator for semantic entity naming.
-/// Uses a predefined transition dictionary (Current Node -> List of possible Next Nodes).
+/// Loads probabilities dynamically from a JSON file.
 /// </summary>
 public class MarkovNameGenerator
 {
-    private readonly string[] startNodes;
-    private readonly Dictionary<string, string[]> transitionMatrix;
+    private string[] startNodes;
+    private Dictionary<string, string[]> transitionMatrix;
 
-    public MarkovNameGenerator()
+    /// <summary>
+    /// Initializes the generator by parsing the provided JSON string.
+    /// </summary>
+    /// <param name="jsonContent">The raw JSON data.</param>
+    /// <returns>A MarkovNameGenerator instance ready to generate names.</returns>
+    public MarkovNameGenerator(string jsonContent)
     {
-        // Initial state nodes (starting syllables)
-        startNodes = new string[] { "Al", "Zen", "Cor", "Dra", "Vex", "Kael", "Sol", "Tyr", "Om", "Ly" };
+        // Parse the JSON into our wrapper class
+        MarkovData data = JsonUtility.FromJson<MarkovData>(jsonContent);
+        
+        startNodes = data.startNodes;
+        transitionMatrix = new Dictionary<string, string[]>();
 
-        // Markov Chain transition matrix
-        // Empty strings "" represent terminal states (end of the name)
-        transitionMatrix = new Dictionary<string, string[]>()
+        // Reconstruct the C# Dictionary from the parsed JSON array
+        foreach (var transition in data.transitions)
         {
-            { "Al", new string[] { "pha", "tair", "cor", "len" } },
-            { "Zen", new string[] { "ith", "tar", "on", "ia" } },
-            { "Cor", new string[] { "vus", "uscant", "ia", "on" } },
-            { "Dra", new string[] { "con", "goth", "xis", "mus" } },
-            { "Vex", new string[] { "ill", "on", "ar", "us" } },
-            { "Kael", new string[] { "en", "ar", "thas", "ia" } },
-            { "Sol", new string[] { "ar", "is", "stice", "en" } },
-            { "Tyr", new string[] { "is", "an", "on", "ia" } },
-            { "Om", new string[] { "ni", "icron", "eg", "ar" } },
-            { "Ly", new string[] { "ra", "ris", "con", "th" } },
-
-            // Intermediate nodes transitioning to final syllables or terminal states
-            { "pha", new string[] { "ron", "lis", "" } },
-            { "ia", new string[] { "n", "s", "" } },
-            { "on", new string[] { "is", "ia", "" } },
-            { "ar", new string[] { "is", "us", "" } },
-            { "tar", new string[] { "is", "i", "" } },
-            { "con", new string[] { "ar", "is", "" } }
-        };
+            transitionMatrix.Add(transition.node, transition.nextNodes);
+        }
     }
 
     /// <summary>
     /// Traverses the Markov Chain to generate a word.
     /// </summary>
-    /// <param name="prng">The deterministic PRNG instance.</param>
-    /// <param name="maxSyllables">Maximum allowed depth of the chain.</param>
-    /// <returns>A generated name string.</returns>
+    /// <param name="prng">A seeded pseudo-random number generator for deterministic output.</param>
+    /// <param name="maxSyllables">The maximum number of syllables to generate</param>
+    /// <returns>The generated system name.</returns>
     public string GenerateSystemName(System.Random prng, int maxSyllables = 3)
     {
         string name = "";
-        
-        // Pick a starting node
         string currentSyllable = startNodes[prng.Next(startNodes.Length)];
         name += currentSyllable;
 
-        // Traverse the chain dynamically
         for (int i = 1; i < maxSyllables; i++)
         {
             if (transitionMatrix.ContainsKey(currentSyllable))
@@ -63,11 +66,11 @@ public class MarkovNameGenerator
                 name += currentSyllable;
                 
                 if (string.IsNullOrEmpty(currentSyllable)) 
-                    break; // Reached a terminal state
+                    break; 
             }
             else
             {
-                break; // No further transitions available
+                break; 
             }
         }
 
@@ -75,10 +78,10 @@ public class MarkovNameGenerator
     }
 
     /// <summary>
-    /// Utility method to convert an integer to a Roman Numeral (1 to 12).
+    /// Converts a number to its Roman numeral representation.
     /// </summary>
-    /// <param name="number">The integer to convert.</param>
-    /// <returns>The Roman Numeral string.</returns>
+    /// <param name="number">The number to convert.</param>
+    /// <returns>The Roman numeral string.</returns>
     public string ToRoman(int number)
     {
         string[] romanNumerals = { "", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII" };
@@ -87,10 +90,10 @@ public class MarkovNameGenerator
     }
 
     /// <summary>
-    /// Utility method to convert an index to an alphabetical character (a, b, c, etc.).
+    /// Converts a number to its alphabetical representation.
     /// </summary>
-    /// <param name="index">The index to convert.</param>
-    /// <returns>The alphabetical character.</returns>
+    /// <param name="index">The index of the letter (0-25).</param>
+    /// <returns>The alphabetical string.</returns>
     public string ToAlphabet(int index)
     {
         return ((char)('a' + index)).ToString();

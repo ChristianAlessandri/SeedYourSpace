@@ -1,0 +1,32 @@
+{
+  "startNodes": [
+    "Al",
+    "Zen",
+    "Cor",
+    "Dra",
+    "Vex",
+    "Kael",
+    "Sol",
+    "Tyr",
+    "Om",
+    "Ly"
+  ],
+  "transitions": [
+    { "node": "Al", "nextNodes": ["pha", "tair", "cor", "len"] },
+    { "node": "Zen", "nextNodes": ["ith", "tar", "on", "ia"] },
+    { "node": "Cor", "nextNodes": ["vus", "uscant", "ia", "on"] },
+    { "node": "Dra", "nextNodes": ["con", "goth", "xis", "mus"] },
+    { "node": "Vex", "nextNodes": ["ill", "on", "ar", "us"] },
+    { "node": "Kael", "nextNodes": ["en", "ar", "thas", "ia"] },
+    { "node": "Sol", "nextNodes": ["ar", "is", "stice", "en"] },
+    { "node": "Tyr", "nextNodes": ["is", "an", "on", "ia"] },
+    { "node": "Om", "nextNodes": ["ni", "icron", "eg", "ar"] },
+    { "node": "Ly", "nextNodes": ["ra", "ris", "con", "th"] },
+    { "node": "pha", "nextNodes": ["ron", "lis", ""] },
+    { "node": "ia", "nextNodes": ["n", "s", ""] },
+    { "node": "on", "nextNodes": ["is", "ia", ""] },
+    { "node": "ar", "nextNodes": ["is", "us", ""] },
+    { "node": "tar", "nextNodes": ["is", "i", ""] },
+    { "node": "con", "nextNodes": ["ar", "is", ""] }
+  ]
+}
