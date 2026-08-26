@@ -35,7 +35,7 @@ public class StarSystemGenerator : MonoBehaviour
         TextAsset jsonFile = Resources.Load<TextAsset>("markov_data");
         if (jsonFile == null)
         {
-            Debug.LogError("Markov data file not found! Ensure 'markov_data.json' is inside a 'Resources' folder.");
+            Debug.LogError("Error: Markov data file not found! Ensure 'markov_data.json' is inside a 'Resources' folder.");
             return;
         }
 
