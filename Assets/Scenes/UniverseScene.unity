@@ -148,7 +148,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 673709a7057f5d94d9bd67af2d80246e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StarSystemGenerator
-  hexSeed: 0xF5a9b2323e7f1C0C40843B33E7cEB2Ef4caAB895
+  masterSeed: 0xE5a9b2323e7f1C0C40843B33E7cEB2Ef4caAB895
+  algorithmVersion: 1
 --- !u!4 &98518081
 Transform:
   m_ObjectHideFlags: 0
