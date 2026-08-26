@@ -220,9 +220,9 @@ public class StarSystemGenerator : MonoBehaviour
 
         float eccentricity = GetNormalValue(prng, meanEccentricity, stdDevEccentricity);
 
-        // Eccentricity must be >= 0. 
-        // We cap it at 0.99 to prevent parabolic/hyperbolic orbits (e >= 1.0) 
-        // which would mean the planet escapes the star system entirely.
+        // Transform negative eccentricities to positive, as they are physically meaningless
+        eccentricity = Mathf.Abs(eccentricity); 
+
         return Mathf.Clamp(eccentricity, 0f, 0.99f);
     }
 
