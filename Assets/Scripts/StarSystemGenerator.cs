@@ -1,7 +1,41 @@
 using UnityEngine;
 using System;
+using System.Collections.Generic;
 using System.Text;
 using System.Security.Cryptography;
+
+// --- DATA CLASSES ---
+
+/// <summary>
+/// Base data container for any celestial body in the system.
+/// </summary>
+public class CelestialBodyData
+{
+    public string name;
+    public float orbitalDistance;
+    public float orbitalEccentricity;
+    public string className;
+    public float radius;
+    public bool hasRings;
+    public int ringDivisions;
+}
+
+/// <summary>
+/// Data container for a planet, which can hold a list of orbiting moons.
+/// </summary>
+public class PlanetData : CelestialBodyData
+{
+    public List<MoonData> moons = new List<MoonData>();
+}
+
+/// <summary>
+/// Data container specifically for moons.
+/// </summary>
+public class MoonData : CelestialBodyData
+{
+}
+
+// --- GENERATOR ---
 
 /// <summary>
 /// Core procedural generator responsible for deterministic star system generation.
@@ -13,7 +47,7 @@ public class StarSystemGenerator : MonoBehaviour
     public string masterSeed = "0xF5a9b2323e7f1C0C40843B33E7cEB2Ef4caAB895";
     
     [HideInInspector]
-    public int algorithmVersion = 1; // Incremented version for the new statistical engine
+    public int algorithmVersion = 1;
 
     private MarkovNameGenerator nameGenerator;
     private float currentSystemFrostLine;
@@ -24,25 +58,21 @@ public class StarSystemGenerator : MonoBehaviour
     }
 
     /// <summary>
-    /// Generates a complete star system, including the central star and its planetary bodies, based on the provided seed.
+    /// Generates a complete star system based on the provided seed, including the central star and its planetary system.
     /// </summary>
-    /// <param name="seed">The seed for the star system.</param>
+    /// <param name="seed">The seed for generating the star system.</param>
     public void GenerateCompleteStarSystem(string seed)
     {
         Debug.Log($"=== STARTING STAR SYSTEM GENERATION (Algorithm v{algorithmVersion}) ===");
         
-        // Load the JSON file dynamically from the Resources folder
         TextAsset jsonFile = Resources.Load<TextAsset>("markov_data");
         if (jsonFile == null)
         {
-            Debug.LogError("Error: Markov data file not found! Ensure 'markov_data.json' is inside a 'Resources' folder.");
+            Debug.LogError("Error: Markov data file not found!");
             return;
         }
 
-        // Initialize the semantic generator with the loaded JSON
         nameGenerator = new MarkovNameGenerator(jsonFile.text);
-
-        // Generate the root name for the entire system using the Master Seed
         System.Random systemPrng = new System.Random(DeriveNumericalSeed(seed));
         string rootSystemName = nameGenerator.GenerateSystemName(systemPrng);
         
@@ -53,30 +83,25 @@ public class StarSystemGenerator : MonoBehaviour
     }
 
     /// <summary>
-    /// Generates the central star using realistic astrophysics distributions.
-    /// Red Dwarfs (M) are vastly more common than massive Blue (O) stars.
+    /// Generates the central star of the system, determining its spectral class and frost line based on weighted probabilities and normal distributions.
     /// </summary>
-    /// <param name="baseSeed">The base seed for the star system.</param>
-    /// <param name="rootName">The root name for the star system.</param>
+    /// <param name="baseSeed">The seed for generating the central star.</param>
+    /// <param name="rootName">The name of the root system.</param>
     private void GenerateCentralStar(string baseSeed, string rootName)
     {
         string starSubSeedInput = baseSeed + "_Star_Entity";
         int starNumericalSeed = DeriveNumericalSeed(starSubSeedInput);
         System.Random starPrng = new System.Random(starNumericalSeed);
 
-        // Stellar distribution weights reflecting actual universe demographics
-        // O(Blue), B, A, F, G(Solar), K, M(Red Dwarf)
         float[] stellarWeights = { 0.1f, 1.0f, 2.0f, 4.0f, 8.0f, 15.0f, 70.0f };
         int spectralIndex = GetWeightedIndex(stellarWeights, starPrng);
         string spectralClass = GetSpectralClassName(spectralIndex);
 
-        // Base Frost Line distances in AU
         float[] baseFrostLines = { 15.0f, 10.0f, 6.0f, 4.0f, 2.7f, 1.5f, 0.5f };
         float baseLine = baseFrostLines[spectralIndex];
 
-        // Apply NORMAL DISTRIBUTION to the Frost Line oscillation (Mean: 0, StdDev: 0.05)
         float oscillation = GetNormalValue(starPrng, 0f, 0.05f);
-        oscillation = Mathf.Clamp(oscillation, -0.20f, 0.20f); // Cap extreme outliers
+        oscillation = Mathf.Clamp(oscillation, -0.20f, 0.20f);
         currentSystemFrostLine = baseLine * (1f + oscillation);
 
         string starName = rootName + " Prime";
@@ -84,21 +109,22 @@ public class StarSystemGenerator : MonoBehaviour
     }
 
     /// <summary>
-    /// Generates the planetary system based on the central star's properties and the provided seed.
+    /// Generates the planetary system of the star, determining the number and characteristics of the planets.
     /// </summary>
-    /// <param name="baseSeed">The base seed for the planetary system.</param>
-    /// <param name="rootName">The root name for the star system.</param>
+    /// <param name="baseSeed">The seed for generating the planetary system.</param>
+    /// <param name="rootName">The name of the root system.</param>
     private void GeneratePlanetarySystem(string baseSeed, string rootName)
     {
         string layoutSubSeedInput = baseSeed + "_Planets_Layout";
         int layoutNumericalSeed = DeriveNumericalSeed(layoutSubSeedInput);
         System.Random layoutPrng = new System.Random(layoutNumericalSeed);
 
-        // Apply NORMAL DISTRIBUTION for planet count (Mean: 5.5, StdDev: 2.0)
         float rawPlanetCount = GetNormalValue(layoutPrng, 5.5f, 2.0f);
         int planetCount = Mathf.Clamp(Mathf.RoundToInt(rawPlanetCount), 1, 12);
         
         Debug.Log($"[Layout Module] Total Planets Scheduled: {planetCount}");
+
+        List<PlanetData> systemPlanets = new List<PlanetData>();
 
         for (int i = 0; i < planetCount; i++)
         {
@@ -106,26 +132,86 @@ public class StarSystemGenerator : MonoBehaviour
             int planetNumericalSeed = DeriveNumericalSeed(planetSubSeedInput);
             System.Random planetPrng = new System.Random(planetNumericalSeed);
 
-            float orbitalDistance = CalculateOrbitalDistance(i, planetPrng);
-            PlanetProfile selectedClass = ClassifyPlanet(orbitalDistance, planetPrng, currentSystemFrostLine);
+            PlanetData planet = new PlanetData();
+            planet.name = rootName + " " + nameGenerator.ToRoman(i + 1);
+            planet.orbitalDistance = CalculateOrbitalDistance(i, planetPrng);
             
-            // Planetary radius uses Box-Muller via the generic helper now
-            float planetaryRadius = GetNormalValue(planetPrng, selectedClass.radiusMean, selectedClass.radiusStdDev);
-            planetaryRadius = Mathf.Max(planetaryRadius, 0.1f); // Minimum size safety
-
-            float orbitalEccentricity = CalculateEccentricity(planetPrng);
-
-            // Generate semantic name for the planet
-            string planetName = rootName + " " + nameGenerator.ToRoman(i + 1);
-
-            CalculateRings(selectedClass.className, planetPrng, out bool hasRings, out int ringDivisions);
-            int moonCount = CalculateMoons(planetaryRadius, planetPrng);
-
-            string ringData = hasRings ? $"Yes ({ringDivisions})" : "No";
+            PlanetProfile selectedClass = ClassifyPlanet(planet.orbitalDistance, planetPrng, currentSystemFrostLine);
+            planet.className = selectedClass.className;
             
-            // Print planet data
-            Debug.Log($"-> {planetName} | Dist: {orbitalDistance:F2} AU | Ecc: {orbitalEccentricity:F3} | Class: {selectedClass.className} | Rad: {planetaryRadius:F2} RE | Rings: {ringData} | Moons: {moonCount}");
+            planet.radius = GetNormalValue(planetPrng, selectedClass.radiusMean, selectedClass.radiusStdDev);
+            planet.radius = Mathf.Max(planet.radius, 0.1f);
+            
+            planet.orbitalEccentricity = CalculateEccentricity(planetPrng);
+            CalculateRings(planet.className, planetPrng, out planet.hasRings, out planet.ringDivisions);
+
+            // Generate full MoonData structures instead of just an integer count
+            planet.moons = GenerateMoons(planetSubSeedInput, planet.name, planet.radius, planetPrng);
+
+            systemPlanets.Add(planet);
+
+            string ringOutput = planet.hasRings ? $"Yes ({planet.ringDivisions})" : "No";
+            Debug.Log($"-> {planet.name} | Dist: {planet.orbitalDistance:F2} AU | Ecc: {planet.orbitalEccentricity:F3} | Class: {planet.className} | Rad: {planet.radius:F2} RE | Rings: {ringOutput} | Moons: {planet.moons.Count}");
+            
+            // Print the newly structured moon data
+            foreach (MoonData moon in planet.moons)
+            {
+                string moonRingOutput = moon.hasRings ? $"Yes ({moon.ringDivisions})" : "No";
+                Debug.Log($"   └─ {moon.name} | Dist: {moon.orbitalDistance:F2} LU | Ecc: {moon.orbitalEccentricity:F3} | Rad: {moon.radius:F2} RE | Rings: {moonRingOutput}");
+            }
         }
+    }
+
+    /// <summary>
+    /// Generates detailed data for moons orbiting a specific planet using hierarchical sub-seeding.
+    /// </summary>
+    /// <param name="planetSeedInput">The seed for generating the planet's moons.</param>
+    /// <param name="planetName">The name of the host planet.</param>
+    /// <param name="planetaryRadius">The radius of the host planet.</param>
+    /// <param name="planetPrng">The random number generator for the planet.</param>
+    /// <returns>A list of generated moon data structures.</returns>
+    private List<MoonData> GenerateMoons(string planetSeedInput, string planetName, float planetaryRadius, System.Random planetPrng)
+    {
+        List<MoonData> generatedMoons = new List<MoonData>();
+        
+        float scalingFactor = 3.0f;
+        float maxTheoreticalMoons = planetaryRadius * scalingFactor;
+        
+        float meanMoons = maxTheoreticalMoons * 0.3f;
+        float stdDevMoons = maxTheoreticalMoons * 0.2f;
+
+        int moonCount = Mathf.RoundToInt(GetNormalValue(planetPrng, meanMoons, stdDevMoons));
+        moonCount = Mathf.Clamp(moonCount, 0, Mathf.FloorToInt(maxTheoreticalMoons));
+
+        for (int m = 0; m < moonCount; m++)
+        {
+            // Hierarchical Sub-Seeding: Planet Seed -> Moon Seed
+            string moonSubSeedInput = planetSeedInput + $"_Moon_{m}";
+            int moonNumericalSeed = DeriveNumericalSeed(moonSubSeedInput);
+            System.Random moonPrng = new System.Random(moonNumericalSeed);
+
+            MoonData moon = new MoonData();
+            
+            // Uses the ToAlphabet method from MarkovNameGenerator
+            moon.name = planetName + "-" + nameGenerator.ToAlphabet(m);
+            
+            // Radius scaled relative to the host planet (roughly 10% to 25% of planet size)
+            moon.radius = GetNormalValue(moonPrng, planetaryRadius * 0.15f, planetaryRadius * 0.05f);
+            moon.radius = Mathf.Max(moon.radius, 0.01f); // Minimum safety bound
+
+            // Simple incremental orbital distance for moons (LU: Lunar Units placeholder)
+            moon.orbitalDistance = (m + 1) * (moon.radius * 2f + planetaryRadius * 0.5f);
+            
+            moon.orbitalEccentricity = CalculateEccentricity(moonPrng);
+            
+            // Moons are generally rocky bodies. We pass "Terrestrial" to give them the rare 4% ring anomaly.
+            moon.className = "Rocky Moon";
+            CalculateRings("Terrestrial", moonPrng, out moon.hasRings, out moon.ringDivisions);
+
+            generatedMoons.Add(moon);
+        }
+
+        return generatedMoons;
     }
 
     /// <summary>
@@ -211,26 +297,6 @@ public class StarSystemGenerator : MonoBehaviour
             hasRings = true;
             ringCount = 1;
         }
-    }
-
-    /// <summary>
-    /// Executes a deterministic Roulette Wheel Selection to classify the planet.
-    /// </summary>
-    /// <param name="planetaryRadius">The radius of the planet.</param>
-    /// <param name="prng">The isolated PRNG for this planet.</param>
-    /// <returns>An integer representing the number of moons for the planet.</returns>
-    private int CalculateMoons(float planetaryRadius, System.Random prng)
-    {
-        float scalingFactor = 3.0f;
-        float maxTheoreticalMoons = planetaryRadius * scalingFactor;
-        
-        // Normal Distribution centered around a logical mean (e.g. 30% of theoretical max)
-        float meanMoons = maxTheoreticalMoons * 0.3f;
-        float stdDevMoons = maxTheoreticalMoons * 0.2f;
-
-        int moonCount = Mathf.RoundToInt(GetNormalValue(prng, meanMoons, stdDevMoons));
-        
-        return Mathf.Clamp(moonCount, 0, Mathf.FloorToInt(maxTheoreticalMoons));
     }
 
     /// <summary>
