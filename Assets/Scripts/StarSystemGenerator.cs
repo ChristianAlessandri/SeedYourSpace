@@ -145,7 +145,7 @@ public class StarSystemGenerator : MonoBehaviour
             planet.orbitalEccentricity = CalculateEccentricity(planetPrng);
             CalculateRings(planet.className, planetPrng, out planet.hasRings, out planet.ringDivisions);
 
-            // Generate full MoonData structures instead of just an integer count
+            // Generate full MoonData structures
             planet.moons = GenerateMoons(planetSubSeedInput, planet.name, planet.radius, planetPrng);
 
             systemPlanets.Add(planet);
@@ -153,7 +153,7 @@ public class StarSystemGenerator : MonoBehaviour
             string ringOutput = planet.hasRings ? $"Yes ({planet.ringDivisions})" : "No";
             Debug.Log($"-> {planet.name} | Dist: {planet.orbitalDistance:F2} AU | Ecc: {planet.orbitalEccentricity:F3} | Class: {planet.className} | Rad: {planet.radius:F2} RE | Rings: {ringOutput} | Moons: {planet.moons.Count}");
             
-            // Print the newly structured moon data
+            // Print moon data
             foreach (MoonData moon in planet.moons)
             {
                 string moonRingOutput = moon.hasRings ? $"Yes ({moon.ringDivisions})" : "No";
@@ -186,7 +186,7 @@ public class StarSystemGenerator : MonoBehaviour
         for (int m = 0; m < moonCount; m++)
         {
             // Hierarchical Sub-Seeding: Planet Seed -> Moon Seed
-            string moonSubSeedInput = planetSeedInput + $"_Moon_{m}";
+            string moonSubSeedInput = planetSeedInput + $"_Moon_Entity_{m}";
             int moonNumericalSeed = DeriveNumericalSeed(moonSubSeedInput);
             System.Random moonPrng = new System.Random(moonNumericalSeed);
 
