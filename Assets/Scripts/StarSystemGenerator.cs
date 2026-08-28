@@ -54,25 +54,40 @@ public class StarSystemGenerator : MonoBehaviour
     /// </summary>
     /// <param name="baseSeed">The seed for generating the central star.</param>
     /// <param name="rootName">The name of the root system.</param>
-    private void GenerateCentralStar(string baseSeed, string rootName)
+    private StarData GenerateCentralStar(string baseSeed, string rootName)
     {
         string starSubSeedInput = baseSeed + "_Star_Entity";
         int starNumericalSeed = DeriveNumericalSeed(starSubSeedInput);
         System.Random starPrng = new System.Random(starNumericalSeed);
 
+        // O(Blue), B, A, F, G(Solar), K, M(Red Dwarf)
         float[] stellarWeights = { 0.1f, 1.0f, 2.0f, 4.0f, 8.0f, 15.0f, 70.0f };
         int spectralIndex = GetWeightedIndex(stellarWeights, starPrng);
-        string spectralClass = GetSpectralClassName(spectralIndex);
+        
+        // Base physics approximations matching Harvard Spectral Classification
+        float[] massMeans = { 40.0f, 6.0f, 2.0f, 1.3f, 1.0f, 0.7f, 0.3f };
+        float[] tempMeans = { 35000f, 15000f, 8500f, 6500f, 5500f, 4500f, 3000f };
+
+        StarData star = new StarData();
+        star.name = rootName + " Prime";
+        star.spectralClass = GetSpectralClassName(spectralIndex);
+        
+        // Use normal distribution for organic variety in mass and temp
+        star.mass = Mathf.Max(GetNormalValue(starPrng, massMeans[spectralIndex], massMeans[spectralIndex] * 0.1f), 0.08f);
+        star.temperature = Mathf.Max(GetNormalValue(starPrng, tempMeans[spectralIndex], tempMeans[spectralIndex] * 0.05f), 2000f);
 
         float[] baseFrostLines = { 15.0f, 10.0f, 6.0f, 4.0f, 2.7f, 1.5f, 0.5f };
         float baseLine = baseFrostLines[spectralIndex];
 
         float oscillation = GetNormalValue(starPrng, 0f, 0.05f);
         oscillation = Mathf.Clamp(oscillation, -0.20f, 0.20f);
+        
         currentSystemFrostLine = baseLine * (1f + oscillation);
+        star.frostLine = currentSystemFrostLine;
 
-        string starName = rootName + " Prime";
-        Debug.Log($"[Star Module] Name: {starName} | Class: {spectralClass} | Frost Line: {currentSystemFrostLine:F2} AU");
+        Debug.Log($"[Star Module] {star.name} | Class: {star.spectralClass} | Mass: {star.mass:F2} SM | Temp: {Mathf.RoundToInt(star.temperature)} K | Frost Line: {star.frostLine:F2} AU");
+        
+        return star;
     }
 
     /// <summary>
@@ -108,6 +123,10 @@ public class StarSystemGenerator : MonoBehaviour
             
             planet.radius = GetNormalValue(planetPrng, selectedClass.radiusMean, selectedClass.radiusStdDev);
             planet.radius = Mathf.Max(planet.radius, 0.1f);
+
+            // Mass calculation (M = R^3 * Density)
+            float density = Mathf.Max(GetNormalValue(planetPrng, selectedClass.densityMean, 0.1f), 0.1f);
+            planet.mass = Mathf.Pow(planet.radius, 3) * density;
             
             planet.orbitalEccentricity = CalculateEccentricity(planetPrng);
             CalculateRings(planet.className, planetPrng, out planet.hasRings, out planet.ringDivisions);
@@ -118,13 +137,13 @@ public class StarSystemGenerator : MonoBehaviour
             systemPlanets.Add(planet);
 
             string ringOutput = planet.hasRings ? $"Yes ({planet.ringDivisions})" : "No";
-            Debug.Log($"-> {planet.name} | Dist: {planet.orbitalDistance:F2} AU | Ecc: {planet.orbitalEccentricity:F3} | Class: {planet.className} | Rad: {planet.radius:F2} RE | Rings: {ringOutput} | Moons: {planet.moons.Count}");
+            Debug.Log($"-> {planet.name} | mass: {planet.mass:F2} ME | Dist: {planet.orbitalDistance:F2} AU | Ecc: {planet.orbitalEccentricity:F3} | Class: {planet.className} | Rad: {planet.radius:F2} RE | Rings: {ringOutput} | Moons: {planet.moons.Count}");
             
             // Print moon data
             foreach (MoonData moon in planet.moons)
             {
                 string moonRingOutput = moon.hasRings ? $"Yes ({moon.ringDivisions})" : "No";
-                Debug.Log($"   └─ {moon.name} | Dist: {moon.orbitalDistance:F2} LU | Ecc: {moon.orbitalEccentricity:F3} | Rad: {moon.radius:F2} RE | Rings: {moonRingOutput}");
+                Debug.Log($"   └─ {moon.name} | mass: {moon.mass:F5} ME | Dist: {moon.orbitalDistance:F2} LU | Ecc: {moon.orbitalEccentricity:F3} | Rad: {moon.radius:F2} RE | Rings: {moonRingOutput}");
             }
         }
     }
@@ -165,6 +184,10 @@ public class StarSystemGenerator : MonoBehaviour
             // Radius scaled relative to the host planet (roughly 10% to 25% of planet size)
             moon.radius = GetNormalValue(moonPrng, planetaryRadius * 0.15f, planetaryRadius * 0.05f);
             moon.radius = Mathf.Max(moon.radius, 0.01f); // Minimum safety bound
+
+            // Moons are mostly rocky/icy, avg density 0.8 compared to Earth
+            float moonDensity = Mathf.Max(GetNormalValue(moonPrng, 0.8f, 0.1f), 0.1f);
+            moon.mass = Mathf.Pow(moon.radius, 3) * moonDensity;
 
             // Simple incremental orbital distance for moons (LU: Lunar Units placeholder)
             moon.orbitalDistance = (m + 1) * (moon.radius * 2f + planetaryRadius * 0.5f);
@@ -307,11 +330,11 @@ public class StarSystemGenerator : MonoBehaviour
     /// <returns>A PlanetProfile object representing the classified planetary taxonomy.</returns>
     private PlanetProfile ClassifyPlanet(float distance, System.Random prng, float systemFrostLine)
     {
-        // Base profiles: Name, Mean Radius (RE), StdDev, Base Weight
-        PlanetProfile terrestrial = new PlanetProfile("Terrestrial", 1.0f, 0.3f, 10f);
-        PlanetProfile superEarth = new PlanetProfile("Super-Earth", 2.0f, 0.5f, 5f);
-        PlanetProfile iceGiant = new PlanetProfile("Ice Giant", 4.0f, 1.0f, 2f);
-        PlanetProfile gasGiant = new PlanetProfile("Gas Giant", 11.2f, 2.5f, 1f); // Jupiter size baseline
+        // Base profiles: Name, Mean Radius (RE), StdDev, Mean Density (Earth=1), Base Weight
+        PlanetProfile terrestrial = new PlanetProfile("Terrestrial", 1.0f, 0.3f, 1.0f, 10f);
+        PlanetProfile superEarth = new PlanetProfile("Super-Earth", 2.0f, 0.5f, 1.2f, 5f);
+        PlanetProfile iceGiant = new PlanetProfile("Ice Giant", 4.0f, 1.0f, 0.3f, 2f);
+        PlanetProfile gasGiant = new PlanetProfile("Gas Giant", 11.2f, 2.5f, 0.22f, 1f);
 
         if (distance > systemFrostLine) // Beyond the Frost Line
         {

@@ -8,6 +8,7 @@ public class CelestialBodyData
     public float orbitalEccentricity;
     public string className;
     public float radius;
+    public float mass;
     public bool hasRings;
     public int ringDivisions;
 }
