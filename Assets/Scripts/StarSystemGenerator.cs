@@ -4,39 +4,6 @@ using System.Collections.Generic;
 using System.Text;
 using System.Security.Cryptography;
 
-// --- DATA CLASSES ---
-
-/// <summary>
-/// Base data container for any celestial body in the system.
-/// </summary>
-public class CelestialBodyData
-{
-    public string name;
-    public float orbitalDistance;
-    public float orbitalEccentricity;
-    public string className;
-    public float radius;
-    public bool hasRings;
-    public int ringDivisions;
-}
-
-/// <summary>
-/// Data container for a planet, which can hold a list of orbiting moons.
-/// </summary>
-public class PlanetData : CelestialBodyData
-{
-    public List<MoonData> moons = new List<MoonData>();
-}
-
-/// <summary>
-/// Data container specifically for moons.
-/// </summary>
-public class MoonData : CelestialBodyData
-{
-}
-
-// --- GENERATOR ---
-
 /// <summary>
 /// Core procedural generator responsible for deterministic star system generation.
 /// Implements Box-Muller normal distributions and weighted statistical probabilities.
