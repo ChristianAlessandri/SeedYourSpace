@@ -75,6 +75,14 @@ public static class AstrophysicsRules
         return terrestrial;
     }
 
+    /// <summary>
+    /// Classifies a moon based on the distance of its parent planet and the system's frost
+    /// line, using a random number generator.
+    /// </summary>
+    /// <param name="planetDistance">The orbital distance of the parent planet.</param>
+    /// <param name="systemFrostLine">The frost line of the star system.</param>
+    /// <param name="prng">The random number generator.</param>
+    /// <returns>The classified moon type.</returns>
     public static string ClassifyMoon(float planetDistance, float systemFrostLine, System.Random prng)
     {
         if (planetDistance > systemFrostLine)
@@ -136,31 +144,60 @@ public static class AstrophysicsRules
     /// <returns>The determined atmosphere type.</returns>
     public static string DetermineAtmosphere(string className, float gravity, float distance, float frostLine, System.Random prng)
     {
-        if (gravity < 0.25f) return "None (Vacuum)"; // Too low gravity to retain an atmosphere
+        // Gravity threshold for retaining an atmosphere (Jeans escape)
+        if (gravity < 0.25f) return "None (Vacuum)"; 
 
-        if (className.Contains("Gas Giant")) return "H2 (75%), He (24%), CH4 (1%)";
-        if (className.Contains("Ice Giant")) return "H2 (80%), He (15%), CH4 (5%)";
+        // Gas Giants and Ice Giants (Primordial Atmospheres)
+        if (className.Contains("Giant"))
+        {
+            // Gaussian distribution for H2 and He percentages, with constraints to ensure they sum to 100%
+            float h2 = Mathf.Clamp(StochasticMath.GetNormalValue(prng, 75f, 5f), 65f, 85f);
+            float he = Mathf.Clamp(99f - h2, 10f, 30f);
+            float trace = Mathf.Max(100f - (h2 + he), 0.1f);
+            
+            string traceGas = className.Contains("Ice Giant") ? "CH4/NH3" : "CH4";
+            return $"Dense Gas | H2 ({h2:F1}%), He ({he:F1}%), {traceGas} ({trace:F1}%)";
+        }
 
-        string composition = "";
+        // Rocky Planets
         double anomaly = prng.NextDouble();
-
-        // Planets Beyond the Frost Line (Very Cold)
-        if (distance > frostLine)
-        {
-            if (gravity > 1.5f) composition = "H2, He, N2"; // Super-Earths cold retain primordial gases
-            else if (anomaly < 0.3) composition = "N2, CH4 (Methane)"; // Titan-like
-            else return "Trace (Frozen CO2)";
-        }
-        // Planets Intern (Hot/Temperate Zone)
-        else
-        {
-            if (anomaly < 0.05) composition = "N2 (78%), O2 (21%), Ar (1%)"; // Earth-like (Rare)
-            else if (anomaly < 0.5) composition = "CO2 (95%), N2 (3%), SO2(2%)"; // Venus-like (Toxic Greenhouse Effect)
-            else composition = "CO2 (95%), Ar (2%), N2 (2%)"; // Mars-like (Thin)
-        }
-
-        // Determine density based on gravity
         string density = (gravity > 1.2f) ? "Thick" : (gravity < 0.6f) ? "Thin" : "Moderate";
-        return $"{density} | {composition}";
+
+        if (distance > frostLine) 
+        {
+            // Extremely Cold Zone (Beyond Frost Line)
+            if (gravity > 1.5f) return $"{density} | H2, He (Primordial)";
+            if (anomaly < 0.3) 
+            {
+                // Titanic-like Atmosphere (N2 + CH4)
+                float n2 = Mathf.Clamp(StochasticMath.GetNormalValue(prng, 90f, 5f), 80f, 98f);
+                float ch4 = Mathf.Max(100f - n2, 0.1f);
+                return $"{density} | N2 ({n2:F1}%), CH4 ({ch4:F1}%)";
+            }
+            return "Trace (Frozen CO2/CH4)";
+        } 
+        else 
+        {
+            // Hot Zone
+            if (anomaly < 0.05) 
+            {
+                // Habitable Atmosphere (N2 + O2)
+                float n2 = Mathf.Clamp(StochasticMath.GetNormalValue(prng, 75f, 5f), 60f, 85f);
+                float o2 = Mathf.Clamp(StochasticMath.GetNormalValue(prng, 21f, 3f), 15f, 30f);
+                float trace = Mathf.Max(100f - (n2 + o2), 0.1f);
+                return $"{density} (Habitable) | N2 ({n2:F1}%), O2 ({o2:F1}%), Ar/CO2 ({trace:F1}%)";
+            }
+            if (anomaly < 0.5) 
+            {
+                // Greenhouse Atmosphere (CO2 + N2)
+                float co2 = Mathf.Clamp(StochasticMath.GetNormalValue(prng, 95f, 2f), 90f, 98f);
+                float n2 = Mathf.Max(100f - co2, 0.1f);
+                return $"{density} (Toxic) | CO2 ({co2:F1}%), N2/SO2 ({n2:F1}%)";
+            }
+            
+            // Thin Atmosphere (CO2 + Ar/N2)
+            float co2thin = Mathf.Clamp(StochasticMath.GetNormalValue(prng, 95f, 3f), 90f, 98f);
+            return $"{density} | CO2 ({co2thin:F1}%), Ar/N2 ({100f - co2thin:F1}%)";
+        }
     }
 }
