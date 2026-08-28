@@ -11,52 +11,54 @@ public class VisualDioramaBuilder : MonoBehaviour
     [Tooltip("A 3D Sphere prefab with the CelestialBody script attached.")]
     public GameObject celestialPrefab; 
 
-    [Header("Diorama Scale Factors")]
-    public float starSizeMultiplier = 2.0f;
-    public float planetSizeMultiplier = 0.5f;
-    public float planetDistanceMultiplier = 15.0f; 
-    public float moonDistanceMultiplier = 2.0f;
+    [Header("Diorama Scale Multipliers")]
+    [Tooltip("Adjust these values to balance the visual representation in the scene.")]
+    [SerializeField] private float starSizeMultiplier = 100.0f; 
+    [SerializeField] private float planetSizeMultiplier = 1.0f; 
+    [SerializeField] private float planetDistanceMultiplier = 200.0f; 
+    [SerializeField] private float moonDistanceMultiplier = 0.15f; 
 
     /// <summary>
     /// Instantiates the entire star system hierarchy.
     /// </summary>
+    /// <param name="starData">The data for the central star.</param>
+    /// <param name="planets">The list of planet data to instantiate.</param>
     public void BuildUniverse(StarData starData, List<PlanetData> planets)
     {
-        // 1. Generate the Central Star
+        // Generate the Central Star
         GameObject starObj = Instantiate(celestialPrefab, Vector3.zero, Quaternion.identity);
         starObj.name = starData.name;
-        
-        // Scale the star and remove the kinematic script since it doesn't orbit anything
         starObj.transform.localScale = Vector3.one * (starData.radius * starSizeMultiplier);
-        Destroy(starObj.GetComponent<CelestialBody>());
+        
+        // Set the star's axial tilt
+        starObj.transform.rotation = Quaternion.Euler(starData.axialTilt, 0f, 0f);
+        
+        CelestialBody starOrbit = starObj.GetComponent<CelestialBody>();
+        starOrbit.InitializeKinematics(0f, 0f, 0f, null, 0f, starData.rotationPeriod);
 
-        // 2. Generate Planets
+        // Generate Planets
         foreach (PlanetData planet in planets)
         {
             GameObject planetObj = Instantiate(celestialPrefab, Vector3.zero, Quaternion.identity);
             planetObj.name = planet.name;
-            
             planetObj.transform.localScale = Vector3.one * (planet.radius * planetSizeMultiplier);
             
-            // Apply Axial Tilt (rotating the mesh physically on the X/Z axis)
-            planetObj.transform.rotation = Quaternion.Euler(planet.axialTilt, 0f, planet.orbitalInclination);
+            planetObj.transform.rotation = Quaternion.Euler(planet.axialTilt, 0f, 0f);
 
-            // Hook up the kinematic engine
             CelestialBody planetOrbit = planetObj.GetComponent<CelestialBody>();
-            planetOrbit.InitializeOrbit(planet.orbitalDistance * planetDistanceMultiplier, planet.orbitalEccentricity, starObj.transform);
+            planetOrbit.InitializeKinematics(planet.orbitalDistance * planetDistanceMultiplier, planet.orbitalEccentricity, planet.orbitalInclination, starObj.transform, planet.revolutionPeriod, planet.rotationPeriod);
 
-            // 3. Generate Moons
+            // Generate Moons
             foreach (MoonData moon in planet.moons)
             {
                 GameObject moonObj = Instantiate(celestialPrefab, Vector3.zero, Quaternion.identity);
                 moonObj.name = moon.name;
-                
                 moonObj.transform.localScale = Vector3.one * (moon.radius * planetSizeMultiplier);
-                moonObj.transform.rotation = Quaternion.Euler(moon.axialTilt, 0f, moon.orbitalInclination);
+                
+                moonObj.transform.rotation = Quaternion.Euler(moon.axialTilt, 0f, 0f);
 
-                // Moons use the planet as their centralStar transform[cite: 21]
                 CelestialBody moonOrbit = moonObj.GetComponent<CelestialBody>();
-                moonOrbit.InitializeOrbit(moon.orbitalDistance * moonDistanceMultiplier, moon.orbitalEccentricity, planetObj.transform);
+                moonOrbit.InitializeKinematics(moon.orbitalDistance * moonDistanceMultiplier, moon.orbitalEccentricity, moon.orbitalInclination, planetObj.transform, moon.revolutionPeriod, moon.rotationPeriod);
             }
         }
     }

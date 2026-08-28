@@ -180,10 +180,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::VisualDioramaBuilder
   celestialPrefab: {fileID: 72994822405351375, guid: 14a5fdcefdad6904a99413637e459c92, type: 3}
-  starSizeMultiplier: 2
-  planetSizeMultiplier: 0.5
-  planetDistanceMultiplier: 15
-  moonDistanceMultiplier: 2
+  starSizeMultiplier: 100
+  planetSizeMultiplier: 1
+  planetDistanceMultiplier: 200
+  moonDistanceMultiplier: 0.15
 --- !u!1 &819342604
 GameObject:
   m_ObjectHideFlags: 0

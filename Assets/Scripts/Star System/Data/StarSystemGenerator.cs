@@ -83,6 +83,9 @@ public class StarSystemGenerator : MonoBehaviour
         currentSystemFrostLine = baseFrostLines[spectralIndex] * (1f + oscillation);
         star.frostLine = currentSystemFrostLine;
 
+        star.axialTilt = Mathf.Abs(StochasticMath.GetNormalValue(starPrng, 7.25f, 2f));
+        star.rotationPeriod = Mathf.Max(StochasticMath.GetNormalValue(starPrng, 600f, 150f), 100f);
+
         Debug.Log($"[Star Module] {star.name} | Class: {star.spectralClass} | Mass: {star.mass:F2} SM | Temp: {Mathf.RoundToInt(star.temperature)} K | Frost Line: {star.frostLine:F2} AU");
         
         return star;
@@ -135,7 +138,9 @@ public class StarSystemGenerator : MonoBehaviour
             planet.orbitalInclination = StochasticMath.GetNormalValue(planetPrng, 0f, 3f);
             planet.atmosphereType = AstrophysicsRules.DetermineAtmosphere(planet.className, planet.surfaceGravity, planet.orbitalDistance, currentSystemFrostLine, planetPrng);
 
-            planet.revolutionPeriod = Mathf.Sqrt(Mathf.Pow(planet.orbitalDistance, 3) / centralStar.mass);
+            // Kepler's Third Law yields Earth Years, convert immediately to Earth Days
+            float revolutionYears = Mathf.Sqrt(Mathf.Pow(planet.orbitalDistance, 3) / centralStar.mass);
+            planet.revolutionPeriod = revolutionYears * 365.25f;
             
             float baseRotation = (planet.className == "Gas Giant" || planet.className == "Ice Giant") ? 12f : 24f;
             planet.rotationPeriod = Mathf.Max(StochasticMath.GetNormalValue(planetPrng, baseRotation, baseRotation * 0.5f), 2f); 
@@ -143,7 +148,7 @@ public class StarSystemGenerator : MonoBehaviour
             bool lockedToStar = (planet.orbitalDistance < 0.2f);
             if (lockedToStar) 
             {
-                planet.rotationPeriod = planet.revolutionPeriod * 365.25f * 24f; 
+                planet.rotationPeriod = planet.revolutionPeriod * 24f; 
             }
             
             planet.orbitalEccentricity = AstrophysicsRules.CalculateEccentricity(planetPrng);
@@ -218,7 +223,8 @@ public class StarSystemGenerator : MonoBehaviour
                 moon.rotationPeriod = Mathf.Max(StochasticMath.GetNormalValue(moonPrng, 48f, 24f), 5f);
             }
 
-            moon.orbitalEccentricity = AstrophysicsRules.CalculateEccentricity(moonPrng);
+            // Tidal circularization keeps moon orbits nearly perfectly circular
+            moon.orbitalEccentricity = Mathf.Clamp(Mathf.Abs(StochasticMath.GetNormalValue(moonPrng, 0.01f, 0.01f)), 0f, 0.05f);
             moon.className = AstrophysicsRules.ClassifyMoon(planetDistance, currentSystemFrostLine, moonPrng);
             
             AstrophysicsRules.CalculateRings(moon.className, moonPrng, out moon.hasRings, out moon.ringDivisions);
