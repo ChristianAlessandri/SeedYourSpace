@@ -8,4 +8,5 @@ public class StarData
     public float frostLine;
     public float mass; // In Solar Masses (M_S)
     public float temperature; // In Kelvin (K)
+    public float radius; // In Solar Radii (R_S)
 }

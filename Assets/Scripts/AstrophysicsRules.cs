@@ -75,6 +75,16 @@ public static class AstrophysicsRules
         return terrestrial;
     }
 
+    public static string ClassifyMoon(float planetDistance, float systemFrostLine, System.Random prng)
+    {
+        if (planetDistance > systemFrostLine)
+        {
+            // Beyond the frost line, moons are more likely to be icy.
+            return (prng.NextDouble() < 0.75) ? "Icy Moon" : "Rocky Moon";
+        }
+        return "Rocky Moon"; 
+    }
+
     /// <summary>
     /// Calculates the eccentricity of a planet's orbit.
     /// </summary>
@@ -126,21 +136,31 @@ public static class AstrophysicsRules
     /// <returns>The determined atmosphere type.</returns>
     public static string DetermineAtmosphere(string className, float gravity, float distance, float frostLine, System.Random prng)
     {
-        if (className.Contains("Giant")) return "Dense Gas (H/He/CH4)";
-        if (gravity < 0.3f) return "None (Vacuum)"; 
+        if (gravity < 0.25f) return "None (Vacuum)"; // Too low gravity to retain an atmosphere
 
-        double chance = prng.NextDouble();
+        if (className.Contains("Gas Giant")) return "H2 (75%), He (24%), CH4 (1%)";
+        if (className.Contains("Ice Giant")) return "H2 (80%), He (15%), CH4 (5%)";
 
-        if (distance > frostLine) 
+        string composition = "";
+        double anomaly = prng.NextDouble();
+
+        // Planets Beyond the Frost Line (Very Cold)
+        if (distance > frostLine)
         {
-            if (chance < 0.2) return "Thin (N2/Methane)";
-            return "Frozen (Vacuum)";
-        } 
-        else 
-        {
-            if (chance < 0.1) return "Breathable (O2/N2)"; 
-            if (chance < 0.5) return "Toxic (CO2/SO2)";    
-            return "Thin (CO2)";                           
+            if (gravity > 1.5f) composition = "H2, He, N2"; // Super-Earths cold retain primordial gases
+            else if (anomaly < 0.3) composition = "N2, CH4 (Methane)"; // Titan-like
+            else return "Trace (Frozen CO2)";
         }
+        // Planets Intern (Hot/Temperate Zone)
+        else
+        {
+            if (anomaly < 0.05) composition = "N2 (78%), O2 (21%), Ar (1%)"; // Earth-like (Rare)
+            else if (anomaly < 0.5) composition = "CO2 (95%), N2 (3%), SO2(2%)"; // Venus-like (Toxic Greenhouse Effect)
+            else composition = "CO2 (95%), Ar (2%), N2 (2%)"; // Mars-like (Thin)
+        }
+
+        // Determine density based on gravity
+        string density = (gravity > 1.2f) ? "Thick" : (gravity < 0.6f) ? "Thin" : "Moderate";
+        return $"{density} | {composition}";
     }
 }

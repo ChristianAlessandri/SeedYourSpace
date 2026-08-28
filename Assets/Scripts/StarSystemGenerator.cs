@@ -44,7 +44,7 @@ public class StarSystemGenerator : MonoBehaviour
         Debug.Log($"[Semantic Module] Root System Name: {rootSystemName}");
 
         StarData centralStar = GenerateCentralStar(seed, rootSystemName);
-        GeneratePlanetarySystem(seed, rootSystemName, centralStar.mass);
+        GeneratePlanetarySystem(seed, rootSystemName, centralStar);
     }
 
     /// <summary>
@@ -64,6 +64,7 @@ public class StarSystemGenerator : MonoBehaviour
         
         float[] massMeans = { 40.0f, 6.0f, 2.0f, 1.3f, 1.0f, 0.7f, 0.3f };
         float[] tempMeans = { 35000f, 15000f, 8500f, 6500f, 5500f, 4500f, 3000f };
+        float[] radiusMeans = { 15.0f, 4.0f, 1.7f, 1.3f, 1.0f, 0.8f, 0.3f };
 
         StarData star = new StarData();
         star.name = rootName + " Prime";
@@ -71,6 +72,7 @@ public class StarSystemGenerator : MonoBehaviour
         
         star.mass = Mathf.Max(StochasticMath.GetNormalValue(starPrng, massMeans[spectralIndex], massMeans[spectralIndex] * 0.1f), 0.08f);
         star.temperature = Mathf.Max(StochasticMath.GetNormalValue(starPrng, tempMeans[spectralIndex], tempMeans[spectralIndex] * 0.05f), 2000f);
+        star.radius = Mathf.Max(StochasticMath.GetNormalValue(starPrng, radiusMeans[spectralIndex], radiusMeans[spectralIndex] * 0.1f), 0.1f);
 
         float[] baseFrostLines = { 15.0f, 10.0f, 6.0f, 4.0f, 2.7f, 1.5f, 0.5f };
         float oscillation = Mathf.Clamp(StochasticMath.GetNormalValue(starPrng, 0f, 0.05f), -0.20f, 0.20f);
@@ -88,9 +90,9 @@ public class StarSystemGenerator : MonoBehaviour
     /// </summary>
     /// <param name="baseSeed">Seed for deterministic generation.</param>
     /// <param name="rootName">The root name for the system.</param>
-    /// <param name="starMass">The mass of the central star.</param>
+    /// <param name="centralStar">The central star data.</param>
     /// <returns>List of generated planetary data.</returns>
-    private void GeneratePlanetarySystem(string baseSeed, string rootName, float starMass)
+    private void GeneratePlanetarySystem(string baseSeed, string rootName, StarData centralStar)
     {
         string layoutSubSeedInput = baseSeed + "_Planets_Layout";
         int layoutNumericalSeed = StochasticMath.DeriveNumericalSeed(layoutSubSeedInput);
@@ -120,12 +122,17 @@ public class StarSystemGenerator : MonoBehaviour
             float density = Mathf.Max(StochasticMath.GetNormalValue(planetPrng, selectedClass.densityMean, 0.1f), 0.1f);
             planet.mass = Mathf.Pow(planet.radius, 3) * density;
             planet.surfaceGravity = planet.mass / (planet.radius * planet.radius);
+
+            // Simplified Equilibrium Temperature
+            // Assumes average albedo (reflectivity) of 0.3
+            float distanceInSolarRadii = planet.orbitalDistance * 215.03f; // 1 AU = ~215 Solar Radii
+            planet.surfaceTemperature = centralStar.temperature * Mathf.Sqrt(centralStar.radius / (2f * distanceInSolarRadii)) * 0.9f;
             
             planet.axialTilt = Mathf.Abs(StochasticMath.GetNormalValue(planetPrng, 23.5f, 15f));
             planet.orbitalInclination = StochasticMath.GetNormalValue(planetPrng, 0f, 3f);
             planet.atmosphereType = AstrophysicsRules.DetermineAtmosphere(planet.className, planet.surfaceGravity, planet.orbitalDistance, currentSystemFrostLine, planetPrng);
 
-            planet.revolutionPeriod = Mathf.Sqrt(Mathf.Pow(planet.orbitalDistance, 3) / starMass);
+            planet.revolutionPeriod = Mathf.Sqrt(Mathf.Pow(planet.orbitalDistance, 3) / centralStar.mass);
             
             float baseRotation = (planet.className == "Gas Giant" || planet.className == "Ice Giant") ? 12f : 24f;
             planet.rotationPeriod = Mathf.Max(StochasticMath.GetNormalValue(planetPrng, baseRotation, baseRotation * 0.5f), 2f); 
@@ -139,7 +146,7 @@ public class StarSystemGenerator : MonoBehaviour
             planet.orbitalEccentricity = AstrophysicsRules.CalculateEccentricity(planetPrng);
             AstrophysicsRules.CalculateRings(planet.className, planetPrng, out planet.hasRings, out planet.ringDivisions);
 
-            planet.moons = GenerateMoons(planetSubSeedInput, planet.name, planet.radius, planet.mass, planetPrng);
+            planet.moons = GenerateMoons(planetSubSeedInput, planet.name, planet.radius, planet.mass, planet.orbitalDistance, planetPrng);
             systemPlanets.Add(planet);
 
             string ringOutput = planet.hasRings ? $"Yes ({planet.ringDivisions})" : "No";
@@ -154,9 +161,10 @@ public class StarSystemGenerator : MonoBehaviour
     /// <param name="planetName">The name of the planet.</param>
     /// <param name="planetaryRadius">The radius of the planet.</param>
     /// <param name="planetaryMass">The mass of the planet.</param>
+    /// <param name="planetDistance">The orbital distance of the planet.</param>
     /// <param name="planetPrng">The random number generator for the planet.</param>
     /// <returns>A list of generated moon data.</returns>
-    private List<MoonData> GenerateMoons(string planetSeedInput, string planetName, float planetaryRadius, float planetaryMass, System.Random planetPrng)
+    private List<MoonData> GenerateMoons(string planetSeedInput, string planetName, float planetaryRadius, float planetaryMass, float planetDistance, System.Random planetPrng)
     {
         List<MoonData> generatedMoons = new List<MoonData>();
         
@@ -198,7 +206,7 @@ public class StarSystemGenerator : MonoBehaviour
             }
 
             moon.orbitalEccentricity = AstrophysicsRules.CalculateEccentricity(moonPrng);
-            moon.className = "Rocky Moon";
+            moon.className = AstrophysicsRules.ClassifyMoon(planetDistance, currentSystemFrostLine, moonPrng);
             AstrophysicsRules.CalculateRings("Terrestrial", moonPrng, out moon.hasRings, out moon.ringDivisions);
             moon.atmosphereType = AstrophysicsRules.DetermineAtmosphere(moon.className, moon.surfaceGravity, moon.orbitalDistance, 999f, moonPrng);
 
