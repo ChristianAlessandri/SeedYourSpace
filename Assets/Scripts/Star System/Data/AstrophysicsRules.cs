@@ -200,4 +200,49 @@ public static class AstrophysicsRules
             return $"{density} | CO2 ({co2thin:F1}%), Ar/N2 ({100f - co2thin:F1}%)";
         }
     }
+
+    /// <summary>
+    /// Calculates the procedural visual parameters of a star based on its physical properties.
+    /// </summary>
+    /// <param name="temperature">Surface temperature in Kelvin.</param>
+    /// <param name="mass">Mass in Solar Masses.</param>
+    /// <param name="radius">Radius in Solar Radii.</param>
+    /// <param name="rotationPeriod">Rotation period in hours.</param>
+    /// <param name="prng">The random number generator.</param>
+    /// <param name="baseColor">Calculated blackbody RGB color.</param>
+    /// <param name="magneticActivity">Calculated magnetic activity (0.0 to 1.0).</param>
+    /// <param name="granulationScale">Calculated granulation cell size multiplier.</param>
+    public static void CalculateStellarSurface(float temperature, float mass, float radius, float rotationPeriod, System.Random prng, out Color baseColor, out float magneticActivity, out float granulationScale)
+    {
+        // Base Color (Simplified Blackbody to RGB approximation)
+        // Adjusting temperature to a 0-1 lerp factor roughly between 3000K and 35000K
+        float t = Mathf.InverseLerp(3000f, 30000f, temperature);
+        Color redDwarf = new Color(1.0f, 0.4f, 0.1f);
+        Color sunYellow = new Color(1.0f, 0.9f, 0.8f);
+        Color blueGiant = new Color(0.5f, 0.7f, 1.0f);
+        
+        if (t < 0.2f) 
+            baseColor = Color.Lerp(redDwarf, sunYellow, t / 0.2f);
+        else 
+            baseColor = Color.Lerp(sunYellow, blueGiant, (t - 0.2f) / 0.8f);
+
+        // Granulation Scale (Inversely proportional to surface gravity)
+        // Surface gravity g = M / R^2. Granulation size is roughly proportional to 1/g.
+        float surfaceGravity = mass / (radius * radius);
+        float baseGranulation = 1f / Mathf.Max(surfaceGravity, 0.01f);
+        
+        // Add slight stochastic variance (+/- 10%)
+        float variance = StochasticMath.GetNormalValue(prng, 1.0f, 0.1f);
+        granulationScale = Mathf.Clamp(baseGranulation * variance, 0.1f, 50f);
+
+        // Magnetic Activity (Dynamo effect)
+        // Fast rotation (low period) and low mass (deep convection zones) increase activity.
+        float rotationFactor = 1000f / Mathf.Max(rotationPeriod, 1f); 
+        float massFactor = 1f / Mathf.Max(mass, 0.1f);
+        
+        float rawActivity = (rotationFactor * 0.4f) + (massFactor * 0.6f);
+        float activityNoise = StochasticMath.GetNormalValue(prng, 0f, 0.15f);
+        
+        magneticActivity = Mathf.Clamp01((rawActivity / 5f) + activityNoise);
+    }
 }

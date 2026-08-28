@@ -86,6 +86,18 @@ public class StarSystemGenerator : MonoBehaviour
         star.axialTilt = Mathf.Abs(StochasticMath.GetNormalValue(starPrng, 7.25f, 2f));
         star.rotationPeriod = Mathf.Max(StochasticMath.GetNormalValue(starPrng, 600f, 150f), 100f);
 
+        // Calculate procedural surface visuals
+        AstrophysicsRules.CalculateStellarSurface(
+            star.temperature, 
+            star.mass, 
+            star.radius, 
+            star.rotationPeriod, 
+            starPrng, 
+            out star.baseColor, 
+            out star.magneticActivity, 
+            out star.granulationScale
+        );
+
         Debug.Log($"[Star Module] {star.name} | Class: {star.spectralClass} | Mass: {star.mass:F2} SM | Temp: {Mathf.RoundToInt(star.temperature)} K | Frost Line: {star.frostLine:F2} AU");
         
         return star;

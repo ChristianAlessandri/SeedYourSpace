@@ -36,6 +36,25 @@ public class VisualDioramaBuilder : MonoBehaviour
         CelestialBody starOrbit = starObj.GetComponent<CelestialBody>();
         starOrbit.InitializeKinematics(0f, 0f, 0f, null, 0f, starData.rotationPeriod);
 
+        // Apply procedural visual data to the star's material
+        Renderer starRenderer = starObj.GetComponent<Renderer>();
+        if (starRenderer != null)
+        {
+            MaterialPropertyBlock propBlock = new MaterialPropertyBlock();
+            
+            // Retrieve current properties (if any) to avoid overwriting unrelated data
+            starRenderer.GetPropertyBlock(propBlock);
+            
+            // Pass the calculated data to the shader
+            // Multiply the base color by an intensity factor to make it glow (Emission)
+            propBlock.SetColor("_BaseColor", starData.baseColor);
+            propBlock.SetColor("_EmissionColor", starData.baseColor * 2.5f); 
+            propBlock.SetFloat("_GranulationScale", starData.granulationScale);
+            propBlock.SetFloat("_MagneticActivity", starData.magneticActivity);
+            
+            starRenderer.SetPropertyBlock(propBlock);
+        }
+
         // Generate Planets
         foreach (PlanetData planet in planets)
         {
