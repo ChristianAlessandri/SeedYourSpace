@@ -1,21 +1,25 @@
 /// <summary>
-/// Base data container for any celestial body in the system.
+/// Base data container for any orbiting celestial body (Planets and Moons).
 /// </summary>
 public class CelestialBodyData
 {
+    // Identifiers & Physical traits
     public string name;
+    public string className;
+    public float mass;           // In Earth Masses (M_E)
+    public float radius;         // In Earth Radii (R_E)
+    public float surfaceGravity; // In Gs
+    public string atmosphereType;
+    
+    // Orbital mechanics
     public float orbitalDistance;
     public float orbitalEccentricity;
-    public string className;
-    public float radius;
-    public float mass;
+    public float orbitalInclination;
+    public float revolutionPeriod; 
+    
+    // Rotation & Visuals
+    public float rotationPeriod;
+    public float axialTilt;
     public bool hasRings;
     public int ringDivisions;
-    public float revolutionPeriod; // For planets: Earth Years. For moons: Earth Days.
-    public float rotationPeriod;   // In Hours
-    public float axialTilt;         // Axial tilt in degrees
-    public float orbitalInclination;// Orbital inclination in degrees
-    public float surfaceGravity;    // Surface gravity in Gs (Earth = 1.0)
-    public string atmosphereType;   // Atmosphere type/biome
-    public bool isTidallyLocked; // For moons
 }

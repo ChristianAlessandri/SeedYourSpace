@@ -150,9 +150,11 @@ public class StarSystemGenerator : MonoBehaviour
             planet.rotationPeriod = Mathf.Max(GetNormalValue(planetPrng, baseRotation, baseRotation * 0.5f), 2f); // Min 2 hours
             
             // Extreme anomalies close to the star get tidally locked to the star
-            planet.isTidallyLocked = (planet.orbitalDistance < 0.2f);
-            if (planet.isTidallyLocked) 
+            bool lockedToStar = (planet.orbitalDistance < 0.2f);
+            if (lockedToStar) 
+            {
                 planet.rotationPeriod = planet.revolutionPeriod * 365.25f * 24f; // Convert years to hours
+            }
             
             planet.orbitalEccentricity = CalculateEccentricity(planetPrng);
             CalculateRings(planet.className, planetPrng, out planet.hasRings, out planet.ringDivisions);
