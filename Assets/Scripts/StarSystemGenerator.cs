@@ -10,6 +10,9 @@ public class StarSystemGenerator : MonoBehaviour
 {
     [Header("Generation Settings")]
     public string masterSeed = "0xF5a9b2323e7f1C0C40843B33E7cEB2Ef4caAB895";
+
+    [Header("Diorama Settings")]
+    public VisualDioramaBuilder dioramaBuilder;
     
     [HideInInspector]
     public int algorithmVersion = 1;
@@ -151,6 +154,15 @@ public class StarSystemGenerator : MonoBehaviour
 
             string ringOutput = planet.hasRings ? $"Yes ({planet.ringDivisions})" : "No";
             Debug.Log($"-> {planet.name} | mass: {planet.mass:F2} ME | Dist: {planet.orbitalDistance:F2} AU | Class: {planet.className} | Rad: {planet.radius:F2} RE | Atmos: {planet.atmosphereType} | Rings: {ringOutput} | Moons: {planet.moons.Count}");
+        }
+
+        if (dioramaBuilder != null)
+        {
+            dioramaBuilder.BuildUniverse(centralStar, systemPlanets);
+        }
+        else
+        {
+            Debug.LogWarning("Warning: Diorama Builder is not assigned. Visual representation will not be generated.");
         }
     }
 
