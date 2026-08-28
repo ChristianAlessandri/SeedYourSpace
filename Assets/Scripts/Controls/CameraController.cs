@@ -14,6 +14,24 @@ public class SimpleCameraController : MonoBehaviour
     [Header("Rotation Settings")]
     public float lookSensitivity = 0.2f;
 
+    private float pitch = 0f;
+    private float yaw = 0f;
+
+    private void Start()
+    {
+        // Prevent distant planets from disappearing by extending the far clipping plane
+        Camera cam = GetComponent<Camera>();
+        if (cam != null)
+        {
+            cam.farClipPlane = 1000000f; // Render up to 1 million units away
+        }
+
+        // Initialize internal rotation state to match the camera's initial rotation
+        Vector3 initialAngles = transform.eulerAngles;
+        pitch = initialAngles.x;
+        yaw = initialAngles.y;
+    }
+
     private void Update()
     {
         if (Keyboard.current == null || Mouse.current == null) return;
@@ -23,21 +41,21 @@ public class SimpleCameraController : MonoBehaviour
         {
             Vector2 mouseDelta = Mouse.current.delta.ReadValue();
             
-            // Horizontally rotate (Yaw) around the world
-            transform.Rotate(Vector3.up, mouseDelta.x * lookSensitivity, Space.World);
-            // Vertically rotate (Pitch) relative to the camera itself
-            transform.Rotate(Vector3.right, -mouseDelta.y * lookSensitivity, Space.Self);
+            yaw += mouseDelta.x * lookSensitivity;
+            pitch -= mouseDelta.y * lookSensitivity;
 
-            // Zero out the Z-axis (Roll) to maintain a stable framing
-            Vector3 currentAngles = transform.eulerAngles;
-            transform.eulerAngles = new Vector3(currentAngles.x, currentAngles.y, 0f);
+            // Clamp pitch to prevent gimbal lock (camera flipping upside down)
+            pitch = Mathf.Clamp(pitch, -89f, 89f);
+
+            // Apply rotation via Euler angles, which intrinsically keeps the Z-axis (roll) at 0
+            transform.eulerAngles = new Vector3(pitch, yaw, 0f);
         }
 
-        // WASD movement controls for the camera
+        // WASD movement controls for the camera (Forward/Backward/Left/Right)
         Vector3 movement = Vector3.zero;
 
-        if (Keyboard.current.wKey.isPressed) movement += transform.up;
-        if (Keyboard.current.sKey.isPressed) movement -= transform.up;
+        if (Keyboard.current.wKey.isPressed) movement += transform.forward;
+        if (Keyboard.current.sKey.isPressed) movement -= transform.forward;
         if (Keyboard.current.aKey.isPressed) movement -= transform.right;
         if (Keyboard.current.dKey.isPressed) movement += transform.right;
 
@@ -45,11 +63,14 @@ public class SimpleCameraController : MonoBehaviour
         
         transform.position += movement * panSpeed * Time.deltaTime;
 
-        // Mouse scroll wheel zoom control
+        // Mouse scroll wheel altitude control (Up/Down)
         float scroll = Mouse.current.scroll.y.ReadValue();
         if (scroll != 0f)
         {
-            transform.position += transform.forward * scroll * scrollSpeed * Time.deltaTime;
+            // We use normalized sign to prevent huge jumps from high-resolution scroll wheels,
+            // but keep your scrollSpeed multiplier to manage the actual velocity.
+            float normalizedScroll = Mathf.Sign(scroll);
+            transform.position += transform.up * normalizedScroll * scrollSpeed * Time.deltaTime;
         }
     }
 }

@@ -183,7 +183,7 @@ MonoBehaviour:
   starSizeMultiplier: 100
   planetSizeMultiplier: 1
   planetDistanceMultiplier: 200
-  moonDistanceMultiplier: 0.15
+  moonDistanceMultiplier: 0.5
 --- !u!1 &819342604
 GameObject:
   m_ObjectHideFlags: 0
@@ -290,7 +290,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 91431ea824bc51a45a7f9edeeac980d5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SimpleCameraController
-  panSpeed: 50
+  panSpeed: 200
   scrollSpeed: 2000
   lookSensitivity: 0.2
 --- !u!114 &819342609
