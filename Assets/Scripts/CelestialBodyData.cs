@@ -13,5 +13,9 @@ public class CelestialBodyData
     public int ringDivisions;
     public float revolutionPeriod; // For planets: Earth Years. For moons: Earth Days.
     public float rotationPeriod;   // In Hours
-    public bool isTidallyLocked;
+    public float axialTilt;         // Axial tilt in degrees
+    public float orbitalInclination;// Orbital inclination in degrees
+    public float surfaceGravity;    // Surface gravity in Gs (Earth = 1.0)
+    public string atmosphereType;   // Atmosphere type/biome
+    public bool isTidallyLocked; // For moons
 }

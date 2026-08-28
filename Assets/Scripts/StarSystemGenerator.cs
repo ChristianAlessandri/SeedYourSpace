@@ -129,6 +129,18 @@ public class StarSystemGenerator : MonoBehaviour
             float density = Mathf.Max(GetNormalValue(planetPrng, selectedClass.densityMean, 0.1f), 0.1f);
             planet.mass = Mathf.Pow(planet.radius, 3) * density;
 
+            // Surface Gravity in Gs (M/R^2)
+            planet.surfaceGravity = planet.mass / (planet.radius * planet.radius);
+
+            // Axial Tilt: usually around 20-25 degrees (like Earth/Mars), but can be extreme (like Uranus at 98)
+            planet.axialTilt = Mathf.Abs(GetNormalValue(planetPrng, 23.5f, 15f));
+            
+            // Orbital Inclination: slight wobble from the star's equator
+            planet.orbitalInclination = GetNormalValue(planetPrng, 0f, 3f);
+
+            // Atmospheric Data
+            planet.atmosphereType = DetermineAtmosphere(planet.className, planet.surfaceGravity, planet.orbitalDistance, currentSystemFrostLine, planetPrng);
+
             // Kepler's Third Law for Planetary Revolution (Earth Years)
             planet.revolutionPeriod = Mathf.Sqrt(Mathf.Pow(planet.orbitalDistance, 3) / starMass);
 
@@ -213,6 +225,15 @@ public class StarSystemGenerator : MonoBehaviour
             float moonDensity = Mathf.Max(GetNormalValue(moonPrng, 0.8f, 0.1f), 0.1f);
             moon.mass = Mathf.Pow(moon.radius, 3) * moonDensity;
 
+            // Surface Gravity in Gs
+            moon.surfaceGravity = moon.mass / (moon.radius * moon.radius);
+
+            // Moons align closely with their planet's equator, so orbital inclination is tiny
+            moon.orbitalInclination = GetNormalValue(moonPrng, 0f, 1f);
+            
+            // Axial tilt
+            moon.axialTilt = Mathf.Abs(GetNormalValue(moonPrng, 5f, 5f));
+
             // Kepler's Third Law applied to moons (Simulated proportional constant for LU to Days)
             float keplerConstant = 3.0f; 
             moon.revolutionPeriod = keplerConstant * Mathf.Sqrt(Mathf.Pow(moon.orbitalDistance, 3) / Mathf.Max(planetaryMass, 0.001f));
@@ -224,6 +245,9 @@ public class StarSystemGenerator : MonoBehaviour
             {
                 // Rotation perfectly matches revolution (Days to Hours)
                 moon.rotationPeriod = moon.revolutionPeriod * 24f;
+
+                // If a moon is tidally locked, its axis is forced perfectly upright relative to the planet
+                moon.axialTilt = 0f;
             }
             else
             {
@@ -236,6 +260,9 @@ public class StarSystemGenerator : MonoBehaviour
             // Moons are generally rocky bodies. We pass "Terrestrial" to give them the rare 4% ring anomaly.
             moon.className = "Rocky Moon";
             CalculateRings("Terrestrial", moonPrng, out moon.hasRings, out moon.ringDivisions);
+
+            // Moons have a very low chance of retaining an atmosphere due to their small size and low gravity.
+            moon.atmosphereType = DetermineAtmosphere(moon.className, moon.surfaceGravity, moon.orbitalDistance, 999f, moonPrng);
 
             generatedMoons.Add(moon);
         }
@@ -358,6 +385,33 @@ public class StarSystemGenerator : MonoBehaviour
     {
         string[] classes = { "O (Blue)", "B (Blue-White)", "A (White)", "F (Yellow-White)", "G (Yellow - Solar)", "K (Orange)", "M (Red Dwarf)" };
         return classes[Mathf.Clamp(index, 0, classes.Length - 1)];
+    }
+
+    /// <summary>
+    /// Determines the atmospheric composition and biome based on gravity, class, and temperature (distance).
+    /// </summary>
+    private string DetermineAtmosphere(string className, float gravity, float distance, float frostLine, System.Random prng)
+    {
+        if (className.Contains("Giant")) return "Dense Gas (H/He/CH4)";
+        
+        // Body with insufficient gravity cannot retain an atmosphere
+        if (gravity < 0.3f) return "None (Vacuum)"; 
+
+        double chance = prng.NextDouble();
+
+        if (distance > frostLine) 
+        {
+            // Frozen outer planets
+            if (chance < 0.2) return "Thin (N2/Methane)";
+            return "Frozen (Vacuum)";
+        } 
+        else 
+        {
+            // Inner planets
+            if (chance < 0.1) return "Breathable (O2/N2)"; // Rare anomaly "Earth-like"
+            if (chance < 0.5) return "Toxic (CO2/SO2)";    // Venus-style
+            return "Thin (CO2)";                           // Mars-style
+        }
     }
 
     /// <summary>
