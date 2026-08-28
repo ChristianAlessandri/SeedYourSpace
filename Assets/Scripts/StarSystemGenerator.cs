@@ -45,8 +45,8 @@ public class StarSystemGenerator : MonoBehaviour
         
         Debug.Log($"[Semantic Module] Root System Name: {rootSystemName}");
 
-        GenerateCentralStar(seed, rootSystemName);
-        GeneratePlanetarySystem(seed, rootSystemName);
+        StarData centralStar = GenerateCentralStar(seed, rootSystemName);
+        GeneratePlanetarySystem(seed, rootSystemName, centralStar.mass);
     }
 
     /// <summary>
@@ -95,7 +95,8 @@ public class StarSystemGenerator : MonoBehaviour
     /// </summary>
     /// <param name="baseSeed">The seed for generating the planetary system.</param>
     /// <param name="rootName">The name of the root system.</param>
-    private void GeneratePlanetarySystem(string baseSeed, string rootName)
+    /// <param name="starMass">The mass of the central star.</param>
+    private void GeneratePlanetarySystem(string baseSeed, string rootName, float starMass)
     {
         string layoutSubSeedInput = baseSeed + "_Planets_Layout";
         int layoutNumericalSeed = DeriveNumericalSeed(layoutSubSeedInput);
@@ -117,7 +118,7 @@ public class StarSystemGenerator : MonoBehaviour
             PlanetData planet = new PlanetData();
             planet.name = rootName + " " + nameGenerator.ToRoman(i + 1);
             planet.orbitalDistance = CalculateOrbitalDistance(i, planetPrng);
-            
+
             PlanetProfile selectedClass = ClassifyPlanet(planet.orbitalDistance, planetPrng, currentSystemFrostLine);
             planet.className = selectedClass.className;
             
@@ -127,17 +128,31 @@ public class StarSystemGenerator : MonoBehaviour
             // Mass calculation (M = R^3 * Density)
             float density = Mathf.Max(GetNormalValue(planetPrng, selectedClass.densityMean, 0.1f), 0.1f);
             planet.mass = Mathf.Pow(planet.radius, 3) * density;
+
+            // Kepler's Third Law for Planetary Revolution (Earth Years)
+            planet.revolutionPeriod = Mathf.Sqrt(Mathf.Pow(planet.orbitalDistance, 3) / starMass);
+
+            // Rotation Period (Hours) using Box-Muller. 
+            // Gas Giants rotate extremely fast (e.g., Jupiter ~10h), Terrestrials vary wildly.
+            float baseRotation = (planet.className == "Gas Giant" || planet.className == "Ice Giant") ? 12f : 24f;
+            planet.rotationPeriod = Mathf.Max(GetNormalValue(planetPrng, baseRotation, baseRotation * 0.5f), 2f); // Min 2 hours
+            
+            // Extreme anomalies close to the star get tidally locked to the star
+            planet.isTidallyLocked = (planet.orbitalDistance < 0.2f);
+            if (planet.isTidallyLocked) 
+                planet.rotationPeriod = planet.revolutionPeriod * 365.25f * 24f; // Convert years to hours
             
             planet.orbitalEccentricity = CalculateEccentricity(planetPrng);
             CalculateRings(planet.className, planetPrng, out planet.hasRings, out planet.ringDivisions);
 
-            // Generate full MoonData structures
-            planet.moons = GenerateMoons(planetSubSeedInput, planet.name, planet.radius, planetPrng);
+            // Generate MoonData structures
+            planet.moons = GenerateMoons(planetSubSeedInput, planet.name, planet.radius, planet.mass, planetPrng);
 
             systemPlanets.Add(planet);
 
+            // Print planet data
             string ringOutput = planet.hasRings ? $"Yes ({planet.ringDivisions})" : "No";
-            Debug.Log($"-> {planet.name} | mass: {planet.mass:F2} ME | Dist: {planet.orbitalDistance:F2} AU | Ecc: {planet.orbitalEccentricity:F3} | Class: {planet.className} | Rad: {planet.radius:F2} RE | Rings: {ringOutput} | Moons: {planet.moons.Count}");
+            Debug.Log($"-> {planet.name} | mass: {planet.mass:F2} ME | Dist: {planet.orbitalDistance:F2} AU | Rev Period: {planet.revolutionPeriod:F3} Yrs | Rot Period: {planet.rotationPeriod:F3} Hrs | Class: {planet.className} | Rad: {planet.radius:F2} RE | Rings: {ringOutput} | Moons: {planet.moons.Count}");
             
             // Print moon data
             foreach (MoonData moon in planet.moons)
@@ -154,9 +169,10 @@ public class StarSystemGenerator : MonoBehaviour
     /// <param name="planetSeedInput">The seed for generating the planet's moons.</param>
     /// <param name="planetName">The name of the host planet.</param>
     /// <param name="planetaryRadius">The radius of the host planet.</param>
+    /// <param name="planetaryMass">The mass of the host planet.</param>
     /// <param name="planetPrng">The random number generator for the planet.</param>
     /// <returns>A list of generated moon data structures.</returns>
-    private List<MoonData> GenerateMoons(string planetSeedInput, string planetName, float planetaryRadius, System.Random planetPrng)
+    private List<MoonData> GenerateMoons(string planetSeedInput, string planetName, float planetaryRadius, float planetaryMass, System.Random planetPrng)
     {
         List<MoonData> generatedMoons = new List<MoonData>();
         
@@ -191,7 +207,25 @@ public class StarSystemGenerator : MonoBehaviour
 
             // Simple incremental orbital distance for moons (LU: Lunar Units placeholder)
             moon.orbitalDistance = (m + 1) * (moon.radius * 2f + planetaryRadius * 0.5f);
-            
+
+            // Kepler's Third Law applied to moons (Simulated proportional constant for LU to Days)
+            float keplerConstant = 3.0f; 
+            moon.revolutionPeriod = keplerConstant * Mathf.Sqrt(Mathf.Pow(moon.orbitalDistance, 3) / Mathf.Max(planetaryMass, 0.001f));
+
+            // Tidal Locking. 85% of moons in our simulation become tidally locked.
+            moon.isTidallyLocked = (moonPrng.NextDouble() <= 0.85);
+
+            if (moon.isTidallyLocked)
+            {
+                // Rotation perfectly matches revolution (Days to Hours)
+                moon.rotationPeriod = moon.revolutionPeriod * 24f;
+            }
+            else
+            {
+                // Unlocked anomalous rotation (e.g., newly captured asteroids)
+                moon.rotationPeriod = Mathf.Max(GetNormalValue(moonPrng, 48f, 24f), 5f);
+            }
+
             moon.orbitalEccentricity = CalculateEccentricity(moonPrng);
             
             // Moons are generally rocky bodies. We pass "Terrestrial" to give them the rare 4% ring anomaly.

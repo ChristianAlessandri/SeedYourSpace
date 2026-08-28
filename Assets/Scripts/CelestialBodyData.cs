@@ -11,4 +11,7 @@ public class CelestialBodyData
     public float mass;
     public bool hasRings;
     public int ringDivisions;
+    public float revolutionPeriod; // For planets: Earth Years. For moons: Earth Days.
+    public float rotationPeriod;   // In Hours
+    public bool isTidallyLocked;
 }
