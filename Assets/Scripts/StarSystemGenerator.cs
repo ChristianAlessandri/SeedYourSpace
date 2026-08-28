@@ -185,6 +185,8 @@ public class StarSystemGenerator : MonoBehaviour
         int moonCount = Mathf.RoundToInt(GetNormalValue(planetPrng, meanMoons, stdDevMoons));
         moonCount = Mathf.Clamp(moonCount, 0, Mathf.FloorToInt(maxTheoreticalMoons));
 
+        float currentOrbitalDistance = planetaryRadius * 2.0f;
+
         for (int m = 0; m < moonCount; m++)
         {
             // Hierarchical Sub-Seeding: Planet Seed -> Moon Seed
@@ -201,12 +203,15 @@ public class StarSystemGenerator : MonoBehaviour
             moon.radius = GetNormalValue(moonPrng, planetaryRadius * 0.15f, planetaryRadius * 0.05f);
             moon.radius = Mathf.Max(moon.radius, 0.01f); // Minimum safety bound
 
+            float orbitalGap = Mathf.Max(GetNormalValue(moonPrng, 5.0f, 1.5f), 1.0f); // Empty space between moons in Lunar Units (LU)
+            currentOrbitalDistance += orbitalGap + (moon.radius * 2f);
+
+            // Simple incremental orbital distance for moons (LU: Lunar Units placeholder)
+            moon.orbitalDistance = currentOrbitalDistance;
+
             // Moons are mostly rocky/icy, avg density 0.8 compared to Earth
             float moonDensity = Mathf.Max(GetNormalValue(moonPrng, 0.8f, 0.1f), 0.1f);
             moon.mass = Mathf.Pow(moon.radius, 3) * moonDensity;
-
-            // Simple incremental orbital distance for moons (LU: Lunar Units placeholder)
-            moon.orbitalDistance = (m + 1) * (moon.radius * 2f + planetaryRadius * 0.5f);
 
             // Kepler's Third Law applied to moons (Simulated proportional constant for LU to Days)
             float keplerConstant = 3.0f; 
