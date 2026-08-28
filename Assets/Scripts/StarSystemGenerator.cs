@@ -146,7 +146,7 @@ public class StarSystemGenerator : MonoBehaviour
             planet.orbitalEccentricity = AstrophysicsRules.CalculateEccentricity(planetPrng);
             AstrophysicsRules.CalculateRings(planet.className, planetPrng, out planet.hasRings, out planet.ringDivisions);
 
-            planet.moons = GenerateMoons(planetSubSeedInput, planet.name, planet.radius, planet.mass, planet.orbitalDistance, planetPrng);
+            planet.moons = GenerateMoons(planetSubSeedInput, planet.name, planet.radius, planet.mass, planet.surfaceTemperature, planet.orbitalDistance, planetPrng);
             systemPlanets.Add(planet);
 
             string ringOutput = planet.hasRings ? $"Yes ({planet.ringDivisions})" : "No";
@@ -161,10 +161,11 @@ public class StarSystemGenerator : MonoBehaviour
     /// <param name="planetName">The name of the planet.</param>
     /// <param name="planetaryRadius">The radius of the planet.</param>
     /// <param name="planetaryMass">The mass of the planet.</param>
+    /// <param name="planetTemperature">The surface temperature of the planet.</param>
     /// <param name="planetDistance">The orbital distance of the planet.</param>
     /// <param name="planetPrng">The random number generator for the planet.</param>
     /// <returns>A list of generated moon data.</returns>
-    private List<MoonData> GenerateMoons(string planetSeedInput, string planetName, float planetaryRadius, float planetaryMass, float planetDistance, System.Random planetPrng)
+    private List<MoonData> GenerateMoons(string planetSeedInput, string planetName, float planetaryRadius, float planetaryMass, float planetTemperature, float planetDistance, System.Random planetPrng)
     {
         List<MoonData> generatedMoons = new List<MoonData>();
         
@@ -207,8 +208,17 @@ public class StarSystemGenerator : MonoBehaviour
 
             moon.orbitalEccentricity = AstrophysicsRules.CalculateEccentricity(moonPrng);
             moon.className = AstrophysicsRules.ClassifyMoon(planetDistance, currentSystemFrostLine, moonPrng);
-            AstrophysicsRules.CalculateRings("Terrestrial", moonPrng, out moon.hasRings, out moon.ringDivisions);
-            moon.atmosphereType = AstrophysicsRules.DetermineAtmosphere(moon.className, moon.surfaceGravity, moon.orbitalDistance, 999f, moonPrng);
+            
+            AstrophysicsRules.CalculateRings(moon.className, moonPrng, out moon.hasRings, out moon.ringDivisions);
+            
+            // Moons inherit their thermal zone from the host planet's distance to the star.
+            // We assign the planet's temperature with a tiny variance (+/- 5%)
+            float tempVariance = StochasticMath.GetNormalValue(moonPrng, 1.0f, 0.05f);
+            
+            moon.surfaceTemperature = planetTemperature * tempVariance;
+
+            // Use planetDistance (AU) and the real system frost line (AU) to determine the moon's atmosphere
+            moon.atmosphereType = AstrophysicsRules.DetermineAtmosphere(moon.className, moon.surfaceGravity, planetDistance, currentSystemFrostLine, moonPrng);
 
             generatedMoons.Add(moon);
         }
