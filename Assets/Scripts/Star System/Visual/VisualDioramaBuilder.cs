@@ -156,40 +156,57 @@ public class VisualDioramaBuilder : MonoBehaviour
         MeshRenderer mr = ringObj.AddComponent<MeshRenderer>();
         
         int segments = 64;
-        Vector3[] vertices = new Vector3[(segments + 1) * 2];
-        int[] triangles = new int[segments * 6];
-        Vector2[] uvs = new Vector2[(segments + 1) * 2];
-        Vector3[] normals = new Vector3[(segments + 1) * 2];
+        int divisions = Mathf.Max(1, bodyData.ringDivisions); // Assicura almeno 1 anello
+
+        // Calculate the width of each ring and the gap between them
+        float totalThickness = localOuter - localInner;
+        float gapRatio = 0.3f; // The gap between rings is 30% of the ring width
+        float ringWidth = (divisions == 1) ? totalThickness : totalThickness / (divisions + (divisions - 1) * gapRatio);
+        float gapWidth = ringWidth * gapRatio;
+
+        // Reserve arrays for vertices, triangles, UVs, and normals
+        Vector3[] vertices = new Vector3[(segments + 1) * 2 * divisions];
+        int[] triangles = new int[segments * 6 * divisions];
+        Vector2[] uvs = new Vector2[(segments + 1) * 2 * divisions];
+        Vector3[] normals = new Vector3[(segments + 1) * 2 * divisions];
 
         float angleStep = (Mathf.PI * 2f) / segments;
+        int vIndex = 0;
+        int tIndex = 0;
 
-        for (int i = 0; i <= segments; i++)
+        // Generate each individual ring segment
+        for (int d = 0; d < divisions; d++)
         {
-            float angle = i * angleStep;
-            float cos = Mathf.Cos(angle);
-            float sin = Mathf.Sin(angle);
+            float currentInner = localInner + (d * (ringWidth + gapWidth));
+            float currentOuter = currentInner + ringWidth;
 
-            vertices[i * 2] = new Vector3(cos * localInner, 0f, sin * localInner);
-            vertices[i * 2 + 1] = new Vector3(cos * localOuter, 0f, sin * localOuter);
-
-            uvs[i * 2] = new Vector2(0f, (float)i / segments);
-            uvs[i * 2 + 1] = new Vector2(1f, (float)i / segments);
-
-            normals[i * 2] = Vector3.up;
-            normals[i * 2 + 1] = Vector3.up;
-
-            if (i < segments)
+            for (int i = 0; i <= segments; i++)
             {
-                int ti = i * 6;
-                int vi = i * 2;
+                float angle = i * angleStep;
+                float cos = Mathf.Cos(angle);
+                float sin = Mathf.Sin(angle);
 
-                triangles[ti] = vi;
-                triangles[ti + 1] = vi + 1;
-                triangles[ti + 2] = vi + 2;
-                
-                triangles[ti + 3] = vi + 1;
-                triangles[ti + 4] = vi + 3;
-                triangles[ti + 5] = vi + 2;
+                vertices[vIndex] = new Vector3(cos * currentInner, 0f, sin * currentInner);
+                vertices[vIndex + 1] = new Vector3(cos * currentOuter, 0f, sin * currentOuter);
+
+                uvs[vIndex] = new Vector2(0f, (float)i / segments);
+                uvs[vIndex + 1] = new Vector2(1f, (float)i / segments);
+
+                normals[vIndex] = Vector3.up;
+                normals[vIndex + 1] = Vector3.up;
+
+                if (i < segments)
+                {
+                    triangles[tIndex] = vIndex;
+                    triangles[tIndex + 1] = vIndex + 1;
+                    triangles[tIndex + 2] = vIndex + 2;
+                    
+                    triangles[tIndex + 3] = vIndex + 1;
+                    triangles[tIndex + 4] = vIndex + 3;
+                    triangles[tIndex + 5] = vIndex + 2;
+                    tIndex += 6;
+                }
+                vIndex += 2;
             }
         }
 
