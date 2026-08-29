@@ -42,6 +42,8 @@ Material:
     - _QueueControl: 0
     - _QueueOffset: 0
     - _StarDensity: 75
+    - _StarDistance: 75
+    - _StarVisibility: 225
     m_Colors:
     - _NebulaColor: {r: 0.086406864, g: 0, b: 0.10377359, a: 1}
   m_BuildTextureStacks: []

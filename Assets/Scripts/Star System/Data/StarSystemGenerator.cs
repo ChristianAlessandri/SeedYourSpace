@@ -46,6 +46,27 @@ public class StarSystemGenerator : MonoBehaviour
         
         Debug.Log($"[Semantic Module] Root System Name: {rootSystemName}");
 
+        // --- Skybox Procedural Generation ---
+        // StarDistance: 75 to 100
+        float starDistance = (float)systemPrng.NextDouble() * 25f + 75f; 
+        
+        // StarVisibility: 225 to 275
+        float starVisibility = (float)systemPrng.NextDouble() * 50f + 225f; 
+
+        // Realistic Nebula Color via HSV
+        // Hue: 0.55 (Deep Blue) to 0.95 (Deep Red/Magenta)
+        // Saturation: 0.4 to 0.7 (Muted, not neon)
+        // Value: 0.05 to 0.15 (Very dark and subtle)
+        float hue = Mathf.Lerp(0.55f, 0.95f, (float)systemPrng.NextDouble());
+        float sat = Mathf.Lerp(0.4f, 0.7f, (float)systemPrng.NextDouble());
+        float val = Mathf.Lerp(0.05f, 0.15f, (float)systemPrng.NextDouble());
+        Color nebulaColor = Color.HSVToRGB(hue, sat, val);
+
+        if (dioramaBuilder != null)
+        {
+            dioramaBuilder.BuildSkybox(nebulaColor, starDistance, starVisibility);
+        }
+
         StarData centralStar = GenerateCentralStar(seed, rootSystemName);
         GeneratePlanetarySystem(seed, rootSystemName, centralStar);
     }

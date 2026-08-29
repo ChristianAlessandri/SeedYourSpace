@@ -17,6 +17,9 @@ public class VisualDioramaBuilder : MonoBehaviour
     [Tooltip("The material using the PlanetSurface Lit Shader Graph.")]
     public Material planetMaterial;
 
+    [Tooltip("The base material using the ProceduralSkybox Shader Graph.")]
+    public Material baseSkyboxMaterial;
+
     [Header("Diorama Scale Multipliers")]
     [Tooltip("Adjust these values to balance the visual representation in the scene.")]
     [SerializeField] private float starSizeMultiplier = 100.0f; 
@@ -62,6 +65,18 @@ public class VisualDioramaBuilder : MonoBehaviour
             starRenderer.SetPropertyBlock(propBlock);
         }
 
+        // Attach and configure a point light for the central star
+        Light starLight = starObj.AddComponent<Light>();
+        starLight.type = LightType.Point;
+        starLight.color = starData.baseColor; // Match the physical blackbody color
+        
+        // Extend the range to ensure it illuminates planets at the edge of the system
+        starLight.range = 1000000f; 
+        
+        // Luminosity approximation scaled for the diorama.
+        starLight.intensity = 500000f * starData.mass; 
+        starLight.shadows = LightShadows.Soft;
+
         // Generate Planets
         foreach (PlanetData planet in planets)
         {
@@ -106,7 +121,7 @@ public class VisualDioramaBuilder : MonoBehaviour
                 if (moonRenderer != null)
                 {
                     if (planetMaterial != null) moonRenderer.sharedMaterial = planetMaterial;
-                    
+
                     MaterialPropertyBlock moonProps = new MaterialPropertyBlock();
                     moonRenderer.GetPropertyBlock(moonProps);
                     
@@ -118,6 +133,33 @@ public class VisualDioramaBuilder : MonoBehaviour
                     moonRenderer.SetPropertyBlock(moonProps);
                 }
             }
+        }
+    }
+
+    /// <summary>
+    /// Instantiates a dynamic skybox material and applies the procedurally generated parameters.
+    /// </summary>
+    /// <param name="nebulaColor">The color of the nebula in the skybox.</param>
+    /// <param name="starDistance">The distance of stars in the skybox.</param>
+    /// <param name="starVisibility">The visibility factor of stars in the skybox.</param>
+    public void BuildSkybox(Color nebulaColor, float starDistance, float starVisibility)
+    {
+        if (baseSkyboxMaterial != null)
+        {
+            // Instantiate a copy to avoid permanently overwriting the project asset
+            Material instancedSkybox = new Material(baseSkyboxMaterial);
+            
+            instancedSkybox.SetColor("_NebulaColor", nebulaColor);
+            instancedSkybox.SetFloat("_StarDistance", starDistance);
+            instancedSkybox.SetFloat("_StarVisibility", starVisibility);
+            
+            // Assign to the global scene environment
+            RenderSettings.skybox = instancedSkybox;
+            DynamicGI.UpdateEnvironment(); // Recompute ambient lighting based on the new skybox
+        }
+        else
+        {
+            Debug.LogWarning("Warning: Base Skybox Material is missing from the Diorama Builder.");
         }
     }
 }
