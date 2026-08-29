@@ -149,7 +149,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 673709a7057f5d94d9bd67af2d80246e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StarSystemGenerator
-  masterSeed: 0xF5a923f23e7f1C0C40843B33E7cEB2Ef4caAB895
+  masterSeed: 0x5
   dioramaBuilder: {fileID: 98518082}
   algorithmVersion: 1
 --- !u!4 &98518081
@@ -185,7 +185,7 @@ MonoBehaviour:
   baseSkyboxMaterial: {fileID: 2100000, guid: 97ba7ef56e212f349b8353c6c25b98b1, type: 2}
   starSizeMultiplier: 40
   planetSizeMultiplier: 1
-  planetDistanceMultiplier: 250
+  planetDistanceMultiplier: 200
   moonDistanceMultiplier: 0.5
 --- !u!1 &819342604
 GameObject:
