@@ -105,30 +105,50 @@ public static class AstrophysicsRules
     }
 
     /// <summary>
-    /// Calculates whether a planet has rings and how many divisions those rings have, based on its class and a random number generator.
+    /// Calculates whether a planet has rings and generates their physical and visual properties.
     /// </summary>
     /// <param name="planetClass">The class of the planet.</param>
+    /// <param name="bodyRadius">The radius of the planet.</param>
     /// <param name="prng">The random number generator.</param>
-    /// <param name="hasRings">Whether the planet has rings.</param>
-    /// <param name="ringCount">The number of ring divisions.</param>
-    public static void CalculateRings(string planetClass, System.Random prng, out bool hasRings, out int ringCount)
+    /// <param name="hasRings">Output parameter indicating if the planet has rings.</param>
+    /// <param name="ringCount">Output parameter for the number of rings.</param>
+    /// <param name="innerRadius">Output parameter for the inner radius of the rings.</param>
+    /// <param name="outerRadius">Output parameter for the outer radius of the rings.</param>
+    /// <param name="ringColor">Output parameter for the color of the rings.</param>
+    public static void CalculateRings(string planetClass, float bodyRadius, System.Random prng, out bool hasRings, out int ringCount, out float innerRadius, out float outerRadius, out Color ringColor)
     {
         hasRings = false;
         ringCount = 0;
+        innerRadius = 0f;
+        outerRadius = 0f;
+        ringColor = Color.clear;
+
         double ringChance = prng.NextDouble();
 
-        if (planetClass == "Gas Giant" || planetClass == "Ice Giant")
+        if (planetClass.Contains("Giant"))
         {
             if (ringChance <= 0.85)
             {
                 hasRings = true;
                 ringCount = Mathf.Clamp(Mathf.RoundToInt(StochasticMath.GetNormalValue(prng, 3f, 1f)), 1, 6);
+                
+                // Rings start near the Roche limit and expand outward
+                innerRadius = bodyRadius * (float)(1.2 + prng.NextDouble() * 0.5); 
+                outerRadius = innerRadius + bodyRadius * (float)(0.5 + prng.NextDouble() * 2.0);
+                
+                if (planetClass == "Ice Giant")
+                    ringColor = new Color(0.7f, 0.85f, 0.95f, 0.6f); // Bright icy dust
+                else
+                    ringColor = new Color(0.6f, 0.5f, 0.4f, 0.7f); // Rock and dirty ice
             }
         }
-        else if (ringChance <= 0.04)
+        else if (ringChance <= 0.04) // Very rare for rocky planets (e.g. destroyed moons)
         {
             hasRings = true;
             ringCount = 1;
+            innerRadius = bodyRadius * 1.3f;
+            outerRadius = innerRadius + bodyRadius * 0.4f;
+            ringColor = new Color(0.4f, 0.4f, 0.4f, 0.8f); // Dark rocky debris
         }
     }
 

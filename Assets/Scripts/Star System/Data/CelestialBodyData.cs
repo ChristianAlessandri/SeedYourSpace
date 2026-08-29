@@ -18,11 +18,16 @@ public class CelestialBodyData
     public float orbitalInclination;
     public float revolutionPeriod; // In Earth Days for both Planets and Moons
     
-    // Rotation & Visuals
+    // Rotation
     public float rotationPeriod;
     public float axialTilt;
+
+    // Rings
     public bool hasRings;
     public int ringDivisions;
+    public float ringInnerRadius;
+    public float ringOuterRadius;
+    public UnityEngine.Color ringColor;
 
     // Procedural Surface Visual Data
     public UnityEngine.Color baseColor;

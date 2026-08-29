@@ -11,13 +11,9 @@ public class VisualDioramaBuilder : MonoBehaviour
     [Tooltip("A 3D Sphere prefab with the CelestialBody script attached.")]
     public GameObject celestialPrefab; 
 
-    [Tooltip("The material using the StarSurface Unlit Shader Graph.")]
     public Material starMaterial;
-
-    [Tooltip("The material using the PlanetSurface Lit Shader Graph.")]
     public Material planetMaterial;
-
-    [Tooltip("The base material using the ProceduralSkybox Shader Graph.")]
+    public Material ringMaterial;
     public Material baseSkyboxMaterial;
 
     [Header("Diorama Scale Multipliers")]
@@ -103,6 +99,7 @@ public class VisualDioramaBuilder : MonoBehaviour
                 planetProps.SetFloat("_CloudCoverage", planet.cloudCoverage);
                 
                 planetRenderer.SetPropertyBlock(planetProps);
+                BuildRingSystem(planetObj, planet);
             }
 
             // Generate Moons
@@ -131,8 +128,85 @@ public class VisualDioramaBuilder : MonoBehaviour
                     moonProps.SetFloat("_CloudCoverage", moon.cloudCoverage);
                     
                     moonRenderer.SetPropertyBlock(moonProps);
+                    BuildRingSystem(moonObj, moon);
                 }
             }
+        }
+    }
+
+    /// <summary>
+    /// Procedurally generates a double-sided ring mesh around a celestial body.
+    /// </summary>
+    /// <param name="parentObj">The celestial body GameObject to which the rings will be attached.</param>
+    /// <param name="bodyData">The data of the celestial body, including ring properties.</param>
+    /// <summary>
+    /// Procedurally generates a ring mesh around a celestial body.
+    /// </summary>
+    private void BuildRingSystem(GameObject parentObj, CelestialBodyData bodyData)
+    {
+        if (!bodyData.hasRings) return;
+
+        GameObject ringObj = new GameObject("Procedural_Rings");
+        ringObj.transform.SetParent(parentObj.transform, false);
+
+        float localInner = bodyData.ringInnerRadius / bodyData.radius;
+        float localOuter = bodyData.ringOuterRadius / bodyData.radius;
+
+        MeshFilter mf = ringObj.AddComponent<MeshFilter>();
+        MeshRenderer mr = ringObj.AddComponent<MeshRenderer>();
+        
+        int segments = 64;
+        Vector3[] vertices = new Vector3[(segments + 1) * 2];
+        int[] triangles = new int[segments * 6];
+        Vector2[] uvs = new Vector2[(segments + 1) * 2];
+        Vector3[] normals = new Vector3[(segments + 1) * 2];
+
+        float angleStep = (Mathf.PI * 2f) / segments;
+
+        for (int i = 0; i <= segments; i++)
+        {
+            float angle = i * angleStep;
+            float cos = Mathf.Cos(angle);
+            float sin = Mathf.Sin(angle);
+
+            vertices[i * 2] = new Vector3(cos * localInner, 0f, sin * localInner);
+            vertices[i * 2 + 1] = new Vector3(cos * localOuter, 0f, sin * localOuter);
+
+            uvs[i * 2] = new Vector2(0f, (float)i / segments);
+            uvs[i * 2 + 1] = new Vector2(1f, (float)i / segments);
+
+            normals[i * 2] = Vector3.up;
+            normals[i * 2 + 1] = Vector3.up;
+
+            if (i < segments)
+            {
+                int ti = i * 6;
+                int vi = i * 2;
+
+                triangles[ti] = vi;
+                triangles[ti + 1] = vi + 1;
+                triangles[ti + 2] = vi + 2;
+                
+                triangles[ti + 3] = vi + 1;
+                triangles[ti + 4] = vi + 3;
+                triangles[ti + 5] = vi + 2;
+            }
+        }
+
+        Mesh ringMesh = new Mesh();
+        ringMesh.name = "Procedural_Ring_Mesh";
+        ringMesh.vertices = vertices;
+        ringMesh.triangles = triangles;
+        ringMesh.uv = uvs;
+        ringMesh.normals = normals;
+        mf.mesh = ringMesh;
+
+        if (ringMaterial != null)
+        {
+            mr.sharedMaterial = ringMaterial;
+            MaterialPropertyBlock propBlock = new MaterialPropertyBlock();
+            propBlock.SetColor("_BaseColor", bodyData.ringColor);
+            mr.SetPropertyBlock(propBlock);
         }
     }
 

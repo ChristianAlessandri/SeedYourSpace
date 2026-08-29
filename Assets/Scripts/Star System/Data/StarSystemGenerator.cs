@@ -196,8 +196,7 @@ public class StarSystemGenerator : MonoBehaviour
             }
             
             planet.orbitalEccentricity = AstrophysicsRules.CalculateEccentricity(planetPrng);
-            AstrophysicsRules.CalculateRings(planet.className, planetPrng, out planet.hasRings, out planet.ringDivisions);
-
+            AstrophysicsRules.CalculateRings(planet.className, planet.radius, planetPrng, out planet.hasRings, out planet.ringDivisions, out planet.ringInnerRadius, out planet.ringOuterRadius, out planet.ringColor);
             planet.moons = GenerateMoons(planetSubSeedInput, planet.name, planet.radius, planet.mass, planet.surfaceTemperature, planet.orbitalDistance, planetPrng);
             systemPlanets.Add(planet);
 
@@ -271,7 +270,7 @@ public class StarSystemGenerator : MonoBehaviour
             moon.orbitalEccentricity = Mathf.Clamp(Mathf.Abs(StochasticMath.GetNormalValue(moonPrng, 0.01f, 0.01f)), 0f, 0.05f);
             moon.className = AstrophysicsRules.ClassifyMoon(planetDistance, currentSystemFrostLine, moonPrng);
             
-            AstrophysicsRules.CalculateRings(moon.className, moonPrng, out moon.hasRings, out moon.ringDivisions);
+            AstrophysicsRules.CalculateRings(moon.className, moon.radius, moonPrng, out moon.hasRings, out moon.ringDivisions, out moon.ringInnerRadius, out moon.ringOuterRadius, out moon.ringColor);
             
             // Moons inherit their thermal zone from the host planet's distance to the star.
             // We assign the planet's temperature with a tiny variance (+/- 5%)
