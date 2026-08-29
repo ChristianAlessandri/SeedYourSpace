@@ -61,7 +61,7 @@ public class CameraController : MonoBehaviour
 
         if (movement.magnitude > 1f) movement.Normalize();
         
-        transform.position += movement * panSpeed * Time.deltaTime;
+        transform.position += movement * panSpeed * Time.unscaledDeltaTime;
 
         // Mouse scroll wheel altitude control (Up/Down)
         float scroll = Mouse.current.scroll.y.ReadValue();
@@ -70,7 +70,7 @@ public class CameraController : MonoBehaviour
             // We use normalized sign to prevent huge jumps from high-resolution scroll wheels,
             // but keep your scrollSpeed multiplier to manage the actual velocity.
             float normalizedScroll = Mathf.Sign(scroll);
-            transform.position += transform.up * normalizedScroll * scrollSpeed * Time.deltaTime;
+            transform.position += transform.up * normalizedScroll * scrollSpeed * Time.unscaledDeltaTime;
         }
     }
 }
