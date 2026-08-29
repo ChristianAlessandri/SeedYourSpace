@@ -150,6 +150,17 @@ public class StarSystemGenerator : MonoBehaviour
             planet.orbitalInclination = StochasticMath.GetNormalValue(planetPrng, 0f, 3f);
             planet.atmosphereType = AstrophysicsRules.DetermineAtmosphere(planet.className, planet.surfaceGravity, planet.orbitalDistance, currentSystemFrostLine, planetPrng);
 
+            AstrophysicsRules.CalculatePlanetVisuals(
+                planet.className, 
+                planet.surfaceTemperature, 
+                planet.atmosphereType, 
+                planetPrng, 
+                out planet.baseColor, 
+                out planet.secondaryColor, 
+                out planet.hydrofraction, 
+                out planet.cloudCoverage
+            );
+
             // Kepler's Third Law yields Earth Years, convert immediately to Earth Days
             float revolutionYears = Mathf.Sqrt(Mathf.Pow(planet.orbitalDistance, 3) / centralStar.mass);
             planet.revolutionPeriod = revolutionYears * 365.25f;
@@ -249,6 +260,17 @@ public class StarSystemGenerator : MonoBehaviour
 
             // Use planetDistance (AU) and the real system frost line (AU) to determine the moon's atmosphere
             moon.atmosphereType = AstrophysicsRules.DetermineAtmosphere(moon.className, moon.surfaceGravity, planetDistance, currentSystemFrostLine, moonPrng);
+
+            AstrophysicsRules.CalculatePlanetVisuals(
+                moon.className, 
+                moon.surfaceTemperature, 
+                moon.atmosphereType, 
+                moonPrng, 
+                out moon.baseColor, 
+                out moon.secondaryColor, 
+                out moon.hydrofraction, 
+                out moon.cloudCoverage
+            );
 
             generatedMoons.Add(moon);
         }

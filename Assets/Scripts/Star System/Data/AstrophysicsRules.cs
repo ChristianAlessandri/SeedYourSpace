@@ -245,4 +245,71 @@ public static class AstrophysicsRules
         
         magneticActivity = Mathf.Clamp01((rawActivity / 5f) + activityNoise);
     }
+
+    /// <summary>
+    /// Calculates procedural visual parameters for planets and moons based on their physical properties.
+    /// </summary>
+    /// <param name="className">Taxonomic class of the body.</param>
+    /// <param name="temperature">Surface temperature in Kelvin.</param>
+    /// <param name="atmosphere">Atmosphere type description string.</param>
+    /// <param name="prng">The random number generator.</param>
+    /// <param name="baseColor">Primary terrain/surface color.</param>
+    /// <param name="secondaryColor">Secondary color (oceans, ice caps, or secondary bands).</param>
+    /// <param name="hydrofraction">Liquid coverage ratio.</param>
+    /// <param name="cloudCoverage">Cloud coverage ratio.</param>
+    public static void CalculatePlanetVisuals(string className, float temperature, string atmosphere, System.Random prng, out Color baseColor, out Color secondaryColor, out float hydrofraction, out float cloudCoverage)
+    {
+        baseColor = Color.gray;
+        secondaryColor = Color.blue;
+        hydrofraction = 0f;
+        cloudCoverage = 0f;
+
+        if (className.Contains("Giant"))
+        {
+            // Gas and Ice Giants rely on atmospheric banding
+            if (className.Contains("Gas"))
+            {
+                baseColor = new Color(0.8f, 0.6f, 0.4f); // Jovian brownish
+                secondaryColor = new Color(0.9f, 0.8f, 0.7f);
+            }
+            else
+            {
+                baseColor = new Color(0.3f, 0.5f, 0.7f); // Neptune cyan/blue
+                secondaryColor = new Color(0.2f, 0.3f, 0.5f);
+            }
+            cloudCoverage = 1.0f; // Giants are 100% thick atmosphere
+            return;
+        }
+
+        // Terrestrial / Rocky / Icy Worlds
+        bool hasAtmosphere = !atmosphere.Contains("None") && !atmosphere.Contains("Vacuum");
+        
+        if (temperature > 200f && temperature < 350f && hasAtmosphere && (prng.NextDouble() < 0.4f))
+        {
+            // Habitable-zone-like worlds with liquid oceans
+            hydrofraction = (float)prng.NextDouble() * 0.6f + 0.3f; // 30% to 90% oceans
+            baseColor = new Color(0.2f, 0.4f, 0.15f); // Terrestrial green/brown land
+            secondaryColor = new Color(0.05f, 0.2f, 0.5f); // Deep blue ocean
+            cloudCoverage = (float)prng.NextDouble() * 0.5f + 0.2f;
+        }
+        else if (temperature <= 273f)
+        {
+            // Frozen ice worlds
+            hydrofraction = 0f;
+            baseColor = new Color(0.8f, 0.85f, 0.9f); // Ice/Snow white-blue
+            secondaryColor = new Color(0.5f, 0.6f, 0.7f);
+            cloudCoverage = (float)prng.NextDouble() * 0.3f;
+        }
+        else
+        {
+            // Barren / Desert / Rocky worlds (like Mars or Mercury)
+            hydrofraction = 0f;
+            float r = (float)prng.NextDouble() * 0.4f + 0.3f;
+            float g = r * 0.6f;
+            float b = g * 0.5f;
+            baseColor = new Color(r, g, b); // Rusty or rocky tones
+            secondaryColor = baseColor * 0.6f;
+            cloudCoverage = hasAtmosphere ? (float)prng.NextDouble() * 0.15f : 0f;
+        }
+    }
 }

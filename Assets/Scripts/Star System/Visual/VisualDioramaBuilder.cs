@@ -11,6 +11,12 @@ public class VisualDioramaBuilder : MonoBehaviour
     [Tooltip("A 3D Sphere prefab with the CelestialBody script attached.")]
     public GameObject celestialPrefab; 
 
+    [Tooltip("The material using the StarSurface Unlit Shader Graph.")]
+    public Material starMaterial;
+
+    [Tooltip("The material using the PlanetSurface Lit Shader Graph.")]
+    public Material planetMaterial;
+
     [Header("Diorama Scale Multipliers")]
     [Tooltip("Adjust these values to balance the visual representation in the scene.")]
     [SerializeField] private float starSizeMultiplier = 100.0f; 
@@ -40,13 +46,14 @@ public class VisualDioramaBuilder : MonoBehaviour
         Renderer starRenderer = starObj.GetComponent<Renderer>();
         if (starRenderer != null)
         {
+            if (starMaterial != null) starRenderer.sharedMaterial = starMaterial;
+
             MaterialPropertyBlock propBlock = new MaterialPropertyBlock();
             
             // Retrieve current properties (if any) to avoid overwriting unrelated data
             starRenderer.GetPropertyBlock(propBlock);
             
             // Pass the calculated data to the shader
-            // Multiply the base color by an intensity factor to make it glow (Emission)
             propBlock.SetColor("_BaseColor", starData.baseColor);
             propBlock.SetColor("_EmissionColor", starData.baseColor * 2.5f); 
             propBlock.SetFloat("_GranulationScale", starData.granulationScale);
@@ -67,6 +74,22 @@ public class VisualDioramaBuilder : MonoBehaviour
             CelestialBody planetOrbit = planetObj.GetComponent<CelestialBody>();
             planetOrbit.InitializeKinematics(planet.orbitalDistance * planetDistanceMultiplier, planet.orbitalEccentricity, planet.orbitalInclination, starObj.transform, planet.revolutionPeriod, planet.rotationPeriod);
 
+            Renderer planetRenderer = planetObj.GetComponent<Renderer>();
+            if (planetRenderer != null)
+            {
+                if (planetMaterial != null) planetRenderer.sharedMaterial = planetMaterial;
+
+                MaterialPropertyBlock planetProps = new MaterialPropertyBlock();
+                planetRenderer.GetPropertyBlock(planetProps);
+                
+                planetProps.SetColor("_BaseColor", planet.baseColor);
+                planetProps.SetColor("_SecondaryColor", planet.secondaryColor);
+                planetProps.SetFloat("_Hydrofraction", planet.hydrofraction);
+                planetProps.SetFloat("_CloudCoverage", planet.cloudCoverage);
+                
+                planetRenderer.SetPropertyBlock(planetProps);
+            }
+
             // Generate Moons
             foreach (MoonData moon in planet.moons)
             {
@@ -78,6 +101,22 @@ public class VisualDioramaBuilder : MonoBehaviour
 
                 CelestialBody moonOrbit = moonObj.GetComponent<CelestialBody>();
                 moonOrbit.InitializeKinematics(moon.orbitalDistance * moonDistanceMultiplier, moon.orbitalEccentricity, moon.orbitalInclination, planetObj.transform, moon.revolutionPeriod, moon.rotationPeriod);
+            
+                Renderer moonRenderer = moonObj.GetComponent<Renderer>();
+                if (moonRenderer != null)
+                {
+                    if (planetMaterial != null) moonRenderer.sharedMaterial = planetMaterial;
+                    
+                    MaterialPropertyBlock moonProps = new MaterialPropertyBlock();
+                    moonRenderer.GetPropertyBlock(moonProps);
+                    
+                    moonProps.SetColor("_BaseColor", moon.baseColor);
+                    moonProps.SetColor("_SecondaryColor", moon.secondaryColor);
+                    moonProps.SetFloat("_Hydrofraction", moon.hydrofraction);
+                    moonProps.SetFloat("_CloudCoverage", moon.cloudCoverage);
+                    
+                    moonRenderer.SetPropertyBlock(moonProps);
+                }
             }
         }
     }

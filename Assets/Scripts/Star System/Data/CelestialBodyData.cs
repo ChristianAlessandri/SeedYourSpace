@@ -23,4 +23,10 @@ public class CelestialBodyData
     public float axialTilt;
     public bool hasRings;
     public int ringDivisions;
+
+    // Procedural Surface Visual Data
+    public UnityEngine.Color baseColor;
+    public UnityEngine.Color secondaryColor;
+    public float hydrofraction; // Percentage of surface covered by liquid (0.0 to 1.0)
+    public float cloudCoverage; // Percentage of cloud cover (0.0 to 1.0)
 }

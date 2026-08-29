@@ -149,7 +149,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 673709a7057f5d94d9bd67af2d80246e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StarSystemGenerator
-  masterSeed: 0xE52323e7fC0C40A87cEB2Ef4caAB895
+  masterSeed: 0xF5a9b2323e7f1C0C40843B33E7cEB2Ef4caAB895
   dioramaBuilder: {fileID: 98518082}
   algorithmVersion: 1
 --- !u!4 &98518081
@@ -180,6 +180,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::VisualDioramaBuilder
   celestialPrefab: {fileID: 72994822405351375, guid: 14a5fdcefdad6904a99413637e459c92, type: 3}
+  starMaterial: {fileID: 2100000, guid: 741a4b1dd44891249936b10799c548b2, type: 2}
+  planetMaterial: {fileID: 2100000, guid: d4de37889d9903842889f351b29c31ca, type: 2}
   starSizeMultiplier: 50
   planetSizeMultiplier: 1
   planetDistanceMultiplier: 200

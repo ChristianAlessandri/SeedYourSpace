@@ -5,7 +5,7 @@ using UnityEngine.InputSystem;
 /// Camera controller that allows for free movement and rotation in a 3D space.
 /// Supports WASD movement, mouse look, and scroll zoom.
 /// </summary>
-public class SimpleCameraController : MonoBehaviour
+public class CameraController : MonoBehaviour
 {
     [Header("Movement Settings")]
     public float panSpeed = 50f;
