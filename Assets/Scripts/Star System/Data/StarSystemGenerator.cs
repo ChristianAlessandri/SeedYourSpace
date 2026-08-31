@@ -33,30 +33,45 @@ public class StarSystemGenerator : MonoBehaviour
     {
         Debug.Log($"=== STARTING STAR SYSTEM GENERATION (Algorithm v{algorithmVersion}) ===");
         
-        TextAsset jsonFile = Resources.Load<TextAsset>("markov_data");
-        if (jsonFile == null)
-        {
-            Debug.LogError("Error: Markov data file not found!");
-            return;
-        }
+        if (!InitializeGenerators()) return;
 
-        nameGenerator = new MarkovNameGenerator(jsonFile.text);
         System.Random systemPrng = new System.Random(StochasticMath.DeriveNumericalSeed(seed));
         string rootSystemName = nameGenerator.GenerateSystemName(systemPrng);
         
         Debug.Log($"[Semantic Module] Root System Name: {rootSystemName}");
 
-        // --- Skybox Procedural Generation ---
-        // StarDistance: 75 to 100
+        GenerateSkybox(systemPrng);
+
+        StarData centralStar = GenerateCentralStar(seed, rootSystemName);
+        GeneratePlanetarySystem(seed, rootSystemName, centralStar);
+    }
+
+    /// <summary>
+    /// Initializes necessary data generators like the Markov name generator.
+    /// </summary>
+    /// <returns>True if initialization was successful, false otherwise.</returns>
+    private bool InitializeGenerators()
+    {
+        TextAsset jsonFile = Resources.Load<TextAsset>("markov_data");
+        if (jsonFile == null)
+        {
+            Debug.LogError("Error: Markov data file not found!");
+            return false;
+        }
+
+        nameGenerator = new MarkovNameGenerator(jsonFile.text);
+        return true;
+    }
+
+    /// <summary>
+    /// Procedurally calculates skybox visuals and passes them to the diorama builder.
+    /// </summary>
+    /// <param name="systemPrng">The root system random number generator.</param>
+    private void GenerateSkybox(System.Random systemPrng)
+    {
         float starDistance = (float)systemPrng.NextDouble() * 25f + 75f; 
-        
-        // StarVisibility: 225 to 275
         float starVisibility = (float)systemPrng.NextDouble() * 50f + 225f; 
 
-        // Realistic Nebula Color via HSV
-        // Hue: 0.55 (Deep Blue) to 0.95 (Deep Red/Magenta)
-        // Saturation: 0.4 to 0.7 (Muted, not neon)
-        // Value: 0.05 to 0.15 (Very dark and subtle)
         float hue = Mathf.Lerp(0.55f, 0.95f, (float)systemPrng.NextDouble());
         float sat = Mathf.Lerp(0.4f, 0.7f, (float)systemPrng.NextDouble());
         float val = Mathf.Lerp(0.05f, 0.15f, (float)systemPrng.NextDouble());
@@ -66,9 +81,6 @@ public class StarSystemGenerator : MonoBehaviour
         {
             dioramaBuilder.BuildSkybox(nebulaColor, starDistance, starVisibility);
         }
-
-        StarData centralStar = GenerateCentralStar(seed, rootSystemName);
-        GeneratePlanetarySystem(seed, rootSystemName, centralStar);
     }
 
     /// <summary>
@@ -107,7 +119,6 @@ public class StarSystemGenerator : MonoBehaviour
         star.axialTilt = Mathf.Abs(StochasticMath.GetNormalValue(starPrng, 7.25f, 2f));
         star.rotationPeriod = Mathf.Max(StochasticMath.GetNormalValue(starPrng, 600f, 150f), 100f);
 
-        // Calculate procedural surface visuals
         AstrophysicsRules.CalculateStellarSurface(
             star.temperature, 
             star.mass, 
@@ -130,7 +141,6 @@ public class StarSystemGenerator : MonoBehaviour
     /// <param name="baseSeed">Seed for deterministic generation.</param>
     /// <param name="rootName">The root name for the system.</param>
     /// <param name="centralStar">The central star data.</param>
-    /// <returns>List of generated planetary data.</returns>
     private void GeneratePlanetarySystem(string baseSeed, string rootName, StarData centralStar)
     {
         string layoutSubSeedInput = baseSeed + "_Planets_Layout";
@@ -147,57 +157,9 @@ public class StarSystemGenerator : MonoBehaviour
         for (int i = 0; i < planetCount; i++)
         {
             string planetSubSeedInput = baseSeed + $"_Planet_Entity_{i}";
-            int planetNumericalSeed = StochasticMath.DeriveNumericalSeed(planetSubSeedInput);
-            System.Random planetPrng = new System.Random(planetNumericalSeed);
-
-            PlanetData planet = new PlanetData();
-            planet.name = rootName + " " + nameGenerator.ToRoman(i + 1);
-            planet.orbitalDistance = AstrophysicsRules.CalculateOrbitalDistance(i, planetPrng);
-
-            PlanetProfile selectedClass = AstrophysicsRules.ClassifyPlanet(planet.orbitalDistance, planetPrng, currentSystemFrostLine);
-            planet.className = selectedClass.className;
+            PlanetData planet = GeneratePlanetEntity(planetSubSeedInput, rootName, i, centralStar);
             
-            planet.radius = Mathf.Max(StochasticMath.GetNormalValue(planetPrng, selectedClass.radiusMean, selectedClass.radiusStdDev), 0.1f);
-            float density = Mathf.Max(StochasticMath.GetNormalValue(planetPrng, selectedClass.densityMean, 0.1f), 0.1f);
-            planet.mass = Mathf.Pow(planet.radius, 3) * density;
-            planet.surfaceGravity = planet.mass / (planet.radius * planet.radius);
-
-            // Simplified Equilibrium Temperature
-            // Assumes average albedo (reflectivity) of 0.3
-            float distanceInSolarRadii = planet.orbitalDistance * 215.03f; // 1 AU = ~215 Solar Radii
-            planet.surfaceTemperature = centralStar.temperature * Mathf.Sqrt(centralStar.radius / (2f * distanceInSolarRadii)) * 0.9f;
-            
-            planet.axialTilt = Mathf.Abs(StochasticMath.GetNormalValue(planetPrng, 23.5f, 15f));
-            planet.orbitalInclination = StochasticMath.GetNormalValue(planetPrng, 0f, 3f);
-            planet.atmosphereType = AstrophysicsRules.DetermineAtmosphere(planet.className, planet.surfaceGravity, planet.orbitalDistance, currentSystemFrostLine, planetPrng);
-
-            AstrophysicsRules.CalculatePlanetVisuals(
-                planet.className, 
-                planet.surfaceTemperature, 
-                planet.atmosphereType, 
-                planetPrng, 
-                out planet.baseColor, 
-                out planet.secondaryColor, 
-                out planet.hydrofraction, 
-                out planet.cloudCoverage
-            );
-
-            // Kepler's Third Law yields Earth Years, convert immediately to Earth Days
-            float revolutionYears = Mathf.Sqrt(Mathf.Pow(planet.orbitalDistance, 3) / centralStar.mass);
-            planet.revolutionPeriod = revolutionYears * 365.25f;
-            
-            float baseRotation = (planet.className == "Gas Giant" || planet.className == "Ice Giant") ? 12f : 24f;
-            planet.rotationPeriod = Mathf.Max(StochasticMath.GetNormalValue(planetPrng, baseRotation, baseRotation * 0.5f), 2f); 
-            
-            bool lockedToStar = (planet.orbitalDistance < 0.2f);
-            if (lockedToStar) 
-            {
-                planet.rotationPeriod = planet.revolutionPeriod * 24f; 
-            }
-            
-            planet.orbitalEccentricity = AstrophysicsRules.CalculateEccentricity(planetPrng);
-            AstrophysicsRules.CalculateRings(planet.className, planet.radius, planetPrng, out planet.hasRings, out planet.ringDivisions, out planet.ringInnerRadius, out planet.ringOuterRadius, out planet.ringColor);
-            planet.moons = GenerateMoons(planetSubSeedInput, planet.name, planet.radius, planet.mass, planet.surfaceTemperature, planet.orbitalDistance, planetPrng);
+            planet.moons = GenerateMoons(planetSubSeedInput, planet);
             systemPlanets.Add(planet);
 
             string ringOutput = planet.hasRings ? $"Yes ({planet.ringDivisions})" : "No";
@@ -215,86 +177,152 @@ public class StarSystemGenerator : MonoBehaviour
     }
 
     /// <summary>
-    /// Generates moons for a given planet based on its properties and a random number generator.
+    /// Generates a single planet entity's physical and visual properties.
+    /// </summary>
+    /// <param name="planetSeedInput">The derived seed input string for this specific planet.</param>
+    /// <param name="rootName">The root name of the star system.</param>
+    /// <param name="planetIndex">The orbital index of the planet.</param>
+    /// <param name="centralStar">Data of the system's central star.</param>
+    /// <returns>A fully populated PlanetData object.</returns>
+    private PlanetData GeneratePlanetEntity(string planetSeedInput, string rootName, int planetIndex, StarData centralStar)
+    {
+        int planetNumericalSeed = StochasticMath.DeriveNumericalSeed(planetSeedInput);
+        System.Random planetPrng = new System.Random(planetNumericalSeed);
+
+        PlanetData planet = new PlanetData();
+        planet.name = rootName + " " + nameGenerator.ToRoman(planetIndex + 1);
+        planet.orbitalDistance = AstrophysicsRules.CalculateOrbitalDistance(planetIndex, planetPrng);
+
+        PlanetProfile selectedClass = AstrophysicsRules.ClassifyPlanet(planet.orbitalDistance, planetPrng, currentSystemFrostLine);
+        planet.className = selectedClass.className;
+        
+        planet.radius = Mathf.Max(StochasticMath.GetNormalValue(planetPrng, selectedClass.radiusMean, selectedClass.radiusStdDev), 0.1f);
+        float density = Mathf.Max(StochasticMath.GetNormalValue(planetPrng, selectedClass.densityMean, 0.1f), 0.1f);
+        planet.mass = Mathf.Pow(planet.radius, 3) * density;
+        planet.surfaceGravity = planet.mass / (planet.radius * planet.radius);
+
+        float distanceInSolarRadii = planet.orbitalDistance * 215.03f; 
+        planet.surfaceTemperature = centralStar.temperature * Mathf.Sqrt(centralStar.radius / (2f * distanceInSolarRadii)) * 0.9f;
+        
+        planet.axialTilt = Mathf.Abs(StochasticMath.GetNormalValue(planetPrng, 23.5f, 15f));
+        planet.orbitalInclination = StochasticMath.GetNormalValue(planetPrng, 0f, 3f);
+        planet.atmosphereType = AstrophysicsRules.DetermineAtmosphere(planet.className, planet.surfaceGravity, planet.orbitalDistance, currentSystemFrostLine, planetPrng);
+
+        AstrophysicsRules.CalculatePlanetVisuals(
+            planet.className, 
+            planet.surfaceTemperature, 
+            planet.atmosphereType, 
+            planetPrng, 
+            out planet.baseColor, 
+            out planet.secondaryColor, 
+            out planet.hydrofraction, 
+            out planet.cloudCoverage
+        );
+
+        float revolutionYears = Mathf.Sqrt(Mathf.Pow(planet.orbitalDistance, 3) / centralStar.mass);
+        planet.revolutionPeriod = revolutionYears * 365.25f;
+        
+        float baseRotation = (planet.className == "Gas Giant" || planet.className == "Ice Giant") ? 12f : 24f;
+        planet.rotationPeriod = Mathf.Max(StochasticMath.GetNormalValue(planetPrng, baseRotation, baseRotation * 0.5f), 2f); 
+        
+        bool lockedToStar = (planet.orbitalDistance < 0.2f);
+        if (lockedToStar) 
+        {
+            planet.rotationPeriod = planet.revolutionPeriod * 24f; 
+        }
+        
+        planet.orbitalEccentricity = AstrophysicsRules.CalculateEccentricity(planetPrng);
+        AstrophysicsRules.CalculateRings(planet.className, planet.radius, planetPrng, out planet.hasRings, out planet.ringDivisions, out planet.ringInnerRadius, out planet.ringOuterRadius, out planet.ringColor);
+        
+        return planet;
+    }
+
+    /// <summary>
+    /// Orchestrates the generation of all moons for a given planet.
     /// </summary>
     /// <param name="planetSeedInput">The seed input for generating moon data.</param>
-    /// <param name="planetName">The name of the planet.</param>
-    /// <param name="planetaryRadius">The radius of the planet.</param>
-    /// <param name="planetaryMass">The mass of the planet.</param>
-    /// <param name="planetTemperature">The surface temperature of the planet.</param>
-    /// <param name="planetDistance">The orbital distance of the planet.</param>
-    /// <param name="planetPrng">The random number generator for the planet.</param>
+    /// <param name="parentPlanet">The parent planet data.</param>
     /// <returns>A list of generated moon data.</returns>
-    private List<MoonData> GenerateMoons(string planetSeedInput, string planetName, float planetaryRadius, float planetaryMass, float planetTemperature, float planetDistance, System.Random planetPrng)
+    private List<MoonData> GenerateMoons(string planetSeedInput, PlanetData parentPlanet)
     {
         List<MoonData> generatedMoons = new List<MoonData>();
+        System.Random layoutPrng = new System.Random(StochasticMath.DeriveNumericalSeed(planetSeedInput + "_MoonLayout"));
         
-        float maxTheoreticalMoons = planetaryRadius * 3.0f;
-        int moonCount = Mathf.Clamp(Mathf.RoundToInt(StochasticMath.GetNormalValue(planetPrng, maxTheoreticalMoons * 0.3f, maxTheoreticalMoons * 0.2f)), 0, Mathf.FloorToInt(maxTheoreticalMoons));
-        float currentOrbitalDistance = planetaryRadius * 2.0f;
+        float maxTheoreticalMoons = parentPlanet.radius * 3.0f;
+        int moonCount = Mathf.Clamp(Mathf.RoundToInt(StochasticMath.GetNormalValue(layoutPrng, maxTheoreticalMoons * 0.3f, maxTheoreticalMoons * 0.2f)), 0, Mathf.FloorToInt(maxTheoreticalMoons));
+        float currentOrbitalDistance = parentPlanet.radius * 2.0f;
 
         for (int m = 0; m < moonCount; m++)
         {
             string moonSubSeedInput = planetSeedInput + $"_Moon_Entity_{m}";
-            System.Random moonPrng = new System.Random(StochasticMath.DeriveNumericalSeed(moonSubSeedInput));
-
-            MoonData moon = new MoonData();
-            moon.name = planetName + "-" + nameGenerator.ToAlphabet(m);
-            moon.radius = Mathf.Max(StochasticMath.GetNormalValue(moonPrng, planetaryRadius * 0.15f, planetaryRadius * 0.05f), 0.01f); 
-
-            float orbitalGap = Mathf.Max(StochasticMath.GetNormalValue(moonPrng, 5.0f, 1.5f), 1.0f);
-            currentOrbitalDistance += orbitalGap + (moon.radius * 2f);
-            moon.orbitalDistance = currentOrbitalDistance;
-
-            float moonDensity = Mathf.Max(StochasticMath.GetNormalValue(moonPrng, 0.8f, 0.1f), 0.1f);
-            moon.mass = Mathf.Pow(moon.radius, 3) * moonDensity;
-            moon.surfaceGravity = moon.mass / (moon.radius * moon.radius);
-
-            moon.orbitalInclination = StochasticMath.GetNormalValue(moonPrng, 0f, 1f);
-            moon.axialTilt = Mathf.Abs(StochasticMath.GetNormalValue(moonPrng, 5f, 5f));
-
-            moon.revolutionPeriod = 3.0f * Mathf.Sqrt(Mathf.Pow(moon.orbitalDistance, 3) / Mathf.Max(planetaryMass, 0.001f));
-            moon.isTidallyLocked = (moonPrng.NextDouble() <= 0.85);
-
-            if (moon.isTidallyLocked)
-            {
-                moon.rotationPeriod = moon.revolutionPeriod * 24f;
-                moon.axialTilt = 0f;
-            }
-            else
-            {
-                moon.rotationPeriod = Mathf.Max(StochasticMath.GetNormalValue(moonPrng, 48f, 24f), 5f);
-            }
-
-            // Tidal circularization keeps moon orbits nearly perfectly circular
-            moon.orbitalEccentricity = Mathf.Clamp(Mathf.Abs(StochasticMath.GetNormalValue(moonPrng, 0.01f, 0.01f)), 0f, 0.05f);
-            moon.className = AstrophysicsRules.ClassifyMoon(planetDistance, currentSystemFrostLine, moonPrng);
-            
-            AstrophysicsRules.CalculateRings(moon.className, moon.radius, moonPrng, out moon.hasRings, out moon.ringDivisions, out moon.ringInnerRadius, out moon.ringOuterRadius, out moon.ringColor);
-            
-            // Moons inherit their thermal zone from the host planet's distance to the star.
-            // We assign the planet's temperature with a tiny variance (+/- 5%)
-            float tempVariance = StochasticMath.GetNormalValue(moonPrng, 1.0f, 0.05f);
-            
-            moon.surfaceTemperature = planetTemperature * tempVariance;
-
-            // Use planetDistance (AU) and the real system frost line (AU) to determine the moon's atmosphere
-            moon.atmosphereType = AstrophysicsRules.DetermineAtmosphere(moon.className, moon.surfaceGravity, planetDistance, currentSystemFrostLine, moonPrng);
-
-            AstrophysicsRules.CalculatePlanetVisuals(
-                moon.className, 
-                moon.surfaceTemperature, 
-                moon.atmosphereType, 
-                moonPrng, 
-                out moon.baseColor, 
-                out moon.secondaryColor, 
-                out moon.hydrofraction, 
-                out moon.cloudCoverage
-            );
-
+            MoonData moon = GenerateMoonEntity(moonSubSeedInput, parentPlanet, m, ref currentOrbitalDistance);
             generatedMoons.Add(moon);
         }
 
         return generatedMoons;
+    }
+
+    /// <summary>
+    /// Generates a single moon entity's physical and visual properties.
+    /// </summary>
+    /// <param name="moonSeedInput">The derived seed input string for this specific moon.</param>
+    /// <param name="parentPlanet">The parent planet data.</param>
+    /// <param name="moonIndex">The alphabetical index of the moon.</param>
+    /// <param name="currentOrbitalDistance">Reference to the running orbital distance tracker, updated per moon.</param>
+    /// <returns>A fully populated MoonData object.</returns>
+    private MoonData GenerateMoonEntity(string moonSeedInput, PlanetData parentPlanet, int moonIndex, ref float currentOrbitalDistance)
+    {
+        System.Random moonPrng = new System.Random(StochasticMath.DeriveNumericalSeed(moonSeedInput));
+        MoonData moon = new MoonData();
+        
+        moon.name = parentPlanet.name + "-" + nameGenerator.ToAlphabet(moonIndex);
+        moon.radius = Mathf.Max(StochasticMath.GetNormalValue(moonPrng, parentPlanet.radius * 0.15f, parentPlanet.radius * 0.05f), 0.01f); 
+
+        float orbitalGap = Mathf.Max(StochasticMath.GetNormalValue(moonPrng, 5.0f, 1.5f), 1.0f);
+        currentOrbitalDistance += orbitalGap + (moon.radius * 2f);
+        moon.orbitalDistance = currentOrbitalDistance;
+
+        float moonDensity = Mathf.Max(StochasticMath.GetNormalValue(moonPrng, 0.8f, 0.1f), 0.1f);
+        moon.mass = Mathf.Pow(moon.radius, 3) * moonDensity;
+        moon.surfaceGravity = moon.mass / (moon.radius * moon.radius);
+
+        moon.orbitalInclination = StochasticMath.GetNormalValue(moonPrng, 0f, 1f);
+        moon.axialTilt = Mathf.Abs(StochasticMath.GetNormalValue(moonPrng, 5f, 5f));
+
+        moon.revolutionPeriod = 3.0f * Mathf.Sqrt(Mathf.Pow(moon.orbitalDistance, 3) / Mathf.Max(parentPlanet.mass, 0.001f));
+        moon.isTidallyLocked = (moonPrng.NextDouble() <= 0.85);
+
+        if (moon.isTidallyLocked)
+        {
+            moon.rotationPeriod = moon.revolutionPeriod * 24f;
+            moon.axialTilt = 0f;
+        }
+        else
+        {
+            moon.rotationPeriod = Mathf.Max(StochasticMath.GetNormalValue(moonPrng, 48f, 24f), 5f);
+        }
+
+        moon.orbitalEccentricity = Mathf.Clamp(Mathf.Abs(StochasticMath.GetNormalValue(moonPrng, 0.01f, 0.01f)), 0f, 0.05f);
+        moon.className = AstrophysicsRules.ClassifyMoon(parentPlanet.orbitalDistance, currentSystemFrostLine, moonPrng);
+        
+        AstrophysicsRules.CalculateRings(moon.className, moon.radius, moonPrng, out moon.hasRings, out moon.ringDivisions, out moon.ringInnerRadius, out moon.ringOuterRadius, out moon.ringColor);
+        
+        float tempVariance = StochasticMath.GetNormalValue(moonPrng, 1.0f, 0.05f);
+        moon.surfaceTemperature = parentPlanet.surfaceTemperature * tempVariance;
+
+        moon.atmosphereType = AstrophysicsRules.DetermineAtmosphere(moon.className, moon.surfaceGravity, parentPlanet.orbitalDistance, currentSystemFrostLine, moonPrng);
+
+        AstrophysicsRules.CalculatePlanetVisuals(
+            moon.className, 
+            moon.surfaceTemperature, 
+            moon.atmosphereType, 
+            moonPrng, 
+            out moon.baseColor, 
+            out moon.secondaryColor, 
+            out moon.hydrofraction, 
+            out moon.cloudCoverage
+        );
+
+        return moon;
     }
 }
