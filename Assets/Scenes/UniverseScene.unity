@@ -149,7 +149,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 673709a7057f5d94d9bd67af2d80246e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StarSystemGenerator
-  masterSeed: 0xf
+  masterSeed: 10
   dioramaBuilder: {fileID: 98518082}
   algorithmVersion: 1
 --- !u!4 &98518081
