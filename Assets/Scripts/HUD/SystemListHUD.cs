@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using UnityEngine.Events; // Added for UnityEvent
 
 /// <summary>
 /// Manages the dynamic list of planets in the UI, allowing users to view and select planets from the generated star system.
@@ -15,10 +16,12 @@ public class SystemListHUD : MonoBehaviour
     public Transform scrollContent;
     public GameObject planetButtonPrefab;
 
-    [Header("Selection Visuals")]
-    public Color normalColor = new Color(1f, 1f, 1f, 0f); 
-    public Color selectedColor = new Color(0f, 0f, 0f, 0.33f); 
+    private Color normalColor = new Color(1f, 1f, 1f, 0f); 
+    private Color selectedColor = new Color(0f, 0f, 0f, 0.33f);
     private Image currentSelectedButtonImage;
+
+    [Header("Events")]
+    public UnityEvent<PlanetData> OnPlanetSelected;
 
     private void Start()
     {
@@ -77,7 +80,6 @@ public class SystemListHUD : MonoBehaviour
             currentSelectedButtonImage.color = selectedColor;
         }
 
-        //! PLACEHOLDER
-        Debug.Log($"Active Planet: {selectedPlanet.name}");
+        OnPlanetSelected?.Invoke(selectedPlanet);
     }
 }
