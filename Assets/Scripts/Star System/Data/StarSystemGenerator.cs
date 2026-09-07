@@ -17,6 +17,11 @@ public class StarSystemGenerator : MonoBehaviour
     [HideInInspector]
     public int algorithmVersion = 1;
 
+    // Counters for tracking the total number of celestial bodies generated
+    public int TotalPlanets { get; private set; }
+    public int TotalMoons { get; private set; }
+    public int TotalRings { get; private set; }
+
     private MarkovNameGenerator nameGenerator;
     private float currentSystemFrostLine;
 
@@ -34,6 +39,10 @@ public class StarSystemGenerator : MonoBehaviour
         Debug.Log($"=== STARTING STAR SYSTEM GENERATION (Algorithm v{algorithmVersion}) ===");
         
         if (!InitializeGenerators()) return;
+
+        TotalPlanets = 0;
+        TotalMoons = 0;
+        TotalRings = 0;
 
         System.Random systemPrng = new System.Random(StochasticMath.DeriveNumericalSeed(seed));
         string rootSystemName = nameGenerator.GenerateSystemName(systemPrng);
@@ -234,6 +243,11 @@ public class StarSystemGenerator : MonoBehaviour
         planet.orbitalEccentricity = AstrophysicsRules.CalculateEccentricity(planetPrng);
         AstrophysicsRules.CalculateRings(planet.className, planet.radius, planetPrng, out planet.hasRings, out planet.ringDivisions, out planet.ringInnerRadius, out planet.ringOuterRadius, out planet.ringColor);
         
+        TotalPlanets++;
+        if (planet.hasRings)
+            for (int r = 0; r < planet.ringDivisions; r++)
+                TotalRings++;
+
         return planet;
     }
 
@@ -322,6 +336,11 @@ public class StarSystemGenerator : MonoBehaviour
             out moon.hydrofraction, 
             out moon.cloudCoverage
         );
+
+        TotalMoons++;
+        if (moon.hasRings)
+            for (int r = 0; r < moon.ringDivisions; r++)
+                TotalRings++;
 
         return moon;
     }
