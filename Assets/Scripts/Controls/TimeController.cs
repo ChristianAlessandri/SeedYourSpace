@@ -9,6 +9,7 @@ public class TimeController : MonoBehaviour
 {
     [Header("UI References")]
     public Slider timeSlider;
+    public TextMeshProUGUI timeComparisonText;
     public TextMeshProUGUI timeText;
 
     void Start()
@@ -51,8 +52,14 @@ public class TimeController : MonoBehaviour
         Time.timeScale = newSpeed;
         
         if (newSpeed == 0f)
+        {
             timeText.text = "Time: PAUSED";
+            timeComparisonText.text = "Real: 1s | Simulation: 0h";
+        }
         else
+        {
             timeText.text = $"Time: {newSpeed:F1}x";
+            timeComparisonText.text = $"Real: 1s | Simulation: {newSpeed*24:F0}h";
+        }
     }
 }
