@@ -23,9 +23,8 @@ public class CelestialBodyDetailHUD : MonoBehaviour
     public TextMeshProUGUI classText;
     public TextMeshProUGUI detailsText;
 
-    [Header("3D Miniature Placeholder (Future Phase)")]
-    [Tooltip("Will be used later for the Render Texture projection.")]
-    public RawImage miniatureDisplay;
+    [Header("Rendering Module")]
+    public CelestialMiniatureRenderer miniatureRenderer;
 
     private void Start()
     {
@@ -93,6 +92,11 @@ public class CelestialBodyDetailHUD : MonoBehaviour
                 $"Weight (Mass): {body.mass:F2} M_E\n" +
                 $"Radii: {body.radius:F2} R_E\n" +
                 $"Atmosphere: {body.atmosphereType}";
+        }
+
+        if (miniatureRenderer != null)
+        {
+            miniatureRenderer.BuildMiniature(body);
         }
     }
 }

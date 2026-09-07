@@ -1,0 +1,245 @@
+using UnityEngine;
+using UnityEngine.UI;
+
+/// <summary>
+/// Renders a dynamic 3D miniature of the selected celestial body for the UI.
+/// Uses the scene prefab for 1:1 visual parity.
+/// </summary>
+public class CelestialMiniatureRenderer : MonoBehaviour
+{
+    [Header("UI Reference")]
+    public RawImage miniatureDisplay;
+
+    [Header("3D Assets")]
+    [Tooltip("A 3D Sphere prefab with the CelestialBody script attached.")]
+    public GameObject celestialPrefab;
+
+    [Header("Rendering Setup")]
+    public string miniatureLayerName = "UI"; 
+    public Vector3 isolatedPosition = new Vector3(0, 100000, 0);
+
+    [Header("Materials Reference")]
+    public Material starMaterial;
+    public Material planetMaterial;
+    public Material ringMaterial;
+
+    private Camera renderCamera;
+    private RenderTexture renderTexture;
+    private GameObject currentMiniatureBody;
+    private GameObject currentMiniatureRings;
+
+    private float visualRotationSpeed = 20f;
+
+    private void Awake()
+    {
+        InitializeRenderStudio();
+    }
+
+    /// <summary>
+    /// Initializes the off-screen rendering setup, including the camera and render texture.
+    /// </summary>
+    private void InitializeRenderStudio()
+    {
+        renderTexture = new RenderTexture(512, 512, 16);
+        renderTexture.Create();
+
+        if (miniatureDisplay != null)
+        {
+            miniatureDisplay.texture = renderTexture;
+        }
+
+        GameObject camObj = new GameObject("Miniature_Camera");
+        camObj.transform.position = isolatedPosition + new Vector3(0, 0, -3.5f); 
+        
+        renderCamera = camObj.AddComponent<Camera>();
+        renderCamera.targetTexture = renderTexture;
+        renderCamera.clearFlags = CameraClearFlags.SolidColor;
+        renderCamera.backgroundColor = new Color(0, 0, 0, 0); 
+        
+        int layerIndex = LayerMask.NameToLayer(miniatureLayerName);
+        if (layerIndex != -1)
+        {
+            renderCamera.cullingMask = 1 << layerIndex;
+        }
+
+        GameObject lightObj = new GameObject("Miniature_Light");
+        lightObj.transform.SetParent(camObj.transform, false);
+        lightObj.transform.localPosition = new Vector3(-2.5f, 2f, -1.5f); 
+        
+        Light miniLight = lightObj.AddComponent<Light>();
+        miniLight.type = LightType.Point; 
+        miniLight.range = 20f; 
+        miniLight.intensity = 15f; 
+        miniLight.cullingMask = renderCamera.cullingMask;
+    }
+
+    /// <summary>
+    /// Builds a miniature of the given celestial body and renders it to the UI.
+    /// </summary>
+    /// <param name="bodyData">The data of the celestial body for which to build the miniature.</param>
+    public void BuildMiniature(CelestialBodyData bodyData)
+    {
+        if (bodyData == null || celestialPrefab == null) return;
+
+        if (currentMiniatureBody != null) Destroy(currentMiniatureBody);
+        if (currentMiniatureRings != null) Destroy(currentMiniatureRings);
+
+        int layerIndex = LayerMask.NameToLayer(miniatureLayerName);
+
+        // Instantiate from prefab exactly like VisualDioramaBuilder
+        currentMiniatureBody = Instantiate(celestialPrefab, isolatedPosition, Quaternion.Euler(bodyData.axialTilt, 0f, 0f));
+        currentMiniatureBody.name = $"Miniature_{bodyData.name}";
+        
+        // Apply the UI layer to the prefab and all its potential children
+        SetLayerRecursively(currentMiniatureBody, layerIndex);
+
+        // Remove the simulation script so it doesn't fly away in the UI
+        CelestialBody orbitScript = currentMiniatureBody.GetComponent<CelestialBody>();
+        if (orbitScript != null)
+        {
+            Destroy(orbitScript);
+        }
+
+        // Apply materials like the Diorama Builder does
+        Renderer mr = currentMiniatureBody.GetComponent<Renderer>();
+        if (mr != null)
+        {
+            if (planetMaterial != null) mr.sharedMaterial = planetMaterial;
+
+            MaterialPropertyBlock props = new MaterialPropertyBlock();
+            mr.GetPropertyBlock(props); 
+            
+            props.SetColor("_BaseColor", bodyData.baseColor);
+            props.SetColor("_SecondaryColor", bodyData.secondaryColor);
+            props.SetFloat("_Hydrofraction", bodyData.hydrofraction);
+            props.SetFloat("_CloudCoverage", bodyData.cloudCoverage);
+            
+            mr.SetPropertyBlock(props);
+        }
+
+        if (bodyData.hasRings)
+        {
+            BuildMiniatureRings(currentMiniatureBody, bodyData, layerIndex);
+        }
+
+        float scaleAdjustment = bodyData.hasRings ? 0.6f : 1.0f;
+        currentMiniatureBody.transform.localScale = Vector3.one * scaleAdjustment;
+    }
+
+
+    /// <summary>
+    /// Builds a simple ring mesh for the miniature if the celestial body has rings.
+    /// </summary>
+    /// <param name="parentObj">The parent object to which the rings will be attached.</param>
+    /// <param name="bodyData">The data of the celestial body for which to build rings.</param>
+    /// <param name="layerIndex">The layer index to assign to the rings.</param>
+    private void BuildMiniatureRings(GameObject parentObj, CelestialBodyData bodyData, int layerIndex)
+    {
+        currentMiniatureRings = new GameObject("Miniature_Rings");
+        currentMiniatureRings.transform.SetParent(parentObj.transform, false);
+        SetLayerRecursively(currentMiniatureRings, layerIndex);
+
+        float localInner = bodyData.ringInnerRadius / bodyData.radius;
+        float localOuter = bodyData.ringOuterRadius / bodyData.radius;
+
+        MeshFilter mf = currentMiniatureRings.AddComponent<MeshFilter>();
+        MeshRenderer mr = currentMiniatureRings.AddComponent<MeshRenderer>();
+        
+        int segments = 64;
+        int divisions = Mathf.Max(1, bodyData.ringDivisions);
+        float totalThickness = localOuter - localInner;
+        float gapRatio = 0.3f; 
+        float ringWidth = (divisions == 1) ? totalThickness : totalThickness / (divisions + (divisions - 1) * gapRatio);
+        float gapWidth = ringWidth * gapRatio;
+
+        Vector3[] vertices = new Vector3[(segments + 1) * 2 * divisions];
+        int[] triangles = new int[segments * 6 * divisions];
+        Vector2[] uvs = new Vector2[(segments + 1) * 2 * divisions];
+        Vector3[] normals = new Vector3[(segments + 1) * 2 * divisions];
+
+        float angleStep = (Mathf.PI * 2f) / segments;
+        int vIndex = 0;
+        int tIndex = 0;
+
+        for (int d = 0; d < divisions; d++)
+        {
+            float currentInner = localInner + (d * (ringWidth + gapWidth));
+            float currentOuter = currentInner + ringWidth;
+
+            for (int i = 0; i <= segments; i++)
+            {
+                float angle = i * angleStep;
+                float cos = Mathf.Cos(angle);
+                float sin = Mathf.Sin(angle);
+
+                vertices[vIndex] = new Vector3(cos * currentInner, 0f, sin * currentInner);
+                vertices[vIndex + 1] = new Vector3(cos * currentOuter, 0f, sin * currentOuter);
+
+                uvs[vIndex] = new Vector2(0f, (float)i / segments);
+                uvs[vIndex + 1] = new Vector2(1f, (float)i / segments);
+
+                normals[vIndex] = Vector3.up;
+                normals[vIndex + 1] = Vector3.up;
+
+                if (i < segments)
+                {
+                    triangles[tIndex] = vIndex;
+                    triangles[tIndex + 1] = vIndex + 1;
+                    triangles[tIndex + 2] = vIndex + 2;
+                    
+                    triangles[tIndex + 3] = vIndex + 1;
+                    triangles[tIndex + 4] = vIndex + 3;
+                    triangles[tIndex + 5] = vIndex + 2;
+                    tIndex += 6;
+                }
+                vIndex += 2;
+            }
+        }
+
+        Mesh ringMesh = new Mesh();
+        ringMesh.vertices = vertices;
+        ringMesh.triangles = triangles;
+        ringMesh.uv = uvs;
+        ringMesh.normals = normals;
+        mf.mesh = ringMesh;
+
+        if (ringMaterial != null)
+        {
+            mr.sharedMaterial = ringMaterial;
+            MaterialPropertyBlock propBlock = new MaterialPropertyBlock();
+            propBlock.SetColor("_BaseColor", bodyData.ringColor);
+            mr.SetPropertyBlock(propBlock);
+        }
+    }
+
+    /// <summary>
+    /// Helper method to ensure the prefab and all its contents are properly isolated from the main camera.
+    /// </summary>
+    private void SetLayerRecursively(GameObject obj, int newLayer)
+    {
+        if (newLayer == -1) return;
+        
+        obj.layer = newLayer;
+        foreach (Transform child in obj.transform)
+        {
+            SetLayerRecursively(child.gameObject, newLayer);
+        }
+    }
+
+    private void Update()
+    {
+        if (currentMiniatureBody != null)
+        {
+            currentMiniatureBody.transform.Rotate(Vector3.up, visualRotationSpeed * Time.unscaledDeltaTime, Space.Self);
+        }
+    }
+
+    private void OnDestroy()
+    {
+        if (renderTexture != null)
+        {
+            renderTexture.Release();
+            Destroy(renderTexture);
+        }
+    }
+}
