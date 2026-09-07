@@ -13,6 +13,9 @@ public class StarSystemGenerator : MonoBehaviour
 
     [Header("Diorama Settings")]
     public VisualDioramaBuilder dioramaBuilder;
+
+    [Header("UI Events")]
+    public UnityEngine.Events.UnityEvent OnSystemGenerated;
     
     [HideInInspector]
     public int algorithmVersion = 1;
@@ -21,6 +24,8 @@ public class StarSystemGenerator : MonoBehaviour
     public int TotalPlanets { get; private set; }
     public int TotalMoons { get; private set; }
     public int TotalRings { get; private set; }
+    public string SystemName { get; private set; }
+    public List<PlanetData> SystemPlanets { get; private set; } = new List<PlanetData>();
 
     private MarkovNameGenerator nameGenerator;
     private float currentSystemFrostLine;
@@ -46,6 +51,7 @@ public class StarSystemGenerator : MonoBehaviour
 
         System.Random systemPrng = new System.Random(StochasticMath.DeriveNumericalSeed(seed));
         string rootSystemName = nameGenerator.GenerateSystemName(systemPrng);
+        SystemName = rootSystemName;
         
         Debug.Log($"[Semantic Module] Root System Name: {rootSystemName}");
 
@@ -152,6 +158,8 @@ public class StarSystemGenerator : MonoBehaviour
     /// <param name="centralStar">The central star data.</param>
     private void GeneratePlanetarySystem(string baseSeed, string rootName, StarData centralStar)
     {
+        SystemPlanets.Clear();
+
         string layoutSubSeedInput = baseSeed + "_Planets_Layout";
         int layoutNumericalSeed = StochasticMath.DeriveNumericalSeed(layoutSubSeedInput);
         System.Random layoutPrng = new System.Random(layoutNumericalSeed);
@@ -174,6 +182,9 @@ public class StarSystemGenerator : MonoBehaviour
             string ringOutput = planet.hasRings ? $"Yes ({planet.ringDivisions})" : "No";
             Debug.Log($"-> {planet.name} | mass: {planet.mass:F2} ME | Dist: {planet.orbitalDistance:F2} AU | Class: {planet.className} | Rad: {planet.radius:F2} RE | Atmos: {planet.atmosphereType} | Rings: {ringOutput} | Moons: {planet.moons.Count}");
         }
+
+        SystemPlanets = systemPlanets;
+        OnSystemGenerated?.Invoke();
 
         if (dioramaBuilder != null)
         {

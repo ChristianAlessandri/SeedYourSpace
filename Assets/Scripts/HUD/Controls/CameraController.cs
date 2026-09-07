@@ -9,7 +9,6 @@ public class CameraController : MonoBehaviour
 {
     [Header("Movement Settings")]
     public float panSpeed = 50f;
-    public float scrollSpeed = 500f;
     
     [Header("Rotation Settings")]
     public float lookSensitivity = 0.2f;
@@ -62,15 +61,5 @@ public class CameraController : MonoBehaviour
         if (movement.magnitude > 1f) movement.Normalize();
         
         transform.position += movement * panSpeed * Time.unscaledDeltaTime;
-
-        // Mouse scroll wheel altitude control (Up/Down)
-        float scroll = Mouse.current.scroll.y.ReadValue();
-        if (scroll != 0f)
-        {
-            // We use normalized sign to prevent huge jumps from high-resolution scroll wheels,
-            // but keep your scrollSpeed multiplier to manage the actual velocity.
-            float normalizedScroll = Mathf.Sign(scroll);
-            transform.position += transform.up * normalizedScroll * scrollSpeed * Time.unscaledDeltaTime;
-        }
     }
 }
