@@ -29,32 +29,44 @@ public class MouseInteractionController : MonoBehaviour
         if (mainCamera == null) mainCamera = Camera.main;
         if (mainCamera == null) return;
 
-        // Shoot Raycast
+        ProcessClick();
+    }
+
+    /// <summary>
+    /// Executes the raycast into the 3D scene to find a target.
+    /// </summary>
+    private void ProcessClick()
+    {
         Ray ray = mainCamera.ScreenPointToRay(Mouse.current.position.ReadValue());
         
         if (Physics.Raycast(ray, out RaycastHit hit))
         {
-            string hitName = hit.collider.gameObject.name;
-            
-            // Try to select in the main system list first
-            bool selectedInSystem = systemListHUD != null && systemListHUD.TrySelectBody(hitName);
-            bool selectedInMoons = false;
-            
-            // If it wasn't a star or planet, check if it's one of the currently visible moons
-            if (!selectedInSystem)
-            {
-                selectedInMoons = moonListHUD != null && moonListHUD.TrySelectBody(hitName);
-            }
-
-            // If we clicked an object but it's not selectable (e.g. rings without data)
-            if (!selectedInSystem && !selectedInMoons)
-            {
-                DeselectEverything();
-            }
+            HandleBodySelection(hit.collider.gameObject.name);
         }
         else
         {
-            // Clicked in empty space
+            DeselectEverything();
+        }
+    }
+
+    /// <summary>
+    /// Routes the selected hit name to the appropriate UI lists.
+    /// </summary>
+    /// <param name="hitName">The name of the clicked physics collider.</param>
+    private void HandleBodySelection(string hitName)
+    {
+        bool selectedInSystem = systemListHUD != null && systemListHUD.TrySelectBody(hitName);
+        bool selectedInMoons = false;
+        
+        // If it wasn't a star or planet, check if it's one of the currently visible moons
+        if (!selectedInSystem)
+        {
+            selectedInMoons = moonListHUD != null && moonListHUD.TrySelectBody(hitName);
+        }
+
+        // If we clicked an object but it's not selectable (e.g. rings without data)
+        if (!selectedInSystem && !selectedInMoons)
+        {
             DeselectEverything();
         }
     }
@@ -74,7 +86,6 @@ public class MouseInteractionController : MonoBehaviour
         
         if (detailHUD != null) detailHUD.ClearDetails();
         if (visualizer != null) visualizer.ClearVisuals();
-
         if (cameraController != null) cameraController.ClearTarget();
     }
 }

@@ -15,7 +15,7 @@ public class PixelizeRenderFeature : ScriptableRendererFeature
     {
         [Tooltip("Higher value means chunkier pixels.")]
         [Range(1, 10)]
-        public int pixelScale = 4;
+        public int pixelScale = 0;
         
         [Tooltip("Toggle the effect on or off.")]
         public bool isEnabled = true;
@@ -52,7 +52,7 @@ public class PixelizePass : ScriptableRenderPass
         this.settings = settings;
     }
 
-    // A simple struct to hold our texture handles during the Render Graph execution
+    // A struct to hold our texture handles during the Render Graph execution
     private class PassData
     {
         public TextureHandle source;
@@ -61,6 +61,8 @@ public class PixelizePass : ScriptableRenderPass
     /// <summary>
     /// Record the render graph commands for this pass. This is where we define the downsampling and upsampling steps.
     /// </summary>
+    /// <param name="renderGraph">The render graph instance.</param>
+    /// <param name="frameData">The context container holding frame-specific data.</param>
     public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
     {
         // Get the current frame's camera and resource data
@@ -68,30 +70,50 @@ public class PixelizePass : ScriptableRenderPass
         UniversalCameraData cameraData = frameData.Get<UniversalCameraData>();
 
         TextureHandle activeColor = resourceData.activeColorTexture;
-
         if (!activeColor.IsValid()) return;
 
-        RenderTextureDescriptor desc = cameraData.cameraTargetDescriptor;
-        int downscaledWidth = Mathf.Max(1, desc.width / settings.pixelScale);
-        int downscaledHeight = Mathf.Max(1, desc.height / settings.pixelScale);
+        // Define and allocate our temporary low-res texture
+        TextureDesc tempDesc = CreateTextureDescriptor(cameraData.cameraTargetDescriptor);
+        TextureHandle tempTexture = renderGraph.CreateTexture(tempDesc);
 
-        // Define our temporary low-res texture
+        // Orchestrate the rendering passes
+        AddDownsamplePass(renderGraph, activeColor, tempTexture);
+        AddUpsamplePass(renderGraph, tempTexture, activeColor);
+    }
+
+    /// <summary>
+    /// Calculates the scaled-down dimensions and creates the texture descriptor.
+    /// </summary>
+    /// <param name="cameraDescriptor">The descriptor of the main camera's render target.</param>
+    /// <returns>A TextureDesc for the downscaled temporary texture.</returns>
+    private TextureDesc CreateTextureDescriptor(RenderTextureDescriptor cameraDescriptor)
+    {
+        int downscaledWidth = Mathf.Max(1, cameraDescriptor.width / settings.pixelScale);
+        int downscaledHeight = Mathf.Max(1, cameraDescriptor.height / settings.pixelScale);
+
         TextureDesc tempDesc = new TextureDesc(downscaledWidth, downscaledHeight);
-        tempDesc.colorFormat = desc.graphicsFormat;
+        tempDesc.colorFormat = cameraDescriptor.graphicsFormat;
         tempDesc.depthBufferBits = 0;
         tempDesc.filterMode = FilterMode.Point; // Keep pixels sharp
         tempDesc.name = "_PixelizeTempTexture";
 
-        // Let the Render Graph allocate the texture memory
-        TextureHandle tempTexture = renderGraph.CreateTexture(tempDesc);
+        return tempDesc;
+    }
 
-        // PASS 1: Downsample (Copy from the Main Camera to the Tiny Texture)
+    /// <summary>
+    /// Adds a raster pass to copy and scale down the main camera output to the tiny texture.
+    /// </summary>
+    /// <param name="renderGraph">The render graph instance.</param>
+    /// <param name="sourceTexture">The source texture (main camera output).</param>
+    /// <param name="targetTexture">The target texture (downscaled temporary texture).</param>
+    private void AddDownsamplePass(RenderGraph renderGraph, TextureHandle sourceTexture, TextureHandle targetTexture)
+    {
         using (var builder = renderGraph.AddRasterRenderPass<PassData>("Pixelize Downsample", out var passData))
         {
-            passData.source = activeColor;
+            passData.source = sourceTexture;
             
             builder.UseTexture(passData.source, AccessFlags.Read);
-            builder.SetRenderAttachment(tempTexture, 0, AccessFlags.Write);
+            builder.SetRenderAttachment(targetTexture, 0, AccessFlags.Write);
 
             builder.SetRenderFunc((PassData data, RasterGraphContext context) =>
             {
@@ -99,14 +121,23 @@ public class PixelizePass : ScriptableRenderPass
                 Blitter.BlitTexture(context.cmd, data.source, new Vector4(1, 1, 0, 0), 0.0f, false);
             });
         }
+    }
 
-        // PASS 2: Upsample (Copy from the Tiny Texture back to the Main Camera)
+    /// <summary>
+    /// Adds a raster pass to copy and scale up the tiny texture back to the main camera output.
+    /// </summary>
+    /// <param name="renderGraph">The render graph instance.</param>
+    /// <param name="sourceTexture">The low-resolution texture to upsample.</param>
+    /// <param name="targetTexture">The main camera's render target to write the up
+    /// sampled result to.</param>
+    private void AddUpsamplePass(RenderGraph renderGraph, TextureHandle sourceTexture, TextureHandle targetTexture)
+    {
         using (var builder = renderGraph.AddRasterRenderPass<PassData>("Pixelize Upsample", out var passData))
         {
-            passData.source = tempTexture;
+            passData.source = sourceTexture;
 
             builder.UseTexture(passData.source, AccessFlags.Read);
-            builder.SetRenderAttachment(activeColor, 0, AccessFlags.Write);
+            builder.SetRenderAttachment(targetTexture, 0, AccessFlags.Write);
 
             builder.SetRenderFunc((PassData data, RasterGraphContext context) =>
             {

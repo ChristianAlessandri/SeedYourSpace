@@ -28,6 +28,14 @@ public class TimeController : MonoBehaviour
 
     void Update()
     {
+        HandleKeyboardInput();
+    }
+
+    /// <summary>
+    /// Processes keyboard inputs to increment or decrement the simulation speed.
+    /// </summary>
+    private void HandleKeyboardInput()
+    {
         if (UnityEngine.InputSystem.Keyboard.current == null) return;
 
         bool plusPressed = UnityEngine.InputSystem.Keyboard.current.equalsKey.wasPressedThisFrame || 
@@ -47,6 +55,10 @@ public class TimeController : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Updates the game's time scale based on the slider's value and updates the UI text accordingly.
+    /// </summary>
+    /// <param name="newSpeed">The new time scale value.</param>
     private void UpdateTimeScale(float newSpeed)
     {
         Time.timeScale = newSpeed;

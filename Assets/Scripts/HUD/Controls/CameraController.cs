@@ -82,7 +82,6 @@ public class CameraController : MonoBehaviour
         if (targetObj != null)
         {
             activeTarget = targetObj.transform;
-            // The world radius is equivalent to the localScale.y in our setup
             activeTargetRadius = targetObj.transform.localScale.y;
         }
     }
@@ -99,12 +98,30 @@ public class CameraController : MonoBehaviour
     {
         if (Keyboard.current == null || Mouse.current == null) return;
 
+        HandleFocusInput();
+        HandleRotation();
+        HandleMovement();
+    }
+
+    /// <summary>
+    /// Handles the input for focusing on the active target when the F key is pressed.
+    /// If a target is set, the camera will move to a position that frames the target based on its radius and the focus distance multiplier.
+    /// </summary>
+    private void HandleFocusInput()
+    {
         // FOCUS ACTION (Press F)
         if (Keyboard.current.fKey.wasPressedThisFrame && activeTarget != null)
         {
             FocusOnTarget();
         }
+    }
 
+    /// <summary>
+    /// Handles camera rotation based on mouse movement when the middle mouse button is pressed.
+    /// The camera's pitch is clamped to prevent flipping over.
+    /// </summary>
+    private void HandleRotation()
+    {
         if (Mouse.current.middleButton.isPressed)
         {
             Vector2 mouseDelta = Mouse.current.delta.ReadValue();
@@ -115,7 +132,14 @@ public class CameraController : MonoBehaviour
             pitch = Mathf.Clamp(pitch, -89f, 89f);
             transform.eulerAngles = new Vector3(pitch, yaw, 0f);
         }
+    }
 
+    /// <summary>
+    /// Handles camera movement based on WASD input, allowing for free navigation in the scene.
+    /// Movement speed is scaled by panSpeed and Time.unscaledDeltaTime to ensure consistent movement regardless of time scale changes.
+    /// </summary>
+    private void HandleMovement()
+    {
         Vector3 movement = Vector3.zero;
 
         if (Keyboard.current.wKey.isPressed) movement += transform.forward;
@@ -134,8 +158,6 @@ public class CameraController : MonoBehaviour
     private void FocusOnTarget()
     {
         float safeDistance = activeTargetRadius * focusDistanceMultiplier;
-        
-        // Move backward from the target along the camera's current viewing angle
         transform.position = activeTarget.position - (transform.forward * safeDistance);
     }
 }
