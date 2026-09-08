@@ -18,9 +18,8 @@ public class StarSystemGenerator : MonoBehaviour
     public UnityEngine.Events.UnityEvent OnSystemGenerated;
     
     [HideInInspector]
-    public int algorithmVersion = 1;
+    public int algorithmVersion = 1; // Maintained for Web3 Smart Contract backward compatibility
 
-    // Counters for tracking the total number of celestial bodies generated
     public int TotalPlanets { get; private set; }
     public int TotalMoons { get; private set; }
     public int TotalRings { get; private set; }
@@ -42,36 +41,34 @@ public class StarSystemGenerator : MonoBehaviour
     /// <param name="seed">Seed for deterministic generation.</param>
     public void GenerateCompleteStarSystem(string seed)
     {
-        Debug.Log($"=== STARTING STAR SYSTEM GENERATION (Algorithm v{algorithmVersion}) ===");
-        
         if (!InitializeGenerators()) return;
 
-        TotalPlanets = 0;
-        TotalMoons = 0;
-        TotalRings = 0;
+        ResetCounters();
 
         System.Random systemPrng = new System.Random(StochasticMath.DeriveNumericalSeed(seed));
-        string rootSystemName = nameGenerator.GenerateSystemName(systemPrng);
-        SystemName = rootSystemName;
+        SystemName = nameGenerator.GenerateSystemName(systemPrng);
         
-        Debug.Log($"[Semantic Module] Root System Name: {rootSystemName}");
-
         GenerateSkybox(systemPrng);
+        SystemStar = GenerateCentralStar(seed, SystemName);
+        SystemPlanets = GeneratePlanetarySystem(seed, SystemName, SystemStar);
 
-        SystemStar = GenerateCentralStar(seed, rootSystemName);
-        GeneratePlanetarySystem(seed, rootSystemName, SystemStar);
+        // Notify UI and render the diorama only after all calculations are complete
+        OnSystemGenerated?.Invoke();
+        BuildVisualRepresentation();
     }
 
     /// <summary>
-    /// Initializes necessary data generators like the Markov name generator.
+    /// Initializes the Markov name generator using a JSON data file. Returns false if the file is missing or corrupted.
     /// </summary>
-    /// <returns>True if initialization was successful, false otherwise.</returns>
+    /// <returns>True if initialization is successful, false otherwise.</returns>
     private bool InitializeGenerators()
     {
+        if (nameGenerator != null) return true;
+
         TextAsset jsonFile = Resources.Load<TextAsset>("markov_data");
         if (jsonFile == null)
         {
-            Debug.LogError("Error: Markov data file not found!");
+            Debug.LogError("Critical Error: Markov data file not found in Resources folder!");
             return false;
         }
 
@@ -80,9 +77,19 @@ public class StarSystemGenerator : MonoBehaviour
     }
 
     /// <summary>
-    /// Procedurally calculates skybox visuals and passes them to the diorama builder.
+    /// Resets the counters for planets, moons, and rings to zero before generating a new system.
+    /// </summary> 
+    private void ResetCounters()
+    {
+        TotalPlanets = 0;
+        TotalMoons = 0;
+        TotalRings = 0;
+    }
+
+    /// <summary>
+    /// Generates the skybox for the star system.
     /// </summary>
-    /// <param name="systemPrng">The root system random number generator.</param>
+    /// <param name="systemPrng">The random number generator for the system.</param>
     private void GenerateSkybox(System.Random systemPrng)
     {
         float starDistance = (float)systemPrng.NextDouble() * 25f + 75f; 
@@ -102,9 +109,9 @@ public class StarSystemGenerator : MonoBehaviour
     /// <summary>
     /// Generates the central star of the system based on the provided seed and root name.
     /// </summary>
-    /// <param name="baseSeed">Seed for deterministic generation.</param>
-    /// <param name="rootName">The root name for the system.</param>
-    /// <returns>The generated central star data.</returns>
+    /// <param name="baseSeed">The base seed for the star generation.</param>
+    /// <param name="rootName">The root name for the star.</param>
+    /// <returns>The generated star data.</returns>
     private StarData GenerateCentralStar(string baseSeed, string rootName)
     {
         string starSubSeedInput = baseSeed + "_Star_Entity";
@@ -136,31 +143,22 @@ public class StarSystemGenerator : MonoBehaviour
         star.rotationPeriod = Mathf.Max(StochasticMath.GetNormalValue(starPrng, 600f, 150f), 100f);
 
         AstrophysicsRules.CalculateStellarSurface(
-            star.temperature, 
-            star.mass, 
-            star.radius, 
-            star.rotationPeriod, 
-            starPrng, 
-            out star.baseColor, 
-            out star.magneticActivity, 
-            out star.granulationScale
+            star.temperature, star.mass, star.radius, star.rotationPeriod, starPrng, 
+            out star.baseColor, out star.magneticActivity, out star.granulationScale
         );
 
-        Debug.Log($"[Star Module] {star.name} | Class: {star.spectralClass} | Mass: {star.mass:F2} SM | Temp: {Mathf.RoundToInt(star.temperature)} K | Frost Line: {star.frostLine:F2} AU");
-        
         return star;
     }
 
     /// <summary>
-    /// Generates the planetary system around the central star based on the provided seed and root name.
+    /// Generates the planetary system for the star system.
     /// </summary>
-    /// <param name="baseSeed">Seed for deterministic generation.</param>
-    /// <param name="rootName">The root name for the system.</param>
-    /// <param name="centralStar">The central star data.</param>
-    private void GeneratePlanetarySystem(string baseSeed, string rootName, StarData centralStar)
+    /// <param name="baseSeed">The base seed for the planetary system generation.</param>
+    /// <param name="rootName">The root name for the planetary system.</param>
+    /// <param name="centralStar">The central star of the system.</param>
+    /// <returns>The list of generated planets.</returns>
+    private List<PlanetData> GeneratePlanetarySystem(string baseSeed, string rootName, StarData centralStar)
     {
-        SystemPlanets.Clear();
-
         string layoutSubSeedInput = baseSeed + "_Planets_Layout";
         int layoutNumericalSeed = StochasticMath.DeriveNumericalSeed(layoutSubSeedInput);
         System.Random layoutPrng = new System.Random(layoutNumericalSeed);
@@ -168,9 +166,7 @@ public class StarSystemGenerator : MonoBehaviour
         float rawPlanetCount = StochasticMath.GetNormalValue(layoutPrng, 5.5f, 2.0f);
         int planetCount = Mathf.Clamp(Mathf.RoundToInt(rawPlanetCount), 1, 12);
         
-        Debug.Log($"[Layout Module] Total Planets Scheduled: {planetCount}");
-
-        List<PlanetData> systemPlanets = new List<PlanetData>();
+        List<PlanetData> generatedPlanets = new List<PlanetData>();
 
         for (int i = 0; i < planetCount; i++)
         {
@@ -178,33 +174,20 @@ public class StarSystemGenerator : MonoBehaviour
             PlanetData planet = GeneratePlanetEntity(planetSubSeedInput, rootName, i, centralStar);
             
             planet.moons = GenerateMoons(planetSubSeedInput, planet);
-            systemPlanets.Add(planet);
-
-            string ringOutput = planet.hasRings ? $"Yes ({planet.ringDivisions})" : "No";
-            Debug.Log($"-> {planet.name} | mass: {planet.mass:F2} ME | Dist: {planet.orbitalDistance:F2} AU | Class: {planet.className} | Rad: {planet.radius:F2} RE | Atmos: {planet.atmosphereType} | Rings: {ringOutput} | Moons: {planet.moons.Count}");
+            generatedPlanets.Add(planet);
         }
 
-        SystemPlanets = systemPlanets;
-        OnSystemGenerated?.Invoke();
-
-        if (dioramaBuilder != null)
-        {
-            dioramaBuilder.BuildUniverse(centralStar, systemPlanets);
-        }
-        else
-        {
-            Debug.LogWarning("Warning: Diorama Builder is not assigned. Visual representation will not be generated.");
-        }
+        return generatedPlanets;
     }
 
     /// <summary>
-    /// Generates a single planet entity's physical and visual properties.
+    /// Generates a single planet entity based on the provided seed and root name.
     /// </summary>
-    /// <param name="planetSeedInput">The derived seed input string for this specific planet.</param>
-    /// <param name="rootName">The root name of the star system.</param>
-    /// <param name="planetIndex">The orbital index of the planet.</param>
-    /// <param name="centralStar">Data of the system's central star.</param>
-    /// <returns>A fully populated PlanetData object.</returns>
+    /// <param name="planetSeedInput">The seed input for the planet generation.</param>
+    /// <param name="rootName">The root name for the planet.</param>
+    /// <param name="planetIndex">The index of the planet in the system.</param>
+    /// <param name="centralStar">The central star of the system.</param>
+    /// <returns>The generated planet data.</returns>
     private PlanetData GeneratePlanetEntity(string planetSeedInput, string rootName, int planetIndex, StarData centralStar)
     {
         int planetNumericalSeed = StochasticMath.DeriveNumericalSeed(planetSeedInput);
@@ -230,14 +213,8 @@ public class StarSystemGenerator : MonoBehaviour
         planet.atmosphereType = AstrophysicsRules.DetermineAtmosphere(planet.className, planet.surfaceGravity, planet.orbitalDistance, currentSystemFrostLine, planetPrng);
 
         AstrophysicsRules.CalculatePlanetVisuals(
-            planet.className, 
-            planet.surfaceTemperature, 
-            planet.atmosphereType, 
-            planetPrng, 
-            out planet.baseColor, 
-            out planet.secondaryColor, 
-            out planet.hydrofraction, 
-            out planet.cloudCoverage
+            planet.className, planet.surfaceTemperature, planet.atmosphereType, planetPrng, 
+            out planet.baseColor, out planet.secondaryColor, out planet.hydrofraction, out planet.cloudCoverage
         );
 
         float revolutionYears = Mathf.Sqrt(Mathf.Pow(planet.orbitalDistance, 3) / centralStar.mass);
@@ -246,29 +223,30 @@ public class StarSystemGenerator : MonoBehaviour
         float baseRotation = (planet.className == "Gas Giant" || planet.className == "Ice Giant") ? 12f : 24f;
         planet.rotationPeriod = Mathf.Max(StochasticMath.GetNormalValue(planetPrng, baseRotation, baseRotation * 0.5f), 2f); 
         
-        bool lockedToStar = (planet.orbitalDistance < 0.2f);
-        if (lockedToStar) 
+        if (planet.orbitalDistance < 0.2f) 
         {
             planet.rotationPeriod = planet.revolutionPeriod * 24f; 
         }
         
         planet.orbitalEccentricity = AstrophysicsRules.CalculateEccentricity(planetPrng);
-        AstrophysicsRules.CalculateRings(planet.className, planet.radius, planetPrng, out planet.hasRings, out planet.ringDivisions, out planet.ringInnerRadius, out planet.ringOuterRadius, out planet.ringColor);
+        AstrophysicsRules.CalculateRings(planet.className, planet.radius, planetPrng, 
+            out planet.hasRings, out planet.ringDivisions, out planet.ringInnerRadius, out planet.ringOuterRadius, out planet.ringColor);
         
         TotalPlanets++;
         if (planet.hasRings)
-            for (int r = 0; r < planet.ringDivisions; r++)
-                TotalRings++;
+        {
+            TotalRings += planet.ringDivisions;
+        }
 
         return planet;
     }
 
     /// <summary>
-    /// Orchestrates the generation of all moons for a given planet.
+    /// Generates the moons for a given planet.
     /// </summary>
-    /// <param name="planetSeedInput">The seed input for generating moon data.</param>
-    /// <param name="parentPlanet">The parent planet data.</param>
-    /// <returns>A list of generated moon data.</returns>
+    /// <param name="planetSeedInput">The seed input for the planet generation.</param>
+    /// <param name="parentPlanet">The parent planet for which to generate moons.</param>
+    /// <returns>The list of generated moon data.</returns>
     private List<MoonData> GenerateMoons(string planetSeedInput, PlanetData parentPlanet)
     {
         List<MoonData> generatedMoons = new List<MoonData>();
@@ -289,13 +267,13 @@ public class StarSystemGenerator : MonoBehaviour
     }
 
     /// <summary>
-    /// Generates a single moon entity's physical and visual properties.
+    /// Generates a single moon entity based on the provided seed and parent planet.
     /// </summary>
-    /// <param name="moonSeedInput">The derived seed input string for this specific moon.</param>
-    /// <param name="parentPlanet">The parent planet data.</param>
-    /// <param name="moonIndex">The alphabetical index of the moon.</param>
-    /// <param name="currentOrbitalDistance">Reference to the running orbital distance tracker, updated per moon.</param>
-    /// <returns>A fully populated MoonData object.</returns>
+    /// <param name="moonSeedInput">The seed input for the moon generation.</param>
+    /// <param name="parentPlanet">The parent planet for which the moon is generated.</param>
+    /// <param name="moonIndex">The index of the moon in the planet's moon list.</param>
+    /// <param name="currentOrbitalDistance">Reference to the current orbital distance for moon placement, updated after each moon generation.</param>
+    /// <returns>The generated moon data.</returns>
     private MoonData GenerateMoonEntity(string moonSeedInput, PlanetData parentPlanet, int moonIndex, ref float currentOrbitalDistance)
     {
         System.Random moonPrng = new System.Random(StochasticMath.DeriveNumericalSeed(moonSeedInput));
@@ -331,7 +309,8 @@ public class StarSystemGenerator : MonoBehaviour
         moon.orbitalEccentricity = Mathf.Clamp(Mathf.Abs(StochasticMath.GetNormalValue(moonPrng, 0.01f, 0.01f)), 0f, 0.05f);
         moon.className = AstrophysicsRules.ClassifyMoon(parentPlanet.orbitalDistance, currentSystemFrostLine, moonPrng);
         
-        AstrophysicsRules.CalculateRings(moon.className, moon.radius, moonPrng, out moon.hasRings, out moon.ringDivisions, out moon.ringInnerRadius, out moon.ringOuterRadius, out moon.ringColor);
+        AstrophysicsRules.CalculateRings(moon.className, moon.radius, moonPrng, 
+            out moon.hasRings, out moon.ringDivisions, out moon.ringInnerRadius, out moon.ringOuterRadius, out moon.ringColor);
         
         float tempVariance = StochasticMath.GetNormalValue(moonPrng, 1.0f, 0.05f);
         moon.surfaceTemperature = parentPlanet.surfaceTemperature * tempVariance;
@@ -339,21 +318,31 @@ public class StarSystemGenerator : MonoBehaviour
         moon.atmosphereType = AstrophysicsRules.DetermineAtmosphere(moon.className, moon.surfaceGravity, parentPlanet.orbitalDistance, currentSystemFrostLine, moonPrng);
 
         AstrophysicsRules.CalculatePlanetVisuals(
-            moon.className, 
-            moon.surfaceTemperature, 
-            moon.atmosphereType, 
-            moonPrng, 
-            out moon.baseColor, 
-            out moon.secondaryColor, 
-            out moon.hydrofraction, 
-            out moon.cloudCoverage
+            moon.className, moon.surfaceTemperature, moon.atmosphereType, moonPrng, 
+            out moon.baseColor, out moon.secondaryColor, out moon.hydrofraction, out moon.cloudCoverage
         );
 
         TotalMoons++;
         if (moon.hasRings)
-            for (int r = 0; r < moon.ringDivisions; r++)
-                TotalRings++;
+        {
+            TotalRings += moon.ringDivisions;
+        }
 
         return moon;
+    }
+
+    /// <summary>
+    /// Builds the visual representation of the star system.
+    /// </summary>
+    private void BuildVisualRepresentation()
+    {
+        if (dioramaBuilder != null)
+        {
+            dioramaBuilder.BuildUniverse(SystemStar, SystemPlanets);
+        }
+        else
+        {
+            Debug.LogWarning("Diorama Builder is not assigned. Visual representation will not be generated.");
+        }
     }
 }
