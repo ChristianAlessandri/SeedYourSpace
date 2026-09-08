@@ -542,6 +542,8 @@ MonoBehaviour:
   parentPlanetNameText: {fileID: 1348519669}
   scrollContent: {fileID: 1998337108}
   moonButtonPrefab: {fileID: 2118867756494689929, guid: 171f7ab340079ed4e9cf386a4a14248e, type: 3}
+  normalColor: {r: 1, g: 1, b: 1, a: 0}
+  selectedColor: {r: 0, g: 0, b: 0, a: 0.33}
   OnMoonSelected:
     m_PersistentCalls:
       m_Calls: []
@@ -2123,6 +2125,58 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1187569152}
   m_CullTransparentMesh: 1
+--- !u!1 &1232413340
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1232413341}
+  - component: {fileID: 1232413342}
+  m_Layer: 0
+  m_Name: SelectionVisualizer
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1232413341
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1232413340}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1232413342
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1232413340}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a9fced64c8fdbd44282c6a761f76a739, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SelectionVisualizer
+  systemListHUD: {fileID: 346823825}
+  moonListHUD: {fileID: 346823826}
+  orbitColor: {r: 1, g: 1, b: 1, a: 0.15}
+  axisColor: {r: 1, g: 0.2, b: 0.2, a: 0.8}
+  planetOrbitLineWidth: 1.5
+  moonOrbitLineWidth: 0.3
+  lineMaterial: {fileID: 2100000, guid: 4518db7710466a3488b19ff9b52b7cfb, type: 2}
+  solidMaterial: {fileID: 2100000, guid: 630ccfd4af79cab40b37f28e7a85fb77, type: 2}
 --- !u!1 &1325254551
 GameObject:
   m_ObjectHideFlags: 0
@@ -3846,3 +3900,4 @@ SceneRoots:
   - {fileID: 346823822}
   - {fileID: 1978882059}
   - {fileID: 1325254554}
+  - {fileID: 1232413341}
