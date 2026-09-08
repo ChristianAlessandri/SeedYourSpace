@@ -76,31 +76,13 @@ public class CelestialMiniatureRenderer : MonoBehaviour
     /// <summary>
     /// Builds a miniature of the given celestial body and renders it to the UI.
     /// </summary>
-    /// <param name="bodyData">The data of the celestial body for which to build the miniature.</param>
+    /// <param name="bodyData">The data for the celestial body to render.</param>
     public void BuildMiniature(CelestialBodyData bodyData)
     {
         if (bodyData == null || celestialPrefab == null) return;
 
-        if (currentMiniatureBody != null) Destroy(currentMiniatureBody);
-        if (currentMiniatureRings != null) Destroy(currentMiniatureRings);
+        SetupBaseMiniatureObject(bodyData.name, bodyData.axialTilt);
 
-        int layerIndex = LayerMask.NameToLayer(miniatureLayerName);
-
-        // Instantiate from prefab exactly like VisualDioramaBuilder
-        currentMiniatureBody = Instantiate(celestialPrefab, isolatedPosition, Quaternion.Euler(bodyData.axialTilt, 0f, 0f));
-        currentMiniatureBody.name = $"Miniature_{bodyData.name}";
-        
-        // Apply the UI layer to the prefab and all its potential children
-        SetLayerRecursively(currentMiniatureBody, layerIndex);
-
-        // Remove the simulation script so it doesn't fly away in the UI
-        CelestialBody orbitScript = currentMiniatureBody.GetComponent<CelestialBody>();
-        if (orbitScript != null)
-        {
-            Destroy(orbitScript);
-        }
-
-        // Apply materials like the Diorama Builder does
         Renderer mr = currentMiniatureBody.GetComponent<Renderer>();
         if (mr != null)
         {
@@ -108,18 +90,16 @@ public class CelestialMiniatureRenderer : MonoBehaviour
 
             MaterialPropertyBlock props = new MaterialPropertyBlock();
             mr.GetPropertyBlock(props); 
-            
             props.SetColor("_BaseColor", bodyData.baseColor);
             props.SetColor("_SecondaryColor", bodyData.secondaryColor);
             props.SetFloat("_Hydrofraction", bodyData.hydrofraction);
             props.SetFloat("_CloudCoverage", bodyData.cloudCoverage);
-            
             mr.SetPropertyBlock(props);
         }
 
         if (bodyData.hasRings)
         {
-            BuildMiniatureRings(currentMiniatureBody, bodyData, layerIndex);
+            BuildMiniatureRings(currentMiniatureBody, bodyData, LayerMask.NameToLayer(miniatureLayerName));
         }
 
         float scaleAdjustment = bodyData.hasRings ? 0.6f : 1.0f;
@@ -129,23 +109,12 @@ public class CelestialMiniatureRenderer : MonoBehaviour
     /// <summary>
     /// Renders a dynamic 3D miniature specifically for the Central Star.
     /// </summary>
-    /// <param name="starData">The data of the star for which to build the miniature.</param>
+    /// <param name="starData">The data for the central star.</param>
     public void BuildMiniature(StarData starData)
     {
         if (starData == null || celestialPrefab == null) return;
 
-        if (currentMiniatureBody != null) Destroy(currentMiniatureBody);
-        if (currentMiniatureRings != null) Destroy(currentMiniatureRings);
-
-        int layerIndex = LayerMask.NameToLayer(miniatureLayerName);
-
-        currentMiniatureBody = Instantiate(celestialPrefab, isolatedPosition, Quaternion.Euler(starData.axialTilt, 0f, 0f));
-        currentMiniatureBody.name = $"Miniature_{starData.name}";
-        
-        SetLayerRecursively(currentMiniatureBody, layerIndex);
-
-        CelestialBody orbitScript = currentMiniatureBody.GetComponent<CelestialBody>();
-        if (orbitScript != null) Destroy(orbitScript);
+        SetupBaseMiniatureObject(starData.name, starData.axialTilt);
 
         Renderer mr = currentMiniatureBody.GetComponent<Renderer>();
         if (mr != null)
@@ -154,23 +123,45 @@ public class CelestialMiniatureRenderer : MonoBehaviour
 
             MaterialPropertyBlock props = new MaterialPropertyBlock();
             mr.GetPropertyBlock(props); 
-            
             props.SetColor("_BaseColor", starData.baseColor);
             props.SetColor("_EmissionColor", starData.baseColor * 2.5f); 
             props.SetFloat("_GranulationScale", starData.granulationScale);
             props.SetFloat("_MagneticActivity", starData.magneticActivity);
-            
             mr.SetPropertyBlock(props);
         }
+        
+        currentMiniatureBody.transform.localScale = Vector3.one * 0.8f;
     }
 
+    /// <summary>
+    /// Handles the common instantiation, layer setting, and cleanup for all miniatures.
+    /// </summary>
+    /// <param name="objectName">The name of the celestial body.</param>
+    /// <param name="axialTilt">The axial tilt of the celestial body.</param>
+    private void SetupBaseMiniatureObject(string objectName, float axialTilt)
+    {
+        if (currentMiniatureBody != null) Destroy(currentMiniatureBody);
+        if (currentMiniatureRings != null) Destroy(currentMiniatureRings);
+
+        currentMiniatureBody = Instantiate(celestialPrefab, isolatedPosition, Quaternion.Euler(axialTilt, 0f, 0f));
+        currentMiniatureBody.name = $"Miniature_{objectName}";
+        
+        SetLayerRecursively(currentMiniatureBody, LayerMask.NameToLayer(miniatureLayerName));
+
+        CelestialBody orbitScript = currentMiniatureBody.GetComponent<CelestialBody>();
+        if (orbitScript != null)
+        {
+            Destroy(orbitScript);
+        }
+    }
 
     /// <summary>
     /// Builds a simple ring mesh for the miniature if the celestial body has rings.
     /// </summary>
-    /// <param name="parentObj">The parent object to which the rings will be attached.</param>
-    /// <param name="bodyData">The data of the celestial body for which to build rings.</param>
-    /// <param name="layerIndex">The layer index to assign to the rings.</param>
+    /// <param name="parentObj">The parent GameObject to which the rings will be attached.</param>
+    /// <param name="bodyData">The data for the celestial body, including ring parameters
+    /// if applicable.</param>
+    /// <param name="layerIndex">The layer index to assign to the rings for proper rendering.</param>
     private void BuildMiniatureRings(GameObject parentObj, CelestialBodyData bodyData, int layerIndex)
     {
         currentMiniatureRings = new GameObject("Miniature_Rings");
@@ -253,6 +244,8 @@ public class CelestialMiniatureRenderer : MonoBehaviour
     /// <summary>
     /// Helper method to ensure the prefab and all its contents are properly isolated from the main camera.
     /// </summary>
+    /// <param name="obj">The GameObject to set the layer for.</param>
+    /// <param name="newLayer">The layer index to assign.</param>
     private void SetLayerRecursively(GameObject obj, int newLayer)
     {
         if (newLayer == -1) return;
