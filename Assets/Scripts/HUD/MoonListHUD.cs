@@ -2,18 +2,15 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using UnityEngine.Events;
+using System.Collections.Generic;
 
 /// <summary>
-/// Manages the dynamic list of moons in the UI for the currently selected planet.
-/// Listens to SystemListHUD and toggles the visibility of its UI container based on selection.
+/// Manages the dynamic list of moons. Supports external selection via 3D picking.
 /// </summary>
 public class MoonListHUD : MonoBehaviour
 {
     [Header("Core References")]
-    [Tooltip("Reference to the system list to listen for selection events.")]
     public SystemListHUD systemListHUD;
-    
-    [Tooltip("The child GameObject containing all the visual elements (Background, ScrollView, etc.).")]
     public GameObject bentoBoxVisualContainer; 
     
     [Header("UI Elements")]
@@ -29,12 +26,12 @@ public class MoonListHUD : MonoBehaviour
     [Header("Events")]
     public UnityEvent<MoonData> OnMoonSelected;
 
+    // Registry mapping body names to their physical UI buttons
+    private Dictionary<string, Button> buttonRegistry = new Dictionary<string, Button>();
+
     private void Start()
     {
-        if (bentoBoxVisualContainer != null)
-        {
-            bentoBoxVisualContainer.SetActive(false);
-        }
+        HideCompletely();
     }
 
     private void OnEnable()
@@ -55,70 +52,47 @@ public class MoonListHUD : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Hides the entire moon list UI. Triggered when a star is selected.
-    /// </summary>
-    /// <param name="starData">The star data that was selected.</param>
-    private void HideMoonList(StarData starData)
-    {
-        if (bentoBoxVisualContainer != null)
-        {
-            bentoBoxVisualContainer.SetActive(false);
-        }
-    }
+    private void HideMoonList(StarData starData) => HideCompletely();
 
     /// <summary>
-    /// Clears the current list, checks for moons, toggles visibility, and populates the UI.
+    /// Populates the moon list based on the selected planet's moons. If no moons exist, the list is hidden.
     /// </summary>
-    /// <param name="activePlanet">The currently selected planet whose moons will be displayed.</param>
+    /// <param name="activePlanet">The currently selected planet.</param>
     private void PopulateMoonList(PlanetData activePlanet)
     {
         foreach (Transform child in scrollContent)
         {
             Destroy(child.gameObject);
         }
+        
         currentSelectedButtonImage = null;
+        buttonRegistry.Clear();
 
         if (activePlanet.moons == null || activePlanet.moons.Count == 0)
         {
-            if (bentoBoxVisualContainer != null)
-            {
-                bentoBoxVisualContainer.SetActive(false);
-            }
+            HideCompletely();
             return;
         }
 
-        if (bentoBoxVisualContainer != null)
-        {
-            bentoBoxVisualContainer.SetActive(true);
-        }
-
-        if (parentPlanetNameText != null)
-        {
-            parentPlanetNameText.text = $"{activePlanet.name} Moons";
-        }
+        if (bentoBoxVisualContainer != null) bentoBoxVisualContainer.SetActive(true);
+        if (parentPlanetNameText != null) parentPlanetNameText.text = $"{activePlanet.name} Moons";
 
         foreach (MoonData moon in activePlanet.moons)
         {
             GameObject newButtonObj = Instantiate(moonButtonPrefab, scrollContent);
             
             TextMeshProUGUI btnText = newButtonObj.GetComponentInChildren<TextMeshProUGUI>();
-            if (btnText != null)
-            {
-                btnText.text = moon.name;
-            }
+            if (btnText != null) btnText.text = moon.name;
 
             Button btn = newButtonObj.GetComponent<Button>();
             Image btnImage = newButtonObj.GetComponent<Image>();
             
-            if (btnImage != null)
-            {
-                btnImage.color = normalColor;
-            }
+            if (btnImage != null) btnImage.color = normalColor;
 
             if (btn != null)
             {
                 btn.onClick.AddListener(() => OnMoonClicked(moon, btnImage));
+                buttonRegistry[moon.name] = btn;
             }
         }
     }
@@ -126,22 +100,49 @@ public class MoonListHUD : MonoBehaviour
     /// <summary>
     /// Handles the click event for a moon button.
     /// </summary>
-    /// <param name="selectedMoon">The moon data for the clicked button.</param>
+    /// <param name="selectedMoon">The moon data associated with the clicked button.</param>
     /// <param name="clickedImage">The image component of the clicked button.</param>
     private void OnMoonClicked(MoonData selectedMoon, Image clickedImage)
+    {
+        if (currentSelectedButtonImage != null) currentSelectedButtonImage.color = normalColor;
+        currentSelectedButtonImage = clickedImage;
+        if (currentSelectedButtonImage != null) currentSelectedButtonImage.color = selectedColor;
+
+        OnMoonSelected?.Invoke(selectedMoon);
+    }
+
+    /// <summary>
+    /// Simulates a UI click if the moon name exists in this list.
+    /// </summary>
+    /// <param name="name">The name of the moon to select.</param>
+    /// <returns>True if the moon was found and selected, false otherwise.</returns>
+    public bool TrySelectBody(string name)
+    {
+        if (buttonRegistry.TryGetValue(name, out Button btn))
+        {
+            btn.onClick.Invoke();
+            return true;
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// Deselects any currently selected moon button, resetting its visual state.
+    /// </summary>
+    public void DeselectAll()
     {
         if (currentSelectedButtonImage != null)
         {
             currentSelectedButtonImage.color = normalColor;
+            currentSelectedButtonImage = null;
         }
+    }
 
-        currentSelectedButtonImage = clickedImage;
-        
-        if (currentSelectedButtonImage != null)
-        {
-            currentSelectedButtonImage.color = selectedColor;
-        }
-
-        OnMoonSelected?.Invoke(selectedMoon);
+    /// <summary>
+    /// Hides the moon list and its container completely, typically used when no moons are available or when a star is selected.
+    /// </summary>
+    public void HideCompletely()
+    {
+        if (bentoBoxVisualContainer != null) bentoBoxVisualContainer.SetActive(false);
     }
 }

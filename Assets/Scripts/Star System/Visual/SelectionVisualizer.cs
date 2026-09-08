@@ -211,4 +211,15 @@ public class SelectionVisualizer : MonoBehaviour
             orbitLine.SetPosition(i, finalPoint);
         }
     }
+
+    /// <summary>
+    /// Hides all visualization lines and sticks when empty space is clicked.
+    /// </summary>
+    public void ClearVisuals()
+    {
+        activeBody = null;
+        orbitLine.enabled = false;
+        if (northPoleStick != null) northPoleStick.SetActive(false);
+        if (southPoleStick != null) southPoleStick.SetActive(false);
+    }
 }

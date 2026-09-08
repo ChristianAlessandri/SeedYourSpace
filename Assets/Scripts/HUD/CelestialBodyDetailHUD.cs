@@ -109,4 +109,12 @@ public class CelestialBodyDetailHUD : MonoBehaviour
 
         if (miniatureRenderer != null) miniatureRenderer.BuildMiniature(star);
     }
+
+    /// <summary>
+    /// Hides the detail panel when empty space is clicked.
+    /// </summary>
+    public void ClearDetails()
+    {
+        if (bentoBoxVisualContainer != null) bentoBoxVisualContainer.SetActive(false);
+    }
 }

@@ -2,9 +2,11 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using UnityEngine.Events; 
+using System.Collections.Generic;
 
 /// <summary>
 /// Manages the dynamic list of celestial bodies in the UI, allowing users to view and select them.
+/// Supports external selection via 3D picking.
 /// </summary>
 public class SystemListHUD : MonoBehaviour
 {
@@ -24,6 +26,9 @@ public class SystemListHUD : MonoBehaviour
     public UnityEvent<PlanetData> OnPlanetSelected;
     public UnityEvent<StarData> OnStarSelected; 
 
+    // Registry mapping body names to their physical UI buttons
+    private Dictionary<string, Button> buttonRegistry = new Dictionary<string, Button>();
+
     private void Awake()
     {
         if (generator != null)
@@ -33,7 +38,7 @@ public class SystemListHUD : MonoBehaviour
     }
 
     /// <summary>
-    /// Populates the UI list with buttons representing the star and planets in the generated system. Each button is set up to trigger the appropriate event when clicked.
+    /// Populates the UI list with buttons for each celestial body in the generated star system.
     /// </summary>
     private void PopulatePlanetList()
     {
@@ -44,15 +49,11 @@ public class SystemListHUD : MonoBehaviour
             Destroy(child.gameObject);
         }
 
-        currentSelectedButtonImage = null;
+        currentSelectedButtonImage = null; 
+        buttonRegistry.Clear(); 
 
-        // Spawn the Star Button first
-        if (generator.SystemStar != null)
-        {
-            SpawnButton(generator.SystemStar.name, generator.SystemStar, null);
-        }
+        if (generator.SystemStar != null) SpawnButton(generator.SystemStar.name, generator.SystemStar, null);
 
-        // Spawn the Planet Buttons
         if (generator.SystemPlanets != null)
         {
             foreach (PlanetData planet in generator.SystemPlanets)
@@ -63,28 +64,22 @@ public class SystemListHUD : MonoBehaviour
     }
 
     /// <summary>
-    /// Spawns a button in the UI for either a star or a planet, based on the provided data.
+    /// Spawns a new button in the UI list for the specified celestial body.
     /// </summary>
-    /// <param name="buttonName">The display name for the button.</param>
-    /// <param name="starData">The data for the star, if applicable.</param
-    /// <param name="planetData">The data for the planet, if applicable.</param>
+    /// <param name="buttonName">The name of the button to create.</param>
+    /// <param name="starData">The star data associated with the button, if applicable.</param>
+    /// <param name="planetData">The planet data associated with the button, if applicable.</param>
     private void SpawnButton(string buttonName, StarData starData, PlanetData planetData)
     {
         GameObject newButtonObj = Instantiate(planetButtonPrefab, scrollContent);
             
         TextMeshProUGUI btnText = newButtonObj.GetComponentInChildren<TextMeshProUGUI>();
-        if (btnText != null)
-        {
-            btnText.text = buttonName;
-        }
+        if (btnText != null) btnText.text = buttonName;
 
         Button btn = newButtonObj.GetComponent<Button>();
         Image btnImage = newButtonObj.GetComponent<Image>();
             
-        if (btnImage != null)
-        {
-            btnImage.color = normalColor;
-        }
+        if (btnImage != null) btnImage.color = normalColor;
 
         if (btn != null)
         {
@@ -95,10 +90,39 @@ public class SystemListHUD : MonoBehaviour
                 currentSelectedButtonImage = btnImage;
                 if (currentSelectedButtonImage != null) currentSelectedButtonImage.color = selectedColor;
 
-                // Fire the appropriate event based on what was passed
                 if (starData != null) OnStarSelected?.Invoke(starData);
                 else if (planetData != null) OnPlanetSelected?.Invoke(planetData);
             });
+
+            // Store reference for external 3D clicking
+            buttonRegistry[buttonName] = btn;
+        }
+    }
+
+    /// <summary>
+    /// Simulates a UI click if the body name exists in this list.
+    /// </summary>
+    /// <param name="name">The name of the body to select.</param>
+    /// <returns>True if the body was found and selected, false otherwise.</returns>
+    public bool TrySelectBody(string name)
+    {
+        if (buttonRegistry.TryGetValue(name, out Button btn))
+        {
+            btn.onClick.Invoke(); 
+            return true;
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// Clears the visual selection state of the buttons.
+    /// </summary>
+    public void DeselectAll()
+    {
+        if (currentSelectedButtonImage != null)
+        {
+            currentSelectedButtonImage.color = normalColor;
+            currentSelectedButtonImage = null;
         }
     }
 }
