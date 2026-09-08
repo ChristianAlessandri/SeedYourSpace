@@ -16,6 +16,7 @@ public class MouseInteractionController : MonoBehaviour
     public MoonListHUD moonListHUD;
     public CelestialBodyDetailHUD detailHUD;
     public SelectionVisualizer visualizer;
+    public CameraController cameraController;
 
     private void Update()
     {
@@ -73,5 +74,7 @@ public class MouseInteractionController : MonoBehaviour
         
         if (detailHUD != null) detailHUD.ClearDetails();
         if (visualizer != null) visualizer.ClearVisuals();
+
+        if (cameraController != null) cameraController.ClearTarget();
     }
 }

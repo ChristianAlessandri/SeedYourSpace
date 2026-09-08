@@ -1665,6 +1665,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SimpleCameraController
   panSpeed: 200
   lookSensitivity: 0.2
+  systemListHUD: {fileID: 346823825}
+  moonListHUD: {fileID: 346823826}
+  focusDistanceMultiplier: 3.5
 --- !u!114 &819342609
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2966,6 +2969,7 @@ MonoBehaviour:
   moonListHUD: {fileID: 346823826}
   detailHUD: {fileID: 346823827}
   visualizer: {fileID: 1232413342}
+  cameraController: {fileID: 819342608}
 --- !u!4 &1672281003
 Transform:
   m_ObjectHideFlags: 0
