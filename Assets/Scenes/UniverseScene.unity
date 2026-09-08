@@ -3327,8 +3327,7 @@ MonoBehaviour:
 
     Moons: 0
 
-    Rings:
-    0'
+    Rings: 0'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 2b940a1d11cee5b48a2a98b982c9bd75, type: 2}
   m_sharedMaterial: {fileID: 9140340394604385720, guid: 2b940a1d11cee5b48a2a98b982c9bd75, type: 2}

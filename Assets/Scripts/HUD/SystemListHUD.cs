@@ -23,7 +23,7 @@ public class SystemListHUD : MonoBehaviour
     [Header("Events")]
     public UnityEvent<PlanetData> OnPlanetSelected;
 
-    private void Start()
+    private void Awake()
     {
         if (generator != null)
         {
