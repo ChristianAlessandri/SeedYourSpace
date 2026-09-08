@@ -25,6 +25,7 @@ public class StarSystemGenerator : MonoBehaviour
     public int TotalMoons { get; private set; }
     public int TotalRings { get; private set; }
     public string SystemName { get; private set; }
+    public StarData SystemStar { get; private set; }
     public List<PlanetData> SystemPlanets { get; private set; } = new List<PlanetData>();
 
     private MarkovNameGenerator nameGenerator;
@@ -57,8 +58,8 @@ public class StarSystemGenerator : MonoBehaviour
 
         GenerateSkybox(systemPrng);
 
-        StarData centralStar = GenerateCentralStar(seed, rootSystemName);
-        GeneratePlanetarySystem(seed, rootSystemName, centralStar);
+        SystemStar = GenerateCentralStar(seed, rootSystemName);
+        GeneratePlanetarySystem(seed, rootSystemName, SystemStar);
     }
 
     /// <summary>

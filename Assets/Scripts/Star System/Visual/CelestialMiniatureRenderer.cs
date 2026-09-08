@@ -126,6 +126,44 @@ public class CelestialMiniatureRenderer : MonoBehaviour
         currentMiniatureBody.transform.localScale = Vector3.one * scaleAdjustment;
     }
 
+    /// <summary>
+    /// Renders a dynamic 3D miniature specifically for the Central Star.
+    /// </summary>
+    /// <param name="starData">The data of the star for which to build the miniature.</param>
+    public void BuildMiniature(StarData starData)
+    {
+        if (starData == null || celestialPrefab == null) return;
+
+        if (currentMiniatureBody != null) Destroy(currentMiniatureBody);
+        if (currentMiniatureRings != null) Destroy(currentMiniatureRings);
+
+        int layerIndex = LayerMask.NameToLayer(miniatureLayerName);
+
+        currentMiniatureBody = Instantiate(celestialPrefab, isolatedPosition, Quaternion.Euler(starData.axialTilt, 0f, 0f));
+        currentMiniatureBody.name = $"Miniature_{starData.name}";
+        
+        SetLayerRecursively(currentMiniatureBody, layerIndex);
+
+        CelestialBody orbitScript = currentMiniatureBody.GetComponent<CelestialBody>();
+        if (orbitScript != null) Destroy(orbitScript);
+
+        Renderer mr = currentMiniatureBody.GetComponent<Renderer>();
+        if (mr != null)
+        {
+            if (starMaterial != null) mr.sharedMaterial = starMaterial;
+
+            MaterialPropertyBlock props = new MaterialPropertyBlock();
+            mr.GetPropertyBlock(props); 
+            
+            props.SetColor("_BaseColor", starData.baseColor);
+            props.SetColor("_EmissionColor", starData.baseColor * 2.5f); 
+            props.SetFloat("_GranulationScale", starData.granulationScale);
+            props.SetFloat("_MagneticActivity", starData.magneticActivity);
+            
+            mr.SetPropertyBlock(props);
+        }
+    }
+
 
     /// <summary>
     /// Builds a simple ring mesh for the miniature if the celestial body has rings.

@@ -257,7 +257,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 673709a7057f5d94d9bd67af2d80246e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StarSystemGenerator
-  masterSeed: 10
+  masterSeed: 0x60
   dioramaBuilder: {fileID: 98518082}
   OnSystemGenerated:
     m_PersistentCalls:
@@ -520,6 +520,9 @@ MonoBehaviour:
   scrollContent: {fileID: 1968163287}
   planetButtonPrefab: {fileID: 2118867756494689929, guid: 171f7ab340079ed4e9cf386a4a14248e, type: 3}
   OnPlanetSelected:
+    m_PersistentCalls:
+      m_Calls: []
+  OnStarSelected:
     m_PersistentCalls:
       m_Calls: []
 --- !u!114 &346823826
@@ -1993,7 +1996,7 @@ MonoBehaviour:
   m_VertexBufferAutoSizeReduction: 0
   m_useMaxVisibleDescender: 1
   m_pageToDisplay: 1
-  m_margin: {x: 0, y: 0, z: 0, w: 0}
+  m_margin: {x: 0, y: 0, z: -170.20776, w: 0}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
   m_hasFontAssetChanged: 0
@@ -2459,7 +2462,7 @@ MonoBehaviour:
   m_VertexBufferAutoSizeReduction: 0
   m_useMaxVisibleDescender: 1
   m_pageToDisplay: 1
-  m_margin: {x: 0, y: 0, z: 0, w: 0}
+  m_margin: {x: 0, y: 0, z: -168.72876, w: 0}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
   m_hasFontAssetChanged: 0

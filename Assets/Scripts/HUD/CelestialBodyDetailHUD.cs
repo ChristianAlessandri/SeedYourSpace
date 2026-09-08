@@ -4,18 +4,15 @@ using TMPro;
 
 /// <summary>
 /// Displays the physical and orbital statistics of a selected celestial body.
-/// Acts as a standalone module listening to both planet and moon selection events.
+/// Acts as a standalone module listening to star, planet, and moon selection events.
 /// </summary>
 public class CelestialBodyDetailHUD : MonoBehaviour
 {
     [Header("Event Listeners")]
-    [Tooltip("Listen for planet selections.")]
     public SystemListHUD systemListHUD;
-    [Tooltip("Listen for moon selections.")]
     public MoonListHUD moonListHUD;
 
     [Header("Container")]
-    [Tooltip("The main visual container to toggle visibility.")]
     public GameObject bentoBoxVisualContainer;
 
     [Header("UI Text Elements")]
@@ -28,19 +25,15 @@ public class CelestialBodyDetailHUD : MonoBehaviour
 
     private void Start()
     {
-        // Hide panel on start
-        if (bentoBoxVisualContainer != null)
-        {
-            bentoBoxVisualContainer.SetActive(false);
-        }
+        if (bentoBoxVisualContainer != null) bentoBoxVisualContainer.SetActive(false);
     }
 
     private void OnEnable()
     {
-        // Subscribe to events. We can cast PlanetData and MoonData to CelestialBodyData implicitly.
         if (systemListHUD != null)
         {
             systemListHUD.OnPlanetSelected.AddListener(UpdateDetails);
+            systemListHUD.OnStarSelected.AddListener(UpdateDetails); // NEW
         }
 
         if (moonListHUD != null)
@@ -51,10 +44,10 @@ public class CelestialBodyDetailHUD : MonoBehaviour
 
     private void OnDisable()
     {
-        // Unsubscribe to prevent memory leaks
         if (systemListHUD != null)
         {
             systemListHUD.OnPlanetSelected.RemoveListener(UpdateDetails);
+            systemListHUD.OnStarSelected.RemoveListener(UpdateDetails); // NEW
         }
 
         if (moonListHUD != null)
@@ -64,25 +57,18 @@ public class CelestialBodyDetailHUD : MonoBehaviour
     }
 
     /// <summary>
-    /// Populates the UI with the selected body's data and shows the panel.
-    /// Accepts CelestialBodyData, meaning it works for both Planets and Moons.
+    /// Updates the HUD with the details of the selected celestial body, whether it's a planet, moon, or star.
+    /// This method formats and displays the relevant statistics in the UI text elements and triggers the miniature renderer to visualize the body.
     /// </summary>
-    /// <param name="body">The data of the selected celestial body.</param>
+    /// <param name="body">The celestial body data to display.</param>
     private void UpdateDetails(CelestialBodyData body)
     {
         if (body == null) return;
+        if (bentoBoxVisualContainer != null) bentoBoxVisualContainer.SetActive(true);
 
-        // Show the container
-        if (bentoBoxVisualContainer != null)
-        {
-            bentoBoxVisualContainer.SetActive(true);
-        }
-
-        // Update Headers
         if (nameText != null) nameText.text = body.name;
         if (classText != null) classText.text = body.className;
 
-        // Update Stats Block
         if (detailsText != null)
         {
             detailsText.text = 
@@ -94,9 +80,33 @@ public class CelestialBodyDetailHUD : MonoBehaviour
                 $"Atmosphere: {body.atmosphereType}";
         }
 
-        if (miniatureRenderer != null)
+        if (miniatureRenderer != null) miniatureRenderer.BuildMiniature(body);
+    }
+
+    /// <summary>
+    /// Updates the HUD with the details of the selected star.
+    /// This method formats and displays the relevant statistics in the UI text elements and triggers the miniature renderer to visualize the star.
+    /// </summary>
+    /// <param name="star">The star data to display.</param>
+    private void UpdateDetails(StarData star)
+    {
+        if (star == null) return;
+        if (bentoBoxVisualContainer != null) bentoBoxVisualContainer.SetActive(true);
+
+        if (nameText != null) nameText.text = star.name;
+        if (classText != null) classText.text = $"Star ({star.spectralClass})";
+
+        if (detailsText != null)
         {
-            miniatureRenderer.BuildMiniature(body);
+            detailsText.text = 
+                $"Temperature: {Mathf.RoundToInt(star.temperature)} K\n" +
+                $"Frost Line: {star.frostLine:F2} AU\n" +
+                $"Spin: {star.rotationPeriod:F1} h\n" +
+                $"Weight (Mass): {star.mass:F2} M_S\n" +
+                $"Radii: {star.radius:F2} R_S\n" +
+                $"Magnetic Activity: {(star.magneticActivity * 100f):F1}%";
         }
+
+        if (miniatureRenderer != null) miniatureRenderer.BuildMiniature(star);
     }
 }
