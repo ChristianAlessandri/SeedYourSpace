@@ -329,6 +329,7 @@ MonoBehaviour:
   celestialPrefab: {fileID: 72994822405351375, guid: 14a5fdcefdad6904a99413637e459c92, type: 3}
   starMaterial: {fileID: 2100000, guid: 741a4b1dd44891249936b10799c548b2, type: 2}
   planetMaterial: {fileID: 2100000, guid: d4de37889d9903842889f351b29c31ca, type: 2}
+  atmosphereMaterial: {fileID: 2100000, guid: 575c42531cc90cf4e9b45718d62f4541, type: 2}
   ringMaterial: {fileID: 2100000, guid: de0b8d1fef82a6449a9e9c476563f03e, type: 2}
   baseSkyboxMaterial: {fileID: 2100000, guid: 97ba7ef56e212f349b8353c6c25b98b1, type: 2}
   starSizeMultiplier: 75
@@ -544,7 +545,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'Pixel Scale: 0'
+  m_text: 'Pixel Scale: OFF'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 2b940a1d11cee5b48a2a98b982c9bd75, type: 2}
   m_sharedMaterial: {fileID: 9140340394604385720, guid: 2b940a1d11cee5b48a2a98b982c9bd75, type: 2}
@@ -910,6 +911,7 @@ MonoBehaviour:
   isolatedPosition: {x: 0, y: 100000, z: 0}
   starMaterial: {fileID: 2100000, guid: 741a4b1dd44891249936b10799c548b2, type: 2}
   planetMaterial: {fileID: 2100000, guid: d4de37889d9903842889f351b29c31ca, type: 2}
+  atmosphereMaterial: {fileID: 2100000, guid: 575c42531cc90cf4e9b45718d62f4541, type: 2}
   ringMaterial: {fileID: 2100000, guid: de0b8d1fef82a6449a9e9c476563f03e, type: 2}
 --- !u!114 &346823829
 MonoBehaviour:
@@ -1503,7 +1505,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 10, y: 10}
-  m_SizeDelta: {x: 140, y: 20}
+  m_SizeDelta: {x: 240, y: 20}
   m_Pivot: {x: 0, y: 0}
 --- !u!114 &611259764
 MonoBehaviour:

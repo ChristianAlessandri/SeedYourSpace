@@ -94,8 +94,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PixelizeRenderFeature
   m_Active: 1
   settings:
-    pixelScale: 4
-    isEnabled: 1
+    pixelScale: 1
+    isEnabled: 0
 --- !u!114 &7833122117494664109
 MonoBehaviour:
   m_ObjectHideFlags: 0

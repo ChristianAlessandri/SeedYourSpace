@@ -21,6 +21,7 @@ public class CelestialMiniatureRenderer : MonoBehaviour
     [Header("Materials Reference")]
     public Material starMaterial;
     public Material planetMaterial;
+    public Material atmosphereMaterial;
     public Material ringMaterial;
 
     private Camera renderCamera;
@@ -104,6 +105,8 @@ public class CelestialMiniatureRenderer : MonoBehaviour
 
         float scaleAdjustment = bodyData.hasRings ? 0.6f : 1.0f;
         currentMiniatureBody.transform.localScale = Vector3.one * scaleAdjustment;
+
+        BuildAtmosphere(currentMiniatureBody, bodyData, LayerMask.NameToLayer(miniatureLayerName));
     }
 
     /// <summary>
@@ -152,6 +155,48 @@ public class CelestialMiniatureRenderer : MonoBehaviour
         if (orbitScript != null)
         {
             Destroy(orbitScript);
+        }
+    }
+
+    /// <summary>
+    /// Instantiates a scaled-up transparent sphere to represent the atmosphere and clouds.
+    /// </summary>
+    /// <param name="parentObj">The parent GameObject (the planet) to which the atmosphere will be attached.</param>
+    /// <param name="bodyData">The data for the celestial body, including atmosphere parameters.</param>
+    /// <param name="layerIndex">The layer index to assign to the atmosphere for proper rendering.</param>
+    private void BuildAtmosphere(GameObject parentObj, CelestialBodyData bodyData, int layerIndex = -1)
+    {
+        // If the celestial body has no atmosphere, we skip this step.
+        if (bodyData.atmosphereType.Contains("Vacuum") || bodyData.atmosphereType.Contains("None")) return;
+
+        // Instance the atmosphere prefab as a child of the planet, slightly larger to simulate the atmospheric layer.
+        GameObject atmosObj = Instantiate(celestialPrefab, parentObj.transform.position, parentObj.transform.rotation);
+        atmosObj.name = "Procedural_Atmosphere";
+        atmosObj.transform.SetParent(parentObj.transform, true);
+        
+        // Scale the atmosphere slightly larger than the planet to create a visible atmospheric layer.
+        atmosObj.transform.localScale = Vector3.one * 1.10f; 
+
+        if (layerIndex != -1) atmosObj.layer = layerIndex;
+
+        // Remove any existing CelestialBody script to prevent unwanted orbital behavior in the miniature.
+        CelestialBody orbitScript = atmosObj.GetComponent<CelestialBody>();
+        if (orbitScript != null) Destroy(orbitScript);
+
+        // Remove the Collider so the 3D Raycast passes through the atmosphere to hit the planet
+        Collider atmosCollider = atmosObj.GetComponent<Collider>();
+        if (atmosCollider != null) Destroy(atmosCollider);
+
+        Renderer mr = atmosObj.GetComponent<Renderer>();
+        if (mr != null && atmosphereMaterial != null)
+        {
+            mr.sharedMaterial = atmosphereMaterial;
+
+            MaterialPropertyBlock props = new MaterialPropertyBlock();
+            // Pass the atmosphere parameters to the shader for visual effects.
+            props.SetFloat("_CloudCoverage", bodyData.cloudCoverage);
+            props.SetColor("_BaseColor", bodyData.baseColor);
+            mr.SetPropertyBlock(props);
         }
     }
 
