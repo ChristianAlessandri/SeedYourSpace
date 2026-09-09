@@ -16,6 +16,9 @@ public class StarSystemGenerator : MonoBehaviour
 
     [Header("UI Events")]
     public UnityEngine.Events.UnityEvent OnSystemGenerated;
+
+    [Tooltip("Controller for global orbital lines visibility.")]
+    public OrreryController orreryController;
     
     [HideInInspector]
     public int algorithmVersion = 1; // Maintained for Web3 Smart Contract backward compatibility
@@ -344,13 +347,19 @@ public class StarSystemGenerator : MonoBehaviour
     }
 
     /// <summary>
-    /// Builds the visual representation of the star system.
+    /// Builds the visual representation of the star system and initializes global orbital lines.
     /// </summary>
     private void BuildVisualRepresentation()
     {
         if (dioramaBuilder != null)
         {
             dioramaBuilder.BuildUniverse(SystemStar, SystemPlanets);
+
+            // Initialize the orrery lines after all celestial bodies are instantiated
+            if (orreryController != null)
+            {
+                orreryController.InitializeOrrery();
+            }
         }
         else
         {
