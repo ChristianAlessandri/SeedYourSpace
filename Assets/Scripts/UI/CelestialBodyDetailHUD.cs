@@ -33,7 +33,7 @@ public class CelestialBodyDetailHUD : MonoBehaviour
         if (systemListHUD != null)
         {
             systemListHUD.OnPlanetSelected.AddListener(UpdateDetails);
-            systemListHUD.OnStarSelected.AddListener(UpdateDetails); // NEW
+            systemListHUD.OnStarSelected.AddListener(UpdateDetails);
         }
 
         if (moonListHUD != null)
@@ -47,7 +47,7 @@ public class CelestialBodyDetailHUD : MonoBehaviour
         if (systemListHUD != null)
         {
             systemListHUD.OnPlanetSelected.RemoveListener(UpdateDetails);
-            systemListHUD.OnStarSelected.RemoveListener(UpdateDetails); // NEW
+            systemListHUD.OnStarSelected.RemoveListener(UpdateDetails);
         }
 
         if (moonListHUD != null)
@@ -71,9 +71,16 @@ public class CelestialBodyDetailHUD : MonoBehaviour
 
         if (detailsText != null)
         {
+            // Automatically adapt the distance label and unit based on the entity's naming convention
+            bool isMoon = body.name.Contains("-");
+            string distanceLabel = isMoon ? "Orbital Dist (Planet)" : "Orbital Dist (Star)";
+            string distanceUnit = isMoon ? "R_E" : "AU";
+
             detailsText.text = 
                 $"Temperature: {Mathf.RoundToInt(body.surfaceTemperature)} K\n" +
+                $"{distanceLabel}: {body.orbitalDistance:F2} {distanceUnit}\n" +
                 $"Eccentricity: {body.orbitalEccentricity:F3}\n" +
+                $"Axial Tilt: {body.axialTilt:F1}°\n" +
                 $"Spin: {body.rotationPeriod:F1} h\n" +
                 $"Weight (Mass): {body.mass:F2} M_E\n" +
                 $"Radii: {body.radius:F2} R_E\n" +
@@ -101,6 +108,7 @@ public class CelestialBodyDetailHUD : MonoBehaviour
             detailsText.text = 
                 $"Temperature: {Mathf.RoundToInt(star.temperature)} K\n" +
                 $"Frost Line: {star.frostLine:F2} AU\n" +
+                $"Axial Tilt: {star.axialTilt:F1}°\n" +
                 $"Spin: {star.rotationPeriod:F1} h\n" +
                 $"Weight (Mass): {star.mass:F2} M_S\n" +
                 $"Radii: {star.radius:F2} R_S\n" +
