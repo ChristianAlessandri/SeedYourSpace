@@ -211,6 +211,12 @@ public class StarSystemGenerator : MonoBehaviour
         planet.axialTilt = Mathf.Abs(StochasticMath.GetNormalValue(planetPrng, 23.5f, 15f));
         planet.orbitalInclination = StochasticMath.GetNormalValue(planetPrng, 0f, 3f);
         planet.atmosphereType = AstrophysicsRules.DetermineAtmosphere(planet.className, planet.surfaceGravity, planet.orbitalDistance, currentSystemFrostLine, planetPrng);
+        AstrophysicsRules.CalculateAtmosphereVisuals(
+            planet.atmosphereType,
+            out planet.atmosphereColor, 
+            out planet.cloudColor, 
+            out planet.atmosphereScale
+        );
 
         AstrophysicsRules.CalculatePlanetVisuals(
             planet.className, planet.surfaceTemperature, planet.atmosphereType, planetPrng, 
@@ -316,6 +322,12 @@ public class StarSystemGenerator : MonoBehaviour
         moon.surfaceTemperature = parentPlanet.surfaceTemperature * tempVariance;
 
         moon.atmosphereType = AstrophysicsRules.DetermineAtmosphere(moon.className, moon.surfaceGravity, parentPlanet.orbitalDistance, currentSystemFrostLine, moonPrng);
+        AstrophysicsRules.CalculateAtmosphereVisuals(
+            moon.atmosphereType,
+            out moon.atmosphereColor, 
+            out moon.cloudColor, 
+            out moon.atmosphereScale
+        );
 
         AstrophysicsRules.CalculatePlanetVisuals(
             moon.className, moon.surfaceTemperature, moon.atmosphereType, moonPrng, 

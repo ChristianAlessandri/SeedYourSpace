@@ -451,4 +451,65 @@ public static class AstrophysicsRules
             cloudCoverage = hasAtmosphere ? (float)prng.NextDouble() * 0.15f : 0f;
         }
     }
+
+    /// <summary>
+    /// Deduces the visual thickness and color palette of an atmosphere based on its chemical composition.
+    /// </summary>
+    public static void CalculateAtmosphereVisuals(string atmosphereType, out Color atmosColor, out Color cloudColor, out float atmosScale)
+    {
+        // Default fallbacks
+        atmosColor = new Color(0.4f, 0.6f, 1.0f); 
+        cloudColor = Color.white;
+        atmosScale = 1.10f;
+
+        if (atmosphereType.Contains("Vacuum") || atmosphereType.Contains("None"))
+        {
+            atmosScale = 1.0f;
+            atmosColor = Color.clear;
+            cloudColor = Color.clear;
+            return;
+        }
+
+        // Calculate Thickness Scale based on Density descriptor
+        if (atmosphereType.Contains("Thick")) atmosScale = 1.25f;
+        else if (atmosphereType.Contains("Moderate") || atmosphereType.Contains("Habitable")) atmosScale = 1.15f;
+        else if (atmosphereType.Contains("Thin")) atmosScale = 1.08f;
+        else if (atmosphereType.Contains("Trace")) atmosScale = 1.03f;
+        else if (atmosphereType.Contains("Dense Gas")) atmosScale = 1.12f; 
+
+        // Calculate Colors based on Chemical Composition
+        if (atmosphereType.Contains("Habitable") || atmosphereType.Contains("O2"))
+        {
+            atmosColor = new Color(0.3f, 0.6f, 1.0f); // Earth Blue
+            cloudColor = new Color(1.0f, 1.0f, 1.0f); // Pure White Clouds
+        }
+        else if (atmosphereType.Contains("Toxic") || atmosphereType.Contains("SO2"))
+        {
+            atmosColor = new Color(0.6f, 0.7f, 0.2f); // Sickly Venus Green-Yellow
+            cloudColor = new Color(0.8f, 0.9f, 0.5f); // Sulphur/Pale Yellow Clouds
+        }
+        else if (atmosphereType.Contains("CH4"))
+        {
+            if (atmosphereType.Contains("Dense Gas")) // Neptune/Uranus Ice Giants
+            {
+                atmosColor = new Color(0.1f, 0.3f, 0.8f); // Deep Methane Blue
+                cloudColor = new Color(0.7f, 0.8f, 1.0f); // Bright blue cirrus
+            }
+            else // Titan-like
+            {
+                atmosColor = new Color(0.9f, 0.5f, 0.1f); // Thick Orange Haze
+                cloudColor = new Color(1.0f, 0.8f, 0.5f); 
+            }
+        }
+        else if (atmosphereType.Contains("CO2"))
+        {
+            atmosColor = new Color(0.8f, 0.4f, 0.2f); // Mars Dust / Rusty Orange
+            cloudColor = new Color(0.9f, 0.7f, 0.6f); 
+        }
+        else if (atmosphereType.Contains("H2") || atmosphereType.Contains("He"))
+        {
+            atmosColor = new Color(0.6f, 0.65f, 0.7f); // Pale Gas Giant
+            cloudColor = new Color(0.9f, 0.85f, 0.8f); // Cream/Beige Bands
+        }
+    }
 }

@@ -169,16 +169,14 @@ public class VisualDioramaBuilder : MonoBehaviour
         atmosObj.name = "Procedural_Atmosphere";
         atmosObj.transform.SetParent(parentObj.transform, true);
         
-        // Scale the atmosphere slightly larger than the planet to create a visible atmospheric layer.
-        atmosObj.transform.localScale = Vector3.one * 1.10f; 
+        // Use the dynamically calculated procedural scale
+        atmosObj.transform.localScale = Vector3.one * bodyData.atmosphereScale; 
 
         if (layerIndex != -1) atmosObj.layer = layerIndex;
 
-        // Remove any existing CelestialBody script to prevent unwanted orbital behavior in the miniature.
         CelestialBody orbitScript = atmosObj.GetComponent<CelestialBody>();
         if (orbitScript != null) Destroy(orbitScript);
 
-        // Remove the Collider so the 3D Raycast passes through the atmosphere to hit the planet
         Collider atmosCollider = atmosObj.GetComponent<Collider>();
         if (atmosCollider != null) Destroy(atmosCollider);
 
@@ -188,9 +186,22 @@ public class VisualDioramaBuilder : MonoBehaviour
             mr.sharedMaterial = atmosphereMaterial;
 
             MaterialPropertyBlock props = new MaterialPropertyBlock();
-            // Pass the atmosphere parameters to the shader for visual effects.
+            
+            // Apply procedural coverage and chemical colors
             props.SetFloat("_CloudCoverage", bodyData.cloudCoverage);
-            props.SetColor("_BaseColor", bodyData.baseColor);
+            props.SetColor("_BaseColor", bodyData.atmosphereColor);
+            props.SetColor("_CloudColor", bodyData.cloudColor);
+
+            System.Random atmosPrng = new System.Random(bodyData.name.GetHashCode());
+            
+            float speedX = (float)(atmosPrng.NextDouble() * 0.04 + 0.01) * (atmosPrng.NextDouble() > 0.5 ? 1f : -1f);
+            float speedY = (float)(atmosPrng.NextDouble() * 0.015 + 0.001) * (atmosPrng.NextDouble() > 0.5 ? 1f : -1f);
+            float speedZ = (float)(atmosPrng.NextDouble() * 0.015 + 0.001) * (atmosPrng.NextDouble() > 0.5 ? 1f : -1f);
+
+            props.SetFloat("_CloudSpeedX", speedX);
+            props.SetFloat("_CloudSpeedY", speedY);
+            props.SetFloat("_CloudSpeedZ", speedZ);
+
             mr.SetPropertyBlock(props);
         }
     }

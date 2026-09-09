@@ -34,4 +34,7 @@ public class CelestialBodyData
     public UnityEngine.Color secondaryColor;
     public float hydrofraction; // Percentage of surface covered by liquid (0.0 to 1.0)
     public float cloudCoverage; // Percentage of cloud cover (0.0 to 1.0)
+    public UnityEngine.Color atmosphereColor;
+    public UnityEngine.Color cloudColor;
+    public float atmosphereScale;
 }
