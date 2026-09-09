@@ -17,6 +17,7 @@ public class MouseInteractionController : MonoBehaviour
     public CelestialBodyDetailHUD detailHUD;
     public SelectionVisualizer visualizer;
     public CameraController cameraController;
+    public CinematicModeController cinematicModeController; // <-- Added Reference
 
     private void Update()
     {
@@ -87,5 +88,8 @@ public class MouseInteractionController : MonoBehaviour
         if (detailHUD != null) detailHUD.ClearDetails();
         if (visualizer != null) visualizer.ClearVisuals();
         if (cameraController != null) cameraController.ClearTarget();
+        
+        // Clear the cinematic target so it defaults back to the star
+        if (cinematicModeController != null) cinematicModeController.ClearTarget(); 
     }
 }

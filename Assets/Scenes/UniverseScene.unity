@@ -4099,6 +4099,7 @@ MonoBehaviour:
   detailHUD: {fileID: 346823827}
   visualizer: {fileID: 1232413342}
   cameraController: {fileID: 819342608}
+  cinematicModeController: {fileID: 1795010278}
 --- !u!4 &1672281003
 Transform:
   m_ObjectHideFlags: 0
@@ -4161,9 +4162,12 @@ MonoBehaviour:
   mainUICanvas: {fileID: 1978882058}
   cameraController: {fileID: 819342608}
   timeController: {fileID: 346823823}
-  cinematicTimeSpeed: 10
+  systemListHUD: {fileID: 346823825}
+  moonListHUD: {fileID: 346823826}
+  cinematicTimeSpeed: 5
   cameraOrbitSpeed: 2.5
   cinematicPitch: 15
+  framingDistanceMultiplier: 4
 --- !u!1 &1851323059
 GameObject:
   m_ObjectHideFlags: 0
