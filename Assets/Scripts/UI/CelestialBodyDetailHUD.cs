@@ -4,7 +4,7 @@ using TMPro;
 
 /// <summary>
 /// Displays the physical and orbital statistics of a selected celestial body.
-/// Acts as a standalone module listening to star, planet, and moon selection events.
+/// Manages the transition between 3D Miniature and 2D Atlas modes.
 /// </summary>
 public class CelestialBodyDetailHUD : MonoBehaviour
 {
@@ -19,6 +19,10 @@ public class CelestialBodyDetailHUD : MonoBehaviour
     public TextMeshProUGUI nameText;
     public TextMeshProUGUI classText;
     public TextMeshProUGUI detailsText;
+
+    [Header("Atlas UI")]
+    public Button viewToggleButton;
+    public TextMeshProUGUI viewToggleText;
 
     [Header("Rendering Module")]
     public CelestialMiniatureRenderer miniatureRenderer;
@@ -40,6 +44,11 @@ public class CelestialBodyDetailHUD : MonoBehaviour
         {
             moonListHUD.OnMoonSelected.AddListener(UpdateDetails);
         }
+
+        if (viewToggleButton != null)
+        {
+            viewToggleButton.onClick.AddListener(OnViewToggleClicked);
+        }
     }
 
     private void OnDisable()
@@ -54,11 +63,38 @@ public class CelestialBodyDetailHUD : MonoBehaviour
         {
             moonListHUD.OnMoonSelected.RemoveListener(UpdateDetails);
         }
+
+        if (viewToggleButton != null)
+        {
+            viewToggleButton.onClick.RemoveListener(OnViewToggleClicked);
+        }
     }
 
     /// <summary>
-    /// Updates the HUD with the details of the selected celestial body, whether it's a planet, moon, or star.
-    /// This method formats and displays the relevant statistics in the UI text elements and triggers the miniature renderer to visualize the body.
+    /// Handles the click event for the Atlas/Miniature switch button.
+    /// </summary>
+    private void OnViewToggleClicked()
+    {
+        if (miniatureRenderer != null)
+        {
+            miniatureRenderer.ToggleViewMode();
+            UpdateButtonText();
+        }
+    }
+
+    /// <summary>
+    /// Updates the text on the toggle button based on the renderer's current state.
+    /// </summary>
+    private void UpdateButtonText()
+    {
+        if (viewToggleText != null && miniatureRenderer != null)
+        {
+            viewToggleText.text = miniatureRenderer.IsAtlasMode ? "Switch to Miniature Mode" : "Switch to Atlas Mode";
+        }
+    }
+
+    /// <summary>
+    /// Updates the details display for a selected celestial body.
     /// </summary>
     /// <param name="body">The celestial body data to display.</param>
     private void UpdateDetails(CelestialBodyData body)
@@ -71,22 +107,11 @@ public class CelestialBodyDetailHUD : MonoBehaviour
 
         if (detailsText != null)
         {
-            // Automatically adapt the distance label and unit based on the entity's naming convention
             bool isMoon = body.name.Contains("-");
             string distanceLabel = isMoon ? "Orbital Dist (Planet)" : "Orbital Dist (Star)";
             string distanceUnit = isMoon ? "R_E" : "AU";
 
-            // Format Revolution Period: moons in days, planets in years
-            string revolutionString;
-            if (isMoon)
-            {
-                revolutionString = $"{body.revolutionPeriod:F1} d";
-            }
-            else
-            {
-                float revolutionYears = body.revolutionPeriod / 365.25f;
-                revolutionString = $"{revolutionYears:F2} y";
-            }
+            string revolutionString = isMoon ? $"{body.revolutionPeriod:F1} d" : $"{(body.revolutionPeriod / 365.25f):F2} y";
 
             detailsText.text = 
                 $"Temperature: {Mathf.RoundToInt(body.surfaceTemperature)} K\n" +
@@ -100,14 +125,16 @@ public class CelestialBodyDetailHUD : MonoBehaviour
                 $"Atmosphere: {body.atmosphereType}";
         }
 
-        if (miniatureRenderer != null) miniatureRenderer.BuildMiniature(body);
+        // Enable the Atlas button for planets/moons and reset to 3D mode on fresh click
+        if (viewToggleButton != null) viewToggleButton.gameObject.SetActive(true);
+        if (miniatureRenderer != null)
+        {
+            miniatureRenderer.ResetTo3DMode();
+            miniatureRenderer.BuildMiniature(body);
+        }
+        UpdateButtonText();
     }
 
-    /// <summary>
-    /// Updates the HUD with the details of the selected star.
-    /// This method formats and displays the relevant statistics in the UI text elements and triggers the miniature renderer to visualize the star.
-    /// </summary>
-    /// <param name="star">The star data to display.</param>
     private void UpdateDetails(StarData star)
     {
         if (star == null) return;
@@ -128,12 +155,11 @@ public class CelestialBodyDetailHUD : MonoBehaviour
                 $"Magnetic Activity: {(star.magneticActivity * 100f):F1}%";
         }
 
+        // Hide the Atlas button for the sun, since we cannot map/land on it
+        if (viewToggleButton != null) viewToggleButton.gameObject.SetActive(false);
         if (miniatureRenderer != null) miniatureRenderer.BuildMiniature(star);
     }
 
-    /// <summary>
-    /// Hides the detail panel when empty space is clicked.
-    /// </summary>
     public void ClearDetails()
     {
         if (bentoBoxVisualContainer != null) bentoBoxVisualContainer.SetActive(false);

@@ -2,8 +2,8 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// Renders a dynamic 3D miniature of the selected celestial body for the UI.
-/// Uses the scene prefab for 1:1 visual parity.
+/// Renders a dynamic 3D miniature of the selected celestial body for the UI, 
+/// or displays a 2D procedural atlas map.
 /// </summary>
 public class CelestialMiniatureRenderer : MonoBehaviour
 {
@@ -11,7 +11,6 @@ public class CelestialMiniatureRenderer : MonoBehaviour
     public RawImage miniatureDisplay;
 
     [Header("3D Assets")]
-    [Tooltip("A 3D Sphere prefab with the CelestialBody script attached.")]
     public GameObject celestialPrefab;
 
     [Header("Rendering Setup")]
@@ -23,11 +22,21 @@ public class CelestialMiniatureRenderer : MonoBehaviour
     public Material planetMaterial;
     public Material atmosphereMaterial;
     public Material ringMaterial;
+    
+    [Header("Atlas Mode")]
+    [Tooltip("The 2D Unlit material using the AtlasShader.")]
+    public Material atlasBaseMaterial;
+
+    public bool IsAtlasMode { get; private set; } = false;
 
     private Camera renderCamera;
     private RenderTexture renderTexture;
     private GameObject currentMiniatureBody;
     private GameObject currentMiniatureRings;
+    private Material atlasInstancedMaterial;
+    
+    private CelestialBodyData currentPlanetData;
+    private StarData currentStarData;
 
     private float visualRotationSpeed = 20f;
 
@@ -37,8 +46,7 @@ public class CelestialMiniatureRenderer : MonoBehaviour
     }
 
     /// <summary>
-    /// Initializes the off-screen rendering setup.
-    /// Elevates the camera to an angled perspective to prevent rings from disappearing when edge-on (Axial Tilt = 0).
+    /// Initializes the off-screen camera and render texture for rendering miniatures.
     /// </summary>
     private void InitializeRenderStudio()
     {
@@ -51,11 +59,7 @@ public class CelestialMiniatureRenderer : MonoBehaviour
         }
 
         GameObject camObj = new GameObject("Miniature_Camera");
-        
-        // Elevate the camera on the Y axis and move it slightly closer to maintain framing
         camObj.transform.position = isolatedPosition + new Vector3(0f, 1.2f, -3.2f); 
-        
-        // Force the camera to look down directly at the center of the celestial body
         camObj.transform.LookAt(isolatedPosition);
         
         renderCamera = camObj.AddComponent<Camera>();
@@ -71,7 +75,6 @@ public class CelestialMiniatureRenderer : MonoBehaviour
 
         GameObject lightObj = new GameObject("Miniature_Light");
         lightObj.transform.SetParent(camObj.transform, false);
-        
         lightObj.transform.localPosition = new Vector3(-2.5f, 2f, -1.5f); 
         
         Light miniLight = lightObj.AddComponent<Light>();
@@ -82,12 +85,72 @@ public class CelestialMiniatureRenderer : MonoBehaviour
     }
 
     /// <summary>
+    /// Toggles between the 3D Render Texture view and the 2D Procedural Atlas Material.
+    /// </summary>
+    public void ToggleViewMode()
+    {
+        IsAtlasMode = !IsAtlasMode;
+        RefreshDisplayMode();
+    }
+
+    /// <summary>
+    /// Forces the renderer back to 3D mode (useful when selecting a new planet).
+    /// </summary>
+    public void ResetTo3DMode()
+    {
+        IsAtlasMode = false;
+        RefreshDisplayMode();
+    }
+
+    /// <summary>
+    /// Updates the display based on the current mode (3D miniature or 2D atlas).
+    /// </summary>
+    private void RefreshDisplayMode()
+    {
+        if (miniatureDisplay == null) return;
+
+        if (IsAtlasMode && currentPlanetData != null)
+        {
+            // 2D Atlas Mode: Turn off 3D camera to save performance, apply UI material
+            if (renderCamera != null) renderCamera.enabled = false;
+            
+            if (atlasInstancedMaterial == null && atlasBaseMaterial != null)
+            {
+                atlasInstancedMaterial = new Material(atlasBaseMaterial);
+            }
+
+            if (atlasInstancedMaterial != null)
+            {
+                atlasInstancedMaterial.SetColor("_BaseColor", currentPlanetData.baseColor);
+                atlasInstancedMaterial.SetColor("_SecondaryColor", currentPlanetData.secondaryColor);
+                atlasInstancedMaterial.SetFloat("_Hydrofraction", currentPlanetData.hydrofraction);
+                
+                float seedOffset = (currentPlanetData.name.GetHashCode() % 1000) / 10f;
+                atlasInstancedMaterial.SetVector("_Offset", new Vector2(seedOffset, seedOffset));
+                
+                miniatureDisplay.texture = null;
+                miniatureDisplay.material = atlasInstancedMaterial;
+            }
+        }
+        else
+        {
+            // 3D Miniature Mode: Turn camera back on, restore Render Texture
+            if (renderCamera != null) renderCamera.enabled = true;
+            miniatureDisplay.material = null;
+            miniatureDisplay.texture = renderTexture;
+        }
+    }
+
+    /// <summary>
     /// Builds a miniature of the given celestial body and renders it to the UI.
     /// </summary>
     /// <param name="bodyData">The data for the celestial body to render.</param>
     public void BuildMiniature(CelestialBodyData bodyData)
     {
         if (bodyData == null || celestialPrefab == null) return;
+        
+        currentPlanetData = bodyData;
+        currentStarData = null;
 
         SetupBaseMiniatureObject(bodyData.name, bodyData.axialTilt);
 
@@ -105,15 +168,14 @@ public class CelestialMiniatureRenderer : MonoBehaviour
             mr.SetPropertyBlock(props);
         }
 
-        if (bodyData.hasRings)
-        {
-            BuildMiniatureRings(currentMiniatureBody, bodyData, LayerMask.NameToLayer(miniatureLayerName));
-        }
+        if (bodyData.hasRings) BuildMiniatureRings(currentMiniatureBody, bodyData, LayerMask.NameToLayer(miniatureLayerName));
 
         float scaleAdjustment = bodyData.hasRings ? 0.6f : 1.0f;
         currentMiniatureBody.transform.localScale = Vector3.one * scaleAdjustment;
 
         BuildAtmosphere(currentMiniatureBody, bodyData, LayerMask.NameToLayer(miniatureLayerName));
+        
+        RefreshDisplayMode();
     }
 
     /// <summary>
@@ -123,6 +185,10 @@ public class CelestialMiniatureRenderer : MonoBehaviour
     public void BuildMiniature(StarData starData)
     {
         if (starData == null || celestialPrefab == null) return;
+        
+        currentStarData = starData;
+        currentPlanetData = null;
+        IsAtlasMode = false; // Stars cannot be viewed in Atlas mode
 
         SetupBaseMiniatureObject(starData.name, starData.axialTilt);
 
@@ -141,6 +207,7 @@ public class CelestialMiniatureRenderer : MonoBehaviour
         }
         
         currentMiniatureBody.transform.localScale = Vector3.one * 0.8f;
+        RefreshDisplayMode();
     }
 
     /// <summary>
@@ -155,14 +222,10 @@ public class CelestialMiniatureRenderer : MonoBehaviour
 
         currentMiniatureBody = Instantiate(celestialPrefab, isolatedPosition, Quaternion.Euler(axialTilt, 0f, 0f));
         currentMiniatureBody.name = $"Miniature_{objectName}";
-        
         SetLayerRecursively(currentMiniatureBody, LayerMask.NameToLayer(miniatureLayerName));
 
         CelestialBody orbitScript = currentMiniatureBody.GetComponent<CelestialBody>();
-        if (orbitScript != null)
-        {
-            Destroy(orbitScript);
-        }
+        if (orbitScript != null) Destroy(orbitScript);
     }
 
     /// <summary>
@@ -322,7 +385,7 @@ public class CelestialMiniatureRenderer : MonoBehaviour
 
     private void Update()
     {
-        if (currentMiniatureBody != null)
+        if (currentMiniatureBody != null && !IsAtlasMode)
         {
             currentMiniatureBody.transform.Rotate(Vector3.up, visualRotationSpeed * Time.unscaledDeltaTime, Space.Self);
         }
