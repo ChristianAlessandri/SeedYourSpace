@@ -1637,9 +1637,9 @@
     "m_PerRendererData": false,
     "m_customAttributes": [],
     "m_Value": {
-        "x": 0.10000000149011612,
-        "y": -0.33000001311302187,
-        "z": 0.20000000298023225,
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0,
         "w": 0.0
     }
 }
@@ -2383,9 +2383,9 @@
     "m_PerRendererData": false,
     "m_customAttributes": [],
     "m_Value": {
-        "r": 1.0,
-        "g": 0.4918583035469055,
-        "b": 0.0,
+        "r": 0.0,
+        "g": 0.3962264060974121,
+        "b": 0.030673958361148835,
         "a": 1.0
     },
     "isMainColor": false,
@@ -2917,7 +2917,7 @@
     "m_ShaderOutputName": "B",
     "m_StageCapability": 3,
     "m_Value": {
-        "x": 0.05000000074505806,
+        "x": 0.17499999701976777,
         "y": 0.0,
         "z": 0.0,
         "w": 0.0
@@ -3970,7 +3970,7 @@
     "m_ShaderOutputName": "B",
     "m_StageCapability": 3,
     "m_Value": {
-        "x": 0.800000011920929,
+        "x": 1.0,
         "y": 0.0,
         "z": 0.0,
         "w": 0.0
@@ -4047,7 +4047,7 @@
     "m_Hidden": false,
     "m_PerRendererData": false,
     "m_customAttributes": [],
-    "m_Value": 0.0,
+    "m_Value": 0.5,
     "m_FloatType": 0,
     "m_LiteralFloatMode": false,
     "m_RangeValues": {
@@ -4799,7 +4799,7 @@
     "m_ShaderOutputName": "B",
     "m_StageCapability": 3,
     "m_Value": {
-        "x": 0.44999998807907107,
+        "x": 0.5,
         "y": 0.0,
         "z": 0.0,
         "w": 0.0
