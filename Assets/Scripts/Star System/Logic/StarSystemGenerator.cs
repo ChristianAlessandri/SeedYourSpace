@@ -98,31 +98,39 @@ public class StarSystemGenerator : MonoBehaviour
         float starDistance = (float)systemPrng.NextDouble() * 25f + 75f; 
         float starVisibility = (float)systemPrng.NextDouble() * 50f + 225f; 
 
-        // Restrict hue to deep blues, purples, cyans, and magentas (0.55 to 0.85)
-        float hue = Mathf.Lerp(0.55f, 0.85f, (float)systemPrng.NextDouble());
-        float sat = Mathf.Lerp(0.6f, 0.9f, (float)systemPrng.NextDouble());
+        // Primary Hue (Deep Space colors: 0.55 to 0.85)
+        float hue1 = Mathf.Lerp(0.55f, 0.85f, (float)systemPrng.NextDouble());
         
-        // Lower the base value (brightness) to make it look ethereal
+        // Secondary Hue (Shifted slightly to create beautiful analog gradients, e.g., Blue to Magenta)
+        float hueShift = Mathf.Lerp(0.1f, 0.25f, (float)systemPrng.NextDouble());
+        float hue2 = Mathf.Repeat(hue1 + hueShift, 1.0f);
+
+        float sat = Mathf.Lerp(0.6f, 0.9f, (float)systemPrng.NextDouble());
         float val = Mathf.Lerp(0.05f, 0.15f, (float)systemPrng.NextDouble()); 
         
-        Color baseNebulaColor = Color.HSVToRGB(hue, sat, val);
+        Color baseColor1 = Color.HSVToRGB(hue1, sat, val);
+        Color baseColor2 = Color.HSVToRGB(hue2, sat, val);
 
-        // Keep the HDR bloom subtle
         float hdrIntensity = Mathf.Lerp(1.2f, 2.0f, (float)systemPrng.NextDouble());
-        
-        // Set a low alpha (e.g., 0.2 to 0.4) to allow the shader to blend with the black background
         float alphaTransparency = Mathf.Lerp(0.2f, 0.4f, (float)systemPrng.NextDouble());
 
-        Color hdrNebulaColor = new Color(
-            baseNebulaColor.r * hdrIntensity, 
-            baseNebulaColor.g * hdrIntensity, 
-            baseNebulaColor.b * hdrIntensity, 
+        Color hdrNebulaColor1 = new Color(
+            baseColor1.r * hdrIntensity, 
+            baseColor1.g * hdrIntensity, 
+            baseColor1.b * hdrIntensity, 
+            alphaTransparency
+        );
+
+        Color hdrNebulaColor2 = new Color(
+            baseColor2.r * hdrIntensity, 
+            baseColor2.g * hdrIntensity, 
+            baseColor2.b * hdrIntensity, 
             alphaTransparency
         );
 
         if (dioramaBuilder != null)
         {
-            dioramaBuilder.BuildSkybox(hdrNebulaColor, starDistance, starVisibility);
+            dioramaBuilder.BuildSkybox(hdrNebulaColor1, hdrNebulaColor2, starDistance, starVisibility);
         }
     }
 

@@ -299,12 +299,13 @@ public class VisualDioramaBuilder : MonoBehaviour
     /// <param name="nebulaColor">The color of the nebula in the skybox.</param>
     /// <param name="starDistance">The distance of stars in the skybox.</param>
     /// <param name="starVisibility">The visibility factor of stars in the skybox.</param>
-    public void BuildSkybox(Color nebulaColor, float starDistance, float starVisibility)
+    public void BuildSkybox(Color nebulaColor1, Color nebulaColor2, float starDistance, float starVisibility)
     {
         if (baseSkyboxMaterial != null)
         {
             Material instancedSkybox = new Material(baseSkyboxMaterial);
-            instancedSkybox.SetColor("_NebulaColor", nebulaColor);
+            instancedSkybox.SetColor("_NebulaColor", nebulaColor1);
+            instancedSkybox.SetColor("_NebulaColor2", nebulaColor2);
             instancedSkybox.SetFloat("_StarDistance", starDistance);
             instancedSkybox.SetFloat("_StarVisibility", starVisibility);
             

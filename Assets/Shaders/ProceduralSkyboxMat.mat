@@ -38,6 +38,7 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
+    - _NebulaEdge1: 0.5
     - _PowerValue: 225
     - _QueueControl: 0
     - _QueueOffset: 0
@@ -47,6 +48,7 @@ Material:
     - _StarVisibility: 225
     m_Colors:
     - _NebulaColor: {r: 0, g: 0, b: 0, a: 1}
+    - _NebulaColor2: {r: 0, g: 0, b: 0, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
 --- !u!114 &3250315575029552509
