@@ -126,7 +126,7 @@ public class CelestialMiniatureRenderer : MonoBehaviour
                 atlasInstancedMaterial.SetFloat("_Hydrofraction", currentPlanetData.hydrofraction);
                 
                 float seedOffset = (currentPlanetData.name.GetHashCode() % 1000) / 10f;
-                atlasInstancedMaterial.SetVector("_Offset", new Vector2(seedOffset, seedOffset));
+                atlasInstancedMaterial.SetVector("_Offset", new Vector4(seedOffset, seedOffset * 2.5f, seedOffset * -1.3f, 0f));
                 
                 miniatureDisplay.texture = null;
                 miniatureDisplay.material = atlasInstancedMaterial;

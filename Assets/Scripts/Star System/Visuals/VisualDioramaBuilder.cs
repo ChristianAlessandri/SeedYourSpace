@@ -110,6 +110,10 @@ public class VisualDioramaBuilder : MonoBehaviour
             planetProps.SetColor("_SecondaryColor", planet.secondaryColor);
             planetProps.SetFloat("_Hydrofraction", planet.hydrofraction);
             planetProps.SetFloat("_CloudCoverage", planet.cloudCoverage);
+            
+            float seedOffset = (planet.name.GetHashCode() % 1000) / 10f;
+            planetProps.SetVector("_Offset", new Vector4(seedOffset, seedOffset * 2.5f, seedOffset * -1.3f, 0f));
+            
             planetRenderer.SetPropertyBlock(planetProps);
             
             BuildRingSystem(planetObj, planet);
@@ -145,6 +149,10 @@ public class VisualDioramaBuilder : MonoBehaviour
             moonProps.SetColor("_SecondaryColor", moon.secondaryColor);
             moonProps.SetFloat("_Hydrofraction", moon.hydrofraction);
             moonProps.SetFloat("_CloudCoverage", moon.cloudCoverage);
+            
+            float seedOffset = (moon.name.GetHashCode() % 1000) / 10f;
+            moonProps.SetVector("_Offset", new Vector4(seedOffset, seedOffset * 2.5f, seedOffset * -1.3f, 0f));
+            
             moonRenderer.SetPropertyBlock(moonProps);
             
             BuildRingSystem(moonObj, moon);
