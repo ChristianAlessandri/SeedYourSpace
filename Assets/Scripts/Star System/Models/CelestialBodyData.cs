@@ -32,6 +32,9 @@ public class CelestialBodyData
     // Procedural Surface Visual Data
     public UnityEngine.Color baseColor;
     public UnityEngine.Color secondaryColor;
+    public UnityEngine.Color deepWaterColor;
+    public UnityEngine.Color highlandColor;
+    public UnityEngine.Color peakColor;
     public float hydrofraction; // Percentage of surface covered by liquid (0.0 to 1.0)
     public float cloudCoverage; // Percentage of cloud cover (0.0 to 1.0)
     public UnityEngine.Color atmosphereColor;

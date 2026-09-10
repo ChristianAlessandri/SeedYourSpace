@@ -106,12 +106,37 @@ public class VisualDioramaBuilder : MonoBehaviour
 
             MaterialPropertyBlock planetProps = new MaterialPropertyBlock();
             planetRenderer.GetPropertyBlock(planetProps);
+
             planetProps.SetColor("_BaseColor", planet.baseColor);
             planetProps.SetColor("_SecondaryColor", planet.secondaryColor);
+
+            Color deepWater = new Color(
+                planet.secondaryColor.r * 0.3f, 
+                planet.secondaryColor.g * 0.3f, 
+                planet.secondaryColor.b * 0.3f, 
+                1f);
+            
+            float gray = (planet.baseColor.r + planet.baseColor.g + planet.baseColor.b) / 3f;
+            Color highland = new Color(
+                Mathf.Lerp(planet.baseColor.r, gray, 0.5f) * 0.8f,
+                Mathf.Lerp(planet.baseColor.g, gray, 0.5f) * 0.8f,
+                Mathf.Lerp(planet.baseColor.b, gray, 0.5f) * 0.8f,
+                1f);
+            
+            Color peak = new Color(
+                Mathf.Lerp(planet.baseColor.r, 1f, 0.7f),
+                Mathf.Lerp(planet.baseColor.g, 1f, 0.7f),
+                Mathf.Lerp(planet.baseColor.b, 1f, 0.7f),
+                1f);
+
+            planetProps.SetColor("_DeepWaterColor", deepWater);
+            planetProps.SetColor("_HighlandColor", highland);
+            planetProps.SetColor("_PeakColor", peak);
+
             planetProps.SetFloat("_Hydrofraction", planet.hydrofraction);
             planetProps.SetFloat("_CloudCoverage", planet.cloudCoverage);
             
-            float seedOffset = (planet.name.GetHashCode() % 1000) / 10f;
+            float seedOffset = (planet.name.GetHashCode() % 1000) / 1000f;
             planetProps.SetVector("_Offset", new Vector4(seedOffset, seedOffset * 2.5f, seedOffset * -1.3f, 0f));
             
             planetRenderer.SetPropertyBlock(planetProps);
@@ -145,12 +170,38 @@ public class VisualDioramaBuilder : MonoBehaviour
 
             MaterialPropertyBlock moonProps = new MaterialPropertyBlock();
             moonRenderer.GetPropertyBlock(moonProps);
+
+            // Base and secondary colors for the moon's surface
             moonProps.SetColor("_BaseColor", moon.baseColor);
             moonProps.SetColor("_SecondaryColor", moon.secondaryColor);
+
+            Color deepWater = new Color(
+                moon.secondaryColor.r * 0.3f, 
+                moon.secondaryColor.g * 0.3f, 
+                moon.secondaryColor.b * 0.3f, 
+                1f);
+            
+            float gray = (moon.baseColor.r + moon.baseColor.g + moon.baseColor.b) / 3f;
+            Color highland = new Color(
+                Mathf.Lerp(moon.baseColor.r, gray, 0.5f) * 0.8f,
+                Mathf.Lerp(moon.baseColor.g, gray, 0.5f) * 0.8f,
+                Mathf.Lerp(moon.baseColor.b, gray, 0.5f) * 0.8f,
+                1f);
+            
+            Color peak = new Color(
+                Mathf.Lerp(moon.baseColor.r, 1f, 0.7f),
+                Mathf.Lerp(moon.baseColor.g, 1f, 0.7f),
+                Mathf.Lerp(moon.baseColor.b, 1f, 0.7f),
+                1f);
+
+            moonProps.SetColor("_DeepWaterColor", deepWater);
+            moonProps.SetColor("_HighlandColor", highland);
+            moonProps.SetColor("_PeakColor", peak);
+
             moonProps.SetFloat("_Hydrofraction", moon.hydrofraction);
             moonProps.SetFloat("_CloudCoverage", moon.cloudCoverage);
             
-            float seedOffset = (moon.name.GetHashCode() % 1000) / 10f;
+            float seedOffset = (moon.name.GetHashCode() % 1000) / 1000f;
             moonProps.SetVector("_Offset", new Vector4(seedOffset, seedOffset * 2.5f, seedOffset * -1.3f, 0f));
             
             moonRenderer.SetPropertyBlock(moonProps);

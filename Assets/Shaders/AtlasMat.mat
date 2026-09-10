@@ -51,9 +51,12 @@ Material:
     - _UIMaskSoftnessX: 1
     - _UIMaskSoftnessY: 1
     m_Colors:
-    - _BaseColor: {r: 0, g: 0, b: 0, a: 1}
+    - _BaseColor: {r: 0.3182056, g: 1, b: 0, a: 1}
     - _ClipRect: {r: 0, g: 0, b: 0, a: 0}
+    - _DeepWaterColor: {r: 0.047169805, g: 0.048889454, b: 0.18867922, a: 1}
+    - _HighlandColor: {r: 0.056967236, g: 0.254717, b: 0, a: 1}
     - _Offset: {r: 0, g: 0, b: 0, a: 0}
-    - _SecondaryColor: {r: 0, g: 0, b: 0, a: 1}
+    - _PeakColor: {r: 1, g: 1, b: 1, a: 1}
+    - _SecondaryColor: {r: 0, g: 0.6138928, b: 1, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

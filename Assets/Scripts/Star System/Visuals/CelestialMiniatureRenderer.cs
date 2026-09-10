@@ -125,7 +125,16 @@ public class CelestialMiniatureRenderer : MonoBehaviour
                 atlasInstancedMaterial.SetColor("_SecondaryColor", currentPlanetData.secondaryColor);
                 atlasInstancedMaterial.SetFloat("_Hydrofraction", currentPlanetData.hydrofraction);
                 
-                float seedOffset = (currentPlanetData.name.GetHashCode() % 1000) / 10f;
+                Color deepWater = new Color(currentPlanetData.secondaryColor.r * 0.3f, currentPlanetData.secondaryColor.g * 0.3f, currentPlanetData.secondaryColor.b * 0.3f, currentPlanetData.secondaryColor.a);
+                float gray = (currentPlanetData.baseColor.r + currentPlanetData.baseColor.g + currentPlanetData.baseColor.b) / 3f;
+                Color highland = new Color(Mathf.Lerp(currentPlanetData.baseColor.r, gray, 0.5f) * 0.8f, Mathf.Lerp(currentPlanetData.baseColor.g, gray, 0.5f) * 0.8f, Mathf.Lerp(currentPlanetData.baseColor.b, gray, 0.5f) * 0.8f, currentPlanetData.baseColor.a);
+                Color peak = new Color(Mathf.Lerp(currentPlanetData.baseColor.r, 1f, 0.7f), Mathf.Lerp(currentPlanetData.baseColor.g, 1f, 0.7f), Mathf.Lerp(currentPlanetData.baseColor.b, 1f, 0.7f), currentPlanetData.baseColor.a);
+                
+                atlasInstancedMaterial.SetColor("_DeepWaterColor", deepWater);
+                atlasInstancedMaterial.SetColor("_HighlandColor", highland);
+                atlasInstancedMaterial.SetColor("_PeakColor", peak);
+                
+                float seedOffset = (currentPlanetData.name.GetHashCode() % 1000) / 1000f;
                 atlasInstancedMaterial.SetVector("_Offset", new Vector4(seedOffset, seedOffset * 2.5f, seedOffset * -1.3f, 0f));
                 
                 miniatureDisplay.texture = null;
@@ -165,6 +174,33 @@ public class CelestialMiniatureRenderer : MonoBehaviour
             props.SetColor("_SecondaryColor", bodyData.secondaryColor);
             props.SetFloat("_Hydrofraction", bodyData.hydrofraction);
             props.SetFloat("_CloudCoverage", bodyData.cloudCoverage);
+
+            Color deepWater = new Color(
+                bodyData.secondaryColor.r * 0.3f, 
+                bodyData.secondaryColor.g * 0.3f, 
+                bodyData.secondaryColor.b * 0.3f, 
+                1f);
+            
+            float gray = (bodyData.baseColor.r + bodyData.baseColor.g + bodyData.baseColor.b) / 3f;
+            Color highland = new Color(
+                Mathf.Lerp(bodyData.baseColor.r, gray, 0.5f) * 0.8f,
+                Mathf.Lerp(bodyData.baseColor.g, gray, 0.5f) * 0.8f,
+                Mathf.Lerp(bodyData.baseColor.b, gray, 0.5f) * 0.8f,
+                1f);
+            
+            Color peak = new Color(
+                Mathf.Lerp(bodyData.baseColor.r, 1f, 0.7f),
+                Mathf.Lerp(bodyData.baseColor.g, 1f, 0.7f),
+                Mathf.Lerp(bodyData.baseColor.b, 1f, 0.7f),
+                1f);
+
+            props.SetColor("_DeepWaterColor", deepWater);
+            props.SetColor("_HighlandColor", highland);
+            props.SetColor("_PeakColor", peak);
+            
+            float seedOffset = (bodyData.name.GetHashCode() % 1000) / 1000f;
+            props.SetVector("_Offset", new Vector4(seedOffset, seedOffset * 2.5f, seedOffset * -1.3f, 0f));
+            
             mr.SetPropertyBlock(props);
         }
 
