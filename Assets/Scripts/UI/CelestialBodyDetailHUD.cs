@@ -76,10 +76,23 @@ public class CelestialBodyDetailHUD : MonoBehaviour
             string distanceLabel = isMoon ? "Orbital Dist (Planet)" : "Orbital Dist (Star)";
             string distanceUnit = isMoon ? "R_E" : "AU";
 
+            // Format Revolution Period: moons in days, planets in years
+            string revolutionString;
+            if (isMoon)
+            {
+                revolutionString = $"{body.revolutionPeriod:F1} d";
+            }
+            else
+            {
+                float revolutionYears = body.revolutionPeriod / 365.25f;
+                revolutionString = $"{revolutionYears:F2} y";
+            }
+
             detailsText.text = 
                 $"Temperature: {Mathf.RoundToInt(body.surfaceTemperature)} K\n" +
                 $"{distanceLabel}: {body.orbitalDistance:F2} {distanceUnit}\n" +
                 $"Eccentricity: {body.orbitalEccentricity:F3}\n" +
+                $"Revolution: {revolutionString}\n" +
                 $"Axial Tilt: {body.axialTilt:F1}°\n" +
                 $"Spin: {body.rotationPeriod:F1} h\n" +
                 $"Weight (Mass): {body.mass:F2} M_E\n" +
