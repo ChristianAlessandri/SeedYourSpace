@@ -293,7 +293,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 673709a7057f5d94d9bd67af2d80246e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StarSystemGenerator
-  masterSeed: 0x60
+  masterSeed: 0x10
   dioramaBuilder: {fileID: 98518082}
   OnSystemGenerated:
     m_PersistentCalls:
@@ -3805,6 +3805,7 @@ GameObject:
   - component: {fileID: 1481964245}
   - component: {fileID: 1481964247}
   - component: {fileID: 1481964246}
+  - component: {fileID: 1481964248}
   m_Layer: 5
   m_Name: Miniature_Atlas
   m_TagString: Untagged
@@ -3866,6 +3867,18 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1481964244}
   m_CullTransparentMesh: 1
+--- !u!114 &1481964248
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1481964244}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e3de63a19b2aa64c84b6f859bba06bf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MapTargetingHUD
 --- !u!1 &1533583860
 GameObject:
   m_ObjectHideFlags: 0
