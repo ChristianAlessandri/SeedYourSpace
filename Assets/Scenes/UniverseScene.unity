@@ -4164,7 +4164,7 @@ MonoBehaviour:
   timeController: {fileID: 346823823}
   systemListHUD: {fileID: 346823825}
   moonListHUD: {fileID: 346823826}
-  cinematicTimeSpeed: 5
+  cinematicTimeSpeed: 2.5
   cameraOrbitSpeed: 2.5
   cinematicPitch: 15
   framingDistanceMultiplier: 4

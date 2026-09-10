@@ -43,6 +43,7 @@ Material:
     - _QueueOffset: 0
     - _StarDensity: 75
     - _StarDistance: 75
+    - _StarIntensity: 7.5
     - _StarVisibility: 225
     m_Colors:
     - _NebulaColor: {r: 0, g: 0, b: 0, a: 1}

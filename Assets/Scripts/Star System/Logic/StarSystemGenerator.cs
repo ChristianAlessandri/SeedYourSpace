@@ -90,7 +90,7 @@ public class StarSystemGenerator : MonoBehaviour
     }
 
     /// <summary>
-    /// Generates the skybox for the star system.
+    /// Generates the skybox for the star system, restricted to deep space colors and softer intensities.
     /// </summary>
     /// <param name="systemPrng">The random number generator for the system.</param>
     private void GenerateSkybox(System.Random systemPrng)
@@ -98,14 +98,31 @@ public class StarSystemGenerator : MonoBehaviour
         float starDistance = (float)systemPrng.NextDouble() * 25f + 75f; 
         float starVisibility = (float)systemPrng.NextDouble() * 50f + 225f; 
 
-        float hue = Mathf.Lerp(0.55f, 0.95f, (float)systemPrng.NextDouble());
-        float sat = Mathf.Lerp(0.4f, 0.7f, (float)systemPrng.NextDouble());
-        float val = Mathf.Lerp(0.05f, 0.15f, (float)systemPrng.NextDouble());
-        Color nebulaColor = Color.HSVToRGB(hue, sat, val);
+        // Restrict hue to deep blues, purples, cyans, and magentas (0.55 to 0.85)
+        float hue = Mathf.Lerp(0.55f, 0.85f, (float)systemPrng.NextDouble());
+        float sat = Mathf.Lerp(0.6f, 0.9f, (float)systemPrng.NextDouble());
+        
+        // Lower the base value (brightness) to make it look ethereal
+        float val = Mathf.Lerp(0.05f, 0.15f, (float)systemPrng.NextDouble()); 
+        
+        Color baseNebulaColor = Color.HSVToRGB(hue, sat, val);
+
+        // Keep the HDR bloom subtle
+        float hdrIntensity = Mathf.Lerp(1.2f, 2.0f, (float)systemPrng.NextDouble());
+        
+        // Set a low alpha (e.g., 0.2 to 0.4) to allow the shader to blend with the black background
+        float alphaTransparency = Mathf.Lerp(0.2f, 0.4f, (float)systemPrng.NextDouble());
+
+        Color hdrNebulaColor = new Color(
+            baseNebulaColor.r * hdrIntensity, 
+            baseNebulaColor.g * hdrIntensity, 
+            baseNebulaColor.b * hdrIntensity, 
+            alphaTransparency
+        );
 
         if (dioramaBuilder != null)
         {
-            dioramaBuilder.BuildSkybox(nebulaColor, starDistance, starVisibility);
+            dioramaBuilder.BuildSkybox(hdrNebulaColor, starDistance, starVisibility);
         }
     }
 
