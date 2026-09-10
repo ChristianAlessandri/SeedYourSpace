@@ -37,7 +37,8 @@ public class CelestialMiniatureRenderer : MonoBehaviour
     }
 
     /// <summary>
-    /// Initializes the off-screen rendering setup, including the camera and render texture.
+    /// Initializes the off-screen rendering setup.
+    /// Elevates the camera to an angled perspective to prevent rings from disappearing when edge-on (Axial Tilt = 0).
     /// </summary>
     private void InitializeRenderStudio()
     {
@@ -50,7 +51,12 @@ public class CelestialMiniatureRenderer : MonoBehaviour
         }
 
         GameObject camObj = new GameObject("Miniature_Camera");
-        camObj.transform.position = isolatedPosition + new Vector3(0, 0, -3.5f); 
+        
+        // Elevate the camera on the Y axis and move it slightly closer to maintain framing
+        camObj.transform.position = isolatedPosition + new Vector3(0f, 1.2f, -3.2f); 
+        
+        // Force the camera to look down directly at the center of the celestial body
+        camObj.transform.LookAt(isolatedPosition);
         
         renderCamera = camObj.AddComponent<Camera>();
         renderCamera.targetTexture = renderTexture;
@@ -65,6 +71,7 @@ public class CelestialMiniatureRenderer : MonoBehaviour
 
         GameObject lightObj = new GameObject("Miniature_Light");
         lightObj.transform.SetParent(camObj.transform, false);
+        
         lightObj.transform.localPosition = new Vector3(-2.5f, 2f, -1.5f); 
         
         Light miniLight = lightObj.AddComponent<Light>();
