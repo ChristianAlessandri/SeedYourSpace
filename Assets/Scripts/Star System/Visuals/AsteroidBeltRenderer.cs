@@ -11,7 +11,7 @@ public class AsteroidBeltRenderer : MonoBehaviour
     private struct AsteroidState
     {
         public Vector3 localPosition;
-        public Quaternion baseRotation; // Stored permanently to prevent floating-point drift
+        public Quaternion baseRotation;
         public Vector3 localScale;
         public Vector3 spinAxis;
         public float spinSpeed;
