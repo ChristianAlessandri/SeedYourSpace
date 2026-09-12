@@ -34,7 +34,16 @@ public static class CelestialVisualUtility
     /// <param name="layerIndex">Optional layer index to assign to the atmosphere.</param>
     public static void BuildAtmosphere(GameObject parentObj, CelestialBodyData bodyData, GameObject prefab, Material mat, int layerIndex = -1)
     {
-        if (bodyData.atmosphereType.Contains("Vacuum") || bodyData.atmosphereType.Contains("None")) return;
+        // Check for missing or non-existent atmospheres
+        if (string.IsNullOrEmpty(bodyData.atmosphereType) || 
+            bodyData.atmosphereType.Contains("Vacuum") || 
+            bodyData.atmosphereType.Contains("None")) 
+        {
+            return; 
+        }
+
+        // If the atmosphere is just "Trace", we might spawn it but disable Auroras
+        bool isTraceAtmosphere = bodyData.atmosphereType.Contains("Trace");
 
         GameObject atmosObj = Object.Instantiate(prefab, parentObj.transform.position, parentObj.transform.rotation);
         atmosObj.name = "Procedural_Atmosphere";
@@ -71,8 +80,9 @@ public static class CelestialVisualUtility
             props.SetFloat("_CloudSpeedZ", speedZ);
 
             // Procedural Auroras Logic
+            // Force 0 magnetic activity if the atmosphere is only "Trace"
             float magneticRoll = (float)atmosPrng.NextDouble();
-            float magneticActivity = (magneticRoll > 0.4f) ? (float)atmosPrng.NextDouble() : 0f;
+            float magneticActivity = (magneticRoll > 0.4f && !isTraceAtmosphere) ? (float)atmosPrng.NextDouble() : 0f;
 
             Color baseAurora = Color.Lerp(
                 new Color(0.0f, 1.0f, 0.4f, 1f), 
