@@ -271,6 +271,26 @@ public class CelestialMiniatureRenderer : MonoBehaviour
             props.SetFloat("_CloudSpeedY", speedY);
             props.SetFloat("_CloudSpeedZ", speedZ);
 
+            // 60% chance for a planet to have a strong enough magnetic field for visible auroras
+            float magneticRoll = (float)atmosPrng.NextDouble();
+            float magneticActivity = (magneticRoll > 0.4f) ? (float)atmosPrng.NextDouble() : 0f;
+
+            Color baseAurora = Color.Lerp(
+                new Color(0.0f, 1.0f, 0.4f, 1f), // Neon Green
+                new Color(0.0f, 0.8f, 1.0f, 1f), // Cyan
+                (float)atmosPrng.NextDouble()
+            );
+
+            Color secondaryAurora = Color.Lerp(
+                new Color(0.5f, 0.1f, 1.0f, 1f), // Deep Purple
+                new Color(1.0f, 0.2f, 0.5f, 1f), // Hot Pink
+                (float)atmosPrng.NextDouble()
+            );
+
+            props.SetColor("_AuroraColor", baseAurora);
+            props.SetColor("_AuroraColor2", secondaryAurora);
+            props.SetFloat("_MagneticActivity", magneticActivity);
+
             mr.SetPropertyBlock(props);
         }
     }
