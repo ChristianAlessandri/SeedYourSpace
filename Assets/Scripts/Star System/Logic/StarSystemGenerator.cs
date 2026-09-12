@@ -29,6 +29,7 @@ public class StarSystemGenerator : MonoBehaviour
     public string SystemName { get; private set; }
     public StarData SystemStar { get; private set; }
     public List<PlanetData> SystemPlanets { get; private set; } = new List<PlanetData>();
+    public List<AsteroidBeltData> SystemBelts { get; private set; } = new List<AsteroidBeltData>();
 
     private MarkovNameGenerator nameGenerator;
     private float currentSystemFrostLine;
@@ -54,6 +55,7 @@ public class StarSystemGenerator : MonoBehaviour
         GenerateSkybox(systemPrng);
         SystemStar = GenerateCentralStar(seed, SystemName);
         SystemPlanets = GeneratePlanetarySystem(seed, SystemName, SystemStar);
+        SystemBelts = GenerateAsteroidBelts(seed, SystemPlanets);
 
         // Notify UI and render the diorama only after all calculations are complete
         OnSystemGenerated?.Invoke();
@@ -378,7 +380,7 @@ public class StarSystemGenerator : MonoBehaviour
     {
         if (dioramaBuilder != null)
         {
-            dioramaBuilder.BuildUniverse(SystemStar, SystemPlanets);
+            dioramaBuilder.BuildUniverse(SystemStar, SystemPlanets, SystemBelts);
 
             // Initialize the orrery lines after all celestial bodies are instantiated
             if (orreryController != null)
@@ -390,5 +392,66 @@ public class StarSystemGenerator : MonoBehaviour
         {
             Debug.LogWarning("Diorama Builder is not assigned. Visual representation will not be generated.");
         }
+    }
+
+    /// <summary>
+    /// Scans the planetary orbits to find stable gravitational gaps (wider than 1.0 AU) 
+    /// and populates them with asteroid belts. Adds a Kuiper-like belt at the edge.
+    /// </summary>
+    /// <param name="baseSeed">The base seed for deterministic generation.</param>
+    /// <param name="planets">The list of planets in the system.</param>
+    /// <summary>
+    /// Scans the planetary orbits to find stable gravitational gaps (wider than 1.0 AU) 
+    /// and populates them with asteroid belts. Adds a Kuiper-like belt at the edge.
+    /// </summary>
+    private List<AsteroidBeltData> GenerateAsteroidBelts(string baseSeed, List<PlanetData> planets)
+    {
+        List<AsteroidBeltData> belts = new List<AsteroidBeltData>();
+        System.Random beltPrng = new System.Random(StochasticMath.DeriveNumericalSeed(baseSeed + "_Belts"));
+
+        // Sort planets by distance to safely evaluate gaps
+        planets.Sort((p1, p2) => p1.orbitalDistance.CompareTo(p2.orbitalDistance));
+
+        float safeMargin = 0.4f; 
+
+        for (int i = 0; i < planets.Count - 1; i++)
+        {
+            float gap = planets[i + 1].orbitalDistance - planets[i].orbitalDistance;
+
+            // The gap must be wide enough to host an asteroid belt, but not too wide to be unstable
+            if (gap > 1.2f && gap < 5.0f && beltPrng.NextDouble() > 0.5)
+            {
+                AsteroidBeltData belt = new AsteroidBeltData();
+                belt.name = $"{SystemName} Inner Belt";
+                belt.innerRadius = planets[i].orbitalDistance + safeMargin;
+                belt.outerRadius = planets[i + 1].orbitalDistance - safeMargin;
+                
+                belt.asteroidCount = Mathf.Clamp(Mathf.RoundToInt(gap * 400f), 300, 1200);
+                belt.seed = beltPrng.Next();
+                
+                belts.Add(belt);
+            }
+        }
+
+        // Kuiper Belt: 30% chance, and ONLY if the last planet is not excessively far away (e.g., > 35 AU)
+        if (planets.Count > 0 && beltPrng.NextDouble() > 0.7)
+        {
+            float lastOrbit = planets[planets.Count - 1].orbitalDistance;
+            
+            if (lastOrbit < 35f)
+            {
+                AsteroidBeltData outerBelt = new AsteroidBeltData();
+                outerBelt.name = $"{SystemName} Kuiper Belt";
+                outerBelt.innerRadius = lastOrbit + 2.0f;
+                outerBelt.outerRadius = outerBelt.innerRadius + (float)(beltPrng.NextDouble() * 2f + 1f);
+                
+                outerBelt.asteroidCount = Mathf.Clamp(Mathf.RoundToInt(outerBelt.outerRadius * 50f), 800, 2500);
+                outerBelt.seed = beltPrng.Next();
+                
+                belts.Add(outerBelt);
+            }
+        }
+
+        return belts;
     }
 }

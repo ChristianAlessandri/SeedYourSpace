@@ -15,6 +15,7 @@ public class VisualDioramaBuilder : MonoBehaviour
     public Material planetMaterial;
     public Material atmosphereMaterial;
     public Material ringMaterial;
+    public GameObject asteroidPrefab;
     public Material baseSkyboxMaterial;
 
     [Header("Diorama Scale Multipliers")]
@@ -24,7 +25,13 @@ public class VisualDioramaBuilder : MonoBehaviour
     [SerializeField] private float planetDistanceMultiplier = 200.0f; 
     [SerializeField] private float moonDistanceMultiplier = 0.15f; 
 
-    public void BuildUniverse(StarData starData, List<PlanetData> planets)
+    /// <summary>
+    /// Builds the entire star system diorama, including the central star, planets, moons, and asteroid belts.
+    /// </summary>
+    /// <param name="starData">The data defining the central star.</param>
+    /// <param name="planets">The list of planets in the system.</param>
+    /// <param name="belts">The list of asteroid belts in the system.</param>
+    public void BuildUniverse(StarData starData, List<PlanetData> planets, List<AsteroidBeltData> belts)
     {
         Transform starTransform = BuildCentralStar(starData);
 
@@ -36,6 +43,16 @@ public class VisualDioramaBuilder : MonoBehaviour
             {
                 BuildMoon(moon, planetTransform);
             }
+        }
+
+        foreach (AsteroidBeltData beltData in belts)
+        {
+            GameObject beltObj = new GameObject($"ProceduralBelt_{beltData.name}");
+            beltObj.transform.position = starTransform.position;
+            beltObj.transform.SetParent(this.transform, true); 
+            
+            AsteroidBeltRenderer renderer = beltObj.AddComponent<AsteroidBeltRenderer>();
+            renderer.InitializeBelt(beltData, planetDistanceMultiplier, asteroidPrefab);
         }
     }
 
