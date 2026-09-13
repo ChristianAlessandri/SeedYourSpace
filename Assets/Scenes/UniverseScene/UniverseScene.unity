@@ -725,6 +725,7 @@ GameObject:
   - component: {fileID: 174957692}
   - component: {fileID: 174957691}
   - component: {fileID: 174957690}
+  - component: {fileID: 174957693}
   m_Layer: 5
   m_Name: SwitchViewBtn
   m_TagString: Untagged
@@ -834,6 +835,22 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 174957688}
   m_CullTransparentMesh: 1
+--- !u!114 &174957693
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 174957688}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 61ecb1fde675c7e44aa1c207532e27cf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UIGradient
+  m_color1: {r: 0.11764706, g: 0.2509804, b: 0.6862745, a: 1}
+  m_color2: {r: 0.21568628, g: 0.1882353, b: 0.6392157, a: 1}
+  m_angle: 60
+  m_ignoreRatio: 1
 --- !u!1 &180419314
 GameObject:
   m_ObjectHideFlags: 0
@@ -846,6 +863,7 @@ GameObject:
   - component: {fileID: 180419318}
   - component: {fileID: 180419317}
   - component: {fileID: 180419316}
+  - component: {fileID: 180419319}
   m_Layer: 5
   m_Name: CinematicBtn
   m_TagString: Untagged
@@ -967,6 +985,22 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 180419314}
   m_CullTransparentMesh: 1
+--- !u!114 &180419319
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 180419314}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 61ecb1fde675c7e44aa1c207532e27cf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UIGradient
+  m_color1: {r: 0.11764706, g: 0.2509804, b: 0.6862745, a: 1}
+  m_color2: {r: 0.21568628, g: 0.1882353, b: 0.6392157, a: 1}
+  m_angle: 60
+  m_ignoreRatio: 1
 --- !u!1 &232138245
 GameObject:
   m_ObjectHideFlags: 0
@@ -1295,8 +1329,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4281479730
-  m_fontColor: {r: 0.19607843, g: 0.19607843, b: 0.19607843, a: 1}
+    rgba: 4294638330
+  m_fontColor: {r: 0.98039216, g: 0.98039216, b: 0.98039216, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -1434,8 +1468,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4281479730
-  m_fontColor: {r: 0.19607843, g: 0.19607843, b: 0.19607843, a: 1}
+    rgba: 4294638330
+  m_fontColor: {r: 0.98039216, g: 0.98039216, b: 0.98039216, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -2111,8 +2145,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4281479730
-  m_fontColor: {r: 0.19607843, g: 0.19607843, b: 0.19607843, a: 1}
+    rgba: 4294638330
+  m_fontColor: {r: 0.98039216, g: 0.98039216, b: 0.98039216, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -2270,6 +2304,7 @@ GameObject:
   - component: {fileID: 497716714}
   - component: {fileID: 497716713}
   - component: {fileID: 497716716}
+  - component: {fileID: 497716717}
   m_Layer: 5
   m_Name: SystemNameBtn
   m_TagString: Untagged
@@ -2407,6 +2442,22 @@ MonoBehaviour:
   - {fileID: 1387267218}
   - {fileID: 35805368}
   disableOnStart: 1
+--- !u!114 &497716717
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 497716711}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 61ecb1fde675c7e44aa1c207532e27cf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UIGradient
+  m_color1: {r: 0.11764706, g: 0.2509804, b: 0.6862745, a: 1}
+  m_color2: {r: 0.21568628, g: 0.1882353, b: 0.6392157, a: 1}
+  m_angle: 60
+  m_ignoreRatio: 1
 --- !u!1 &525022847
 GameObject:
   m_ObjectHideFlags: 0
@@ -2548,8 +2599,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4281479730
-  m_fontColor: {r: 0.19607843, g: 0.19607843, b: 0.19607843, a: 1}
+    rgba: 4294638330
+  m_fontColor: {r: 0.98039216, g: 0.98039216, b: 0.98039216, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -2631,6 +2682,7 @@ GameObject:
   - component: {fileID: 610007610}
   - component: {fileID: 610007609}
   - component: {fileID: 610007608}
+  - component: {fileID: 610007611}
   m_Layer: 5
   m_Name: OrreryBtn
   m_TagString: Untagged
@@ -2752,6 +2804,22 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 610007606}
   m_CullTransparentMesh: 1
+--- !u!114 &610007611
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 610007606}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 61ecb1fde675c7e44aa1c207532e27cf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UIGradient
+  m_color1: {r: 0.11764706, g: 0.2509804, b: 0.6862745, a: 1}
+  m_color2: {r: 0.21568628, g: 0.1882353, b: 0.6392157, a: 1}
+  m_angle: 60
+  m_ignoreRatio: 1
 --- !u!1 &647319987
 GameObject:
   m_ObjectHideFlags: 0
@@ -2995,7 +3063,7 @@ RectTransform:
   m_AnchorMin: {x: 1, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 20, y: -17}
+  m_SizeDelta: {x: 10, y: -10}
   m_Pivot: {x: 1, y: 1}
 --- !u!114 &715150812
 MonoBehaviour:
@@ -4690,6 +4758,7 @@ GameObject:
   - component: {fileID: 1327149839}
   - component: {fileID: 1327149838}
   - component: {fileID: 1327149837}
+  - component: {fileID: 1327149840}
   m_Layer: 5
   m_Name: ArcadeBtn
   m_TagString: Untagged
@@ -4811,6 +4880,22 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1327149835}
   m_CullTransparentMesh: 1
+--- !u!114 &1327149840
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1327149835}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 61ecb1fde675c7e44aa1c207532e27cf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UIGradient
+  m_color1: {r: 0.11764706, g: 0.2509804, b: 0.6862745, a: 1}
+  m_color2: {r: 0.21568628, g: 0.1882353, b: 0.6392157, a: 1}
+  m_angle: 60
+  m_ignoreRatio: 1
 --- !u!1 &1365540019
 GameObject:
   m_ObjectHideFlags: 0
@@ -6214,8 +6299,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4281479730
-  m_fontColor: {r: 0.19607843, g: 0.19607843, b: 0.19607843, a: 1}
+    rgba: 4294638330
+  m_fontColor: {r: 0.98039216, g: 0.98039216, b: 0.98039216, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -6399,7 +6484,7 @@ RectTransform:
   m_AnchorMin: {x: 1, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 20, y: -17}
+  m_SizeDelta: {x: 10, y: -10}
   m_Pivot: {x: 1, y: 1}
 --- !u!114 &1982105219
 MonoBehaviour:
