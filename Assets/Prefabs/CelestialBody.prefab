@@ -142,4 +142,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9c62ec2efb7f64f48889dca1914c2928, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LowPolyMeshGenerator
-  subdivisions: 1
+  subdivisions: 3

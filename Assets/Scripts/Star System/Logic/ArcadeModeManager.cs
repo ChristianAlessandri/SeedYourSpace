@@ -20,6 +20,7 @@ public class ArcadeModeManager : MonoBehaviour
 
     private bool isArcadeActive = false;
     private List<GameObject> activeSpacecraft = new List<GameObject>();
+    public int ActiveShipCount => activeSpacecraft.Count;
 
     private void Start()
     {

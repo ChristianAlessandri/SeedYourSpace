@@ -10,6 +10,9 @@ public class SystemStatsHUD : MonoBehaviour
     [Header("UI References")]
     public TextMeshProUGUI statsText;
     public StarSystemGenerator generator;
+    
+    [Tooltip("Reference to the ArcadeModeManager to track active spacecraft.")]
+    public ArcadeModeManager arcadeManager;
 
     [Header("Settings")]
     [Tooltip("How often the FPS and stats counter updates (in seconds).")]
@@ -42,6 +45,9 @@ public class SystemStatsHUD : MonoBehaviour
     {
         if (generator == null || statsText == null) return;
 
+        // Recupera dinamicamente le navi, se il manager è assegnato e attivo
+        int activeShips = (arcadeManager != null) ? arcadeManager.ActiveShipCount : 0;
+
         // RAM Usage (Allocated managed memory)
         float ramUsageMb = Profiler.GetTotalAllocatedMemoryLong() / 1048576f;
         
@@ -51,8 +57,8 @@ public class SystemStatsHUD : MonoBehaviour
         // Total Video RAM available on the user's GPU
         int totalVram = SystemInfo.graphicsMemorySize;
 
-        // Central star (1) + planets + moons + rings
-        int totalEntities = 1 + generator.TotalPlanets + generator.TotalMoons + generator.TotalRings;
+        // Central star (1) + planets + moons + rings + arcade ships
+        int totalEntities = 1 + generator.TotalPlanets + generator.TotalMoons + generator.TotalRings + activeShips;
 
         statsText.text = $"FPS: {fps}\n" +
                          $"RAM: {ramUsageMb:F1} MB\n" +
@@ -60,6 +66,7 @@ public class SystemStatsHUD : MonoBehaviour
                          $"Entities: {totalEntities}\n" +
                          $"Planets: {generator.TotalPlanets}\n" +
                          $"Moons: {generator.TotalMoons}\n" +
-                         $"Rings: {generator.TotalRings}";
+                         $"Rings: {generator.TotalRings}\n" +
+                         $"Spaceships: {activeShips}";
     }
 }
