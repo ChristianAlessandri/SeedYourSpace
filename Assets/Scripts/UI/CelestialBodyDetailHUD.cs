@@ -89,7 +89,7 @@ public class CelestialBodyDetailHUD : MonoBehaviour
     {
         if (viewToggleText != null && miniatureRenderer != null)
         {
-            viewToggleText.text = miniatureRenderer.IsAtlasMode ? "Switch to Miniature Mode" : "Switch to Atlas Mode";
+            viewToggleText.text = miniatureRenderer.IsAtlasMode ? "Miniature" : "Atlas";
         }
     }
 

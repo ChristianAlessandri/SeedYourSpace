@@ -86,7 +86,7 @@ public class PixelArtController : MonoBehaviour
 
         if (pixelScaleText != null)
         {
-            pixelScaleText.text = scale == 0 ? "Pixel Scale: OFF" : $"Pixel Scale: {scale}x";
+            pixelScaleText.text = $"Pixelize: {scale}x";
         }
 
         if (pixelFeature != null)

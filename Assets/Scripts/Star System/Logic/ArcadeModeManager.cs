@@ -25,7 +25,7 @@ public class ArcadeModeManager : MonoBehaviour
     {
         if (toggleButtonText != null)
         {
-            toggleButtonText.text = "DISABLED";
+            toggleButtonText.text = "Arcade\nDISABLED";
         }
     }
 
@@ -35,7 +35,7 @@ public class ArcadeModeManager : MonoBehaviour
 
         if (toggleButtonText != null)
         {
-            toggleButtonText.text = isArcadeActive ? "ENABLED" : "DISABLED";
+            toggleButtonText.text = isArcadeActive ? "Arcade\nENABLED" : "Arcade\nDISABLED";
         }
 
         if (isArcadeActive)

@@ -68,7 +68,7 @@ public class OrreryController : MonoBehaviour
 
         if (buttonText != null)
         {
-            buttonText.text = isOrreryActive ? "ENABLED" : "DISABLED";
+            buttonText.text = isOrreryActive ? "Orrery\nENABLED" : "Orrery\nDISABLED";
         }
     }
 
