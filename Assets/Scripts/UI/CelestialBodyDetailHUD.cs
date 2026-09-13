@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using System.Collections.Generic;
 
 /// <summary>
 /// Displays the physical and orbital statistics of a selected celestial body.
@@ -13,7 +14,7 @@ public class CelestialBodyDetailHUD : MonoBehaviour
     public MoonListHUD moonListHUD;
 
     [Header("Container")]
-    public GameObject bentoBoxVisualContainer;
+    public List<GameObject> bentoBoxVisualContainer;
 
     [Header("UI Text Elements")]
     public TextMeshProUGUI nameText;
@@ -29,7 +30,16 @@ public class CelestialBodyDetailHUD : MonoBehaviour
 
     private void Start()
     {
-        if (bentoBoxVisualContainer != null) bentoBoxVisualContainer.SetActive(false);
+        if (bentoBoxVisualContainer != null)
+        {
+            foreach (GameObject element in bentoBoxVisualContainer)
+            {
+                if (element != null)
+                {
+                    element.SetActive(false);
+                }
+            }
+        }
     }
 
     private void OnEnable()
@@ -100,7 +110,16 @@ public class CelestialBodyDetailHUD : MonoBehaviour
     private void UpdateDetails(CelestialBodyData body)
     {
         if (body == null) return;
-        if (bentoBoxVisualContainer != null) bentoBoxVisualContainer.SetActive(true);
+        if (bentoBoxVisualContainer != null)
+        {
+            foreach (GameObject element in bentoBoxVisualContainer)
+            {
+                if (element != null)
+                {
+                    element.SetActive(true);
+                }
+            }
+        }
 
         if (nameText != null) nameText.text = body.name;
         if (classText != null) classText.text = body.className;
@@ -138,7 +157,16 @@ public class CelestialBodyDetailHUD : MonoBehaviour
     private void UpdateDetails(StarData star)
     {
         if (star == null) return;
-        if (bentoBoxVisualContainer != null) bentoBoxVisualContainer.SetActive(true);
+        if (bentoBoxVisualContainer != null)
+        {
+            foreach (GameObject element in bentoBoxVisualContainer)
+            {
+                if (element != null)
+                {
+                    element.SetActive(true);
+                }
+            }
+        }
 
         if (nameText != null) nameText.text = star.name;
         if (classText != null) classText.text = $"Star ({star.spectralClass})";
@@ -162,6 +190,15 @@ public class CelestialBodyDetailHUD : MonoBehaviour
 
     public void ClearDetails()
     {
-        if (bentoBoxVisualContainer != null) bentoBoxVisualContainer.SetActive(false);
+        if (bentoBoxVisualContainer != null)
+        {
+            foreach (GameObject element in bentoBoxVisualContainer)
+            {
+                if (element != null)
+                {
+                    element.SetActive(false);
+                }
+            }
+        }
     }
 }

@@ -14,7 +14,6 @@ public class MoonListHUD : MonoBehaviour
     public GameObject bentoBoxVisualContainer; 
     
     [Header("UI Elements")]
-    public TextMeshProUGUI parentPlanetNameText; 
     public Transform scrollContent;
     public GameObject moonButtonPrefab;
     
@@ -75,7 +74,6 @@ public class MoonListHUD : MonoBehaviour
         }
 
         if (bentoBoxVisualContainer != null) bentoBoxVisualContainer.SetActive(true);
-        if (parentPlanetNameText != null) parentPlanetNameText.text = $"{activePlanet.name} Moons";
 
         foreach (MoonData moon in activePlanet.moons)
         {
