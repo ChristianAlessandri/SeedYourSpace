@@ -16,13 +16,13 @@ public struct MarkovTransition
     public string[] nextNodes;
 }
 
-public class MarkovNameGenerator : INameGenerator
+public class MarkovNameGeneratorV1 : INameGenerator
 {
     private string[] startNodes;
     private string[] romanNumerals;
     private Dictionary<string, string[]> transitionMatrix;
 
-    public MarkovNameGenerator(string jsonContent)
+    public MarkovNameGeneratorV1(string jsonContent)
     {
         MarkovData data = JsonUtility.FromJson<MarkovData>(jsonContent);
         

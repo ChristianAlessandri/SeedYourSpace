@@ -69,22 +69,32 @@ public class StarSystemGenerator : MonoBehaviour
     /// Initializes the name generator and astrophysics rules based on the specified algorithm version.
     /// </summary>
     /// <returns>True if initialization is successful, false otherwise.</returns>
+    /// <summary>
+    /// Initializes the generators and astrophysics rules based on the specified algorithm version.
+    /// Uses factories to load the appropriate strategy for Web3 backward compatibility.
+    /// </summary>
+    /// <returns>True if initialization is successful, false otherwise.</returns>
     private bool InitializeGenerators()
     {
+        // Initialize Math Core
         if (stochasticMath == null)
-            stochasticMath = new StochasticMathV1();
-
-        if (nameGenerator == null)
         {
-            TextAsset jsonFile = Resources.Load<TextAsset>("markov_data");
-            if (jsonFile == null)
-            {
-                Debug.LogError("Critical Error: markov_data not found in Resources folder!");
-                return false;
-            }
-            nameGenerator = new MarkovNameGenerator(jsonFile.text);
+            stochasticMath = StochasticMathFactory.CreateMath(algorithmVersion);
         }
 
+        // Initialize Name Generator
+        if (nameGenerator == null)
+        {
+            TextAsset jsonNameFile = Resources.Load<TextAsset>($"markov_data_v{algorithmVersion}");
+            if (jsonNameFile == null)
+            {
+                Debug.LogError($"Critical Error: markov_data_v{algorithmVersion} not found in Resources folder!");
+                return false;
+            }
+            nameGenerator = NameGeneratorFactory.CreateNameGenerator(algorithmVersion, jsonNameFile.text);
+        }
+
+        // Initialize Astrophysics Rules via Factory
         if (astroRules == null)
         {
             astroRules = AstrophysicsRulesFactory.CreateRules(algorithmVersion);
@@ -92,7 +102,7 @@ public class StarSystemGenerator : MonoBehaviour
             TextAsset jsonRulesFile = Resources.Load<TextAsset>($"generation_data_v{algorithmVersion}");
             if (jsonRulesFile == null)
             {
-                Debug.LogError($"Critical Error: generation_data_v{algorithmVersion} non trovato!");
+                Debug.LogError($"Critical Error: generation_data_v{algorithmVersion} not found in Resources folder!");
                 return false;
             }
             generationData = JsonUtility.FromJson<GenerationData>(jsonRulesFile.text);

@@ -8,7 +8,7 @@ public static class AstrophysicsRulesFactory
         {
             case 1:
                 return new AstrophysicsRulesV1();
-            // Future versions can be added here as needed, for example:
+            // Future versions can be added here, e.g.:
             // case 2: return new AstrophysicsRulesV2();
             default:
                 Debug.LogWarning($"[AstrophysicsRulesFactory] Version {version} not supported. Falling back to V1.");
