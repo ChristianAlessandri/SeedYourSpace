@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 /// <summary>
 /// Core procedural orchestrator responsible for deterministic star system generation.
-/// Delegates complex calculations to StochasticMath and astroRules.
+/// Delegates complex calculations to stochasticMath and astroRules.
 /// </summary>
 public class StarSystemGenerator : MonoBehaviour
 {
@@ -31,9 +31,10 @@ public class StarSystemGenerator : MonoBehaviour
     public List<PlanetData> SystemPlanets { get; private set; } = new List<PlanetData>();
     public List<AsteroidBeltData> SystemBelts { get; private set; } = new List<AsteroidBeltData>();
 
-    private MarkovNameGenerator nameGenerator;
-    private IAstrophysicsRules astroRules;
-    private GenerationData generationData;
+    private INameGenerator nameGenerator;
+    private IStochasticMath stochasticMath;
+    private IAstrophysicsRules astroRules; 
+    private GenerationData generationData; 
     private float currentSystemFrostLine;
 
     private void Start()
@@ -51,7 +52,7 @@ public class StarSystemGenerator : MonoBehaviour
 
         ResetCounters();
 
-        System.Random systemPrng = new System.Random(StochasticMath.DeriveNumericalSeed(seed));
+        System.Random systemPrng = new System.Random(stochasticMath.DeriveNumericalSeed(seed));
         SystemName = nameGenerator.GenerateSystemName(systemPrng);
         
         GenerateSkybox(systemPrng);
@@ -70,15 +71,18 @@ public class StarSystemGenerator : MonoBehaviour
     /// <returns>True if initialization is successful, false otherwise.</returns>
     private bool InitializeGenerators()
     {
+        if (stochasticMath == null)
+            stochasticMath = new StochasticMathV1();
+
         if (nameGenerator == null)
         {
-            TextAsset jsonNameFile = Resources.Load<TextAsset>("markov_data");
-            if (jsonNameFile == null)
+            TextAsset jsonFile = Resources.Load<TextAsset>("markov_data");
+            if (jsonFile == null)
             {
-                Debug.LogError("Critical Error: markov_data file not found in Resources folder!");
+                Debug.LogError("Critical Error: markov_data not found in Resources folder!");
                 return false;
             }
-            nameGenerator = new MarkovNameGenerator(jsonNameFile.text);
+            nameGenerator = new MarkovNameGenerator(jsonFile.text);
         }
 
         if (astroRules == null)
@@ -88,11 +92,12 @@ public class StarSystemGenerator : MonoBehaviour
             TextAsset jsonRulesFile = Resources.Load<TextAsset>($"generation_data_v{algorithmVersion}");
             if (jsonRulesFile == null)
             {
-                Debug.LogError($"Critical Error: generation_data_v{algorithmVersion} file not found in Resources folder!");
+                Debug.LogError($"Critical Error: generation_data_v{algorithmVersion} non trovato!");
                 return false;
             }
             generationData = JsonUtility.FromJson<GenerationData>(jsonRulesFile.text);
-            astroRules.Initialize(generationData);
+            
+            astroRules.Initialize(generationData, stochasticMath);
         }
 
         return true;
@@ -162,26 +167,26 @@ public class StarSystemGenerator : MonoBehaviour
     private StarData GenerateCentralStar(string baseSeed, string rootName)
     {
         string starSubSeedInput = baseSeed + "_Star_Entity";
-        int starNumericalSeed = StochasticMath.DeriveNumericalSeed(starSubSeedInput);
+        int starNumericalSeed = stochasticMath.DeriveNumericalSeed(starSubSeedInput);
         System.Random starPrng = new System.Random(starNumericalSeed);
 
-        int spectralIndex = StochasticMath.GetWeightedIndex(generationData.stellarWeights, starPrng);
+        int spectralIndex = stochasticMath.GetWeightedIndex(generationData.stellarWeights, starPrng);
         
         StarData star = new StarData();
         star.name = rootName + " Prime";
         star.spectralClass = astroRules.GetSpectralClassName(spectralIndex);
         
-        star.mass = Mathf.Max(StochasticMath.GetNormalValue(starPrng, generationData.massMeans[spectralIndex], generationData.massMeans[spectralIndex] * 0.1f), 0.08f);
-        star.temperature = Mathf.Max(StochasticMath.GetNormalValue(starPrng, generationData.tempMeans[spectralIndex], generationData.tempMeans[spectralIndex] * 0.05f), 2000f);
-        star.radius = Mathf.Max(StochasticMath.GetNormalValue(starPrng, generationData.radiusMeans[spectralIndex], generationData.radiusMeans[spectralIndex] * 0.1f), 0.1f);
+        star.mass = Mathf.Max(stochasticMath.GetNormalValue(starPrng, generationData.massMeans[spectralIndex], generationData.massMeans[spectralIndex] * 0.1f), 0.08f);
+        star.temperature = Mathf.Max(stochasticMath.GetNormalValue(starPrng, generationData.tempMeans[spectralIndex], generationData.tempMeans[spectralIndex] * 0.05f), 2000f);
+        star.radius = Mathf.Max(stochasticMath.GetNormalValue(starPrng, generationData.radiusMeans[spectralIndex], generationData.radiusMeans[spectralIndex] * 0.1f), 0.1f);
 
-        float oscillation = Mathf.Clamp(StochasticMath.GetNormalValue(starPrng, 0f, 0.05f), -0.20f, 0.20f);
+        float oscillation = Mathf.Clamp(stochasticMath.GetNormalValue(starPrng, 0f, 0.05f), -0.20f, 0.20f);
         
         currentSystemFrostLine = generationData.baseFrostLines[spectralIndex] * (1f + oscillation);
         star.frostLine = currentSystemFrostLine;
 
-        star.axialTilt = Mathf.Abs(StochasticMath.GetNormalValue(starPrng, 7.25f, 2f));
-        star.rotationPeriod = Mathf.Max(StochasticMath.GetNormalValue(starPrng, 600f, 150f), 100f);
+        star.axialTilt = Mathf.Abs(stochasticMath.GetNormalValue(starPrng, 7.25f, 2f));
+        star.rotationPeriod = Mathf.Max(stochasticMath.GetNormalValue(starPrng, 600f, 150f), 100f);
 
         astroRules.CalculateStellarSurface(
             star.temperature, star.mass, star.radius, star.rotationPeriod, starPrng, 
@@ -201,10 +206,10 @@ public class StarSystemGenerator : MonoBehaviour
     private List<PlanetData> GeneratePlanetarySystem(string baseSeed, string rootName, StarData centralStar)
     {
         string layoutSubSeedInput = baseSeed + "_Planets_Layout";
-        int layoutNumericalSeed = StochasticMath.DeriveNumericalSeed(layoutSubSeedInput);
+        int layoutNumericalSeed = stochasticMath.DeriveNumericalSeed(layoutSubSeedInput);
         System.Random layoutPrng = new System.Random(layoutNumericalSeed);
 
-        float rawPlanetCount = StochasticMath.GetNormalValue(layoutPrng, 5.5f, 2.0f);
+        float rawPlanetCount = stochasticMath.GetNormalValue(layoutPrng, 5.5f, 2.0f);
         int planetCount = Mathf.Clamp(Mathf.RoundToInt(rawPlanetCount), 1, 12);
         
         List<PlanetData> generatedPlanets = new List<PlanetData>();
@@ -231,7 +236,7 @@ public class StarSystemGenerator : MonoBehaviour
     /// <returns>The generated planet data.</returns>
     private PlanetData GeneratePlanetEntity(string planetSeedInput, string rootName, int planetIndex, StarData centralStar)
     {
-        int planetNumericalSeed = StochasticMath.DeriveNumericalSeed(planetSeedInput);
+        int planetNumericalSeed = stochasticMath.DeriveNumericalSeed(planetSeedInput);
         System.Random planetPrng = new System.Random(planetNumericalSeed);
 
         PlanetData planet = new PlanetData();
@@ -241,16 +246,16 @@ public class StarSystemGenerator : MonoBehaviour
         PlanetProfile selectedClass = astroRules.ClassifyPlanet(planet.orbitalDistance, planetPrng, currentSystemFrostLine);
         planet.className = selectedClass.className;
         
-        planet.radius = Mathf.Max(StochasticMath.GetNormalValue(planetPrng, selectedClass.radiusMean, selectedClass.radiusStdDev), 0.1f);
-        float density = Mathf.Max(StochasticMath.GetNormalValue(planetPrng, selectedClass.densityMean, 0.1f), 0.1f);
+        planet.radius = Mathf.Max(stochasticMath.GetNormalValue(planetPrng, selectedClass.radiusMean, selectedClass.radiusStdDev), 0.1f);
+        float density = Mathf.Max(stochasticMath.GetNormalValue(planetPrng, selectedClass.densityMean, 0.1f), 0.1f);
         planet.mass = Mathf.Pow(planet.radius, 3) * density;
         planet.surfaceGravity = planet.mass / (planet.radius * planet.radius);
 
         float distanceInSolarRadii = planet.orbitalDistance * 215.03f; 
         planet.surfaceTemperature = centralStar.temperature * Mathf.Sqrt(centralStar.radius / (2f * distanceInSolarRadii)) * 0.9f;
         
-        planet.axialTilt = Mathf.Abs(StochasticMath.GetNormalValue(planetPrng, 23.5f, 15f));
-        planet.orbitalInclination = StochasticMath.GetNormalValue(planetPrng, 0f, 3f);
+        planet.axialTilt = Mathf.Abs(stochasticMath.GetNormalValue(planetPrng, 23.5f, 15f));
+        planet.orbitalInclination = stochasticMath.GetNormalValue(planetPrng, 0f, 3f);
         planet.atmosphereType = astroRules.DetermineAtmosphere(planet.className, planet.surfaceGravity, planet.orbitalDistance, currentSystemFrostLine, planetPrng);
         astroRules.CalculateAtmosphereVisuals(
             planet.atmosphereType,
@@ -268,7 +273,7 @@ public class StarSystemGenerator : MonoBehaviour
         planet.revolutionPeriod = revolutionYears * 365.25f;
         
         float baseRotation = (planet.className == "Gas Giant" || planet.className == "Ice Giant") ? 12f : 24f;
-        planet.rotationPeriod = Mathf.Max(StochasticMath.GetNormalValue(planetPrng, baseRotation, baseRotation * 0.5f), 2f); 
+        planet.rotationPeriod = Mathf.Max(stochasticMath.GetNormalValue(planetPrng, baseRotation, baseRotation * 0.5f), 2f); 
         
         if (planet.orbitalDistance < 0.2f) 
         {
@@ -297,10 +302,10 @@ public class StarSystemGenerator : MonoBehaviour
     private List<MoonData> GenerateMoons(string planetSeedInput, PlanetData parentPlanet)
     {
         List<MoonData> generatedMoons = new List<MoonData>();
-        System.Random layoutPrng = new System.Random(StochasticMath.DeriveNumericalSeed(planetSeedInput + "_MoonLayout"));
+        System.Random layoutPrng = new System.Random(stochasticMath.DeriveNumericalSeed(planetSeedInput + "_MoonLayout"));
         
         float maxTheoreticalMoons = parentPlanet.radius * 3.0f;
-        int moonCount = Mathf.Clamp(Mathf.RoundToInt(StochasticMath.GetNormalValue(layoutPrng, maxTheoreticalMoons * 0.3f, maxTheoreticalMoons * 0.2f)), 0, Mathf.FloorToInt(maxTheoreticalMoons));
+        int moonCount = Mathf.Clamp(Mathf.RoundToInt(stochasticMath.GetNormalValue(layoutPrng, maxTheoreticalMoons * 0.3f, maxTheoreticalMoons * 0.2f)), 0, Mathf.FloorToInt(maxTheoreticalMoons));
         float currentOrbitalDistance = parentPlanet.radius * 2.0f;
 
         for (int m = 0; m < moonCount; m++)
@@ -323,22 +328,22 @@ public class StarSystemGenerator : MonoBehaviour
     /// <returns>The generated moon data.</returns>
     private MoonData GenerateMoonEntity(string moonSeedInput, PlanetData parentPlanet, int moonIndex, ref float currentOrbitalDistance)
     {
-        System.Random moonPrng = new System.Random(StochasticMath.DeriveNumericalSeed(moonSeedInput));
+        System.Random moonPrng = new System.Random(stochasticMath.DeriveNumericalSeed(moonSeedInput));
         MoonData moon = new MoonData();
         
         moon.name = parentPlanet.name + "-" + nameGenerator.ToAlphabet(moonIndex);
-        moon.radius = Mathf.Max(StochasticMath.GetNormalValue(moonPrng, parentPlanet.radius * 0.15f, parentPlanet.radius * 0.05f), 0.01f); 
+        moon.radius = Mathf.Max(stochasticMath.GetNormalValue(moonPrng, parentPlanet.radius * 0.15f, parentPlanet.radius * 0.05f), 0.01f); 
 
-        float orbitalGap = Mathf.Max(StochasticMath.GetNormalValue(moonPrng, 5.0f, 1.5f), 1.0f);
+        float orbitalGap = Mathf.Max(stochasticMath.GetNormalValue(moonPrng, 5.0f, 1.5f), 1.0f);
         currentOrbitalDistance += orbitalGap + (moon.radius * 2f);
         moon.orbitalDistance = currentOrbitalDistance;
 
-        float moonDensity = Mathf.Max(StochasticMath.GetNormalValue(moonPrng, 0.8f, 0.1f), 0.1f);
+        float moonDensity = Mathf.Max(stochasticMath.GetNormalValue(moonPrng, 0.8f, 0.1f), 0.1f);
         moon.mass = Mathf.Pow(moon.radius, 3) * moonDensity;
         moon.surfaceGravity = moon.mass / (moon.radius * moon.radius);
 
-        moon.orbitalInclination = StochasticMath.GetNormalValue(moonPrng, 0f, 1f);
-        moon.axialTilt = Mathf.Abs(StochasticMath.GetNormalValue(moonPrng, 5f, 5f));
+        moon.orbitalInclination = stochasticMath.GetNormalValue(moonPrng, 0f, 1f);
+        moon.axialTilt = Mathf.Abs(stochasticMath.GetNormalValue(moonPrng, 5f, 5f));
 
         moon.revolutionPeriod = 3.0f * Mathf.Sqrt(Mathf.Pow(moon.orbitalDistance, 3) / Mathf.Max(parentPlanet.mass, 0.001f));
         moon.isTidallyLocked = (moonPrng.NextDouble() <= 0.85);
@@ -350,16 +355,16 @@ public class StarSystemGenerator : MonoBehaviour
         }
         else
         {
-            moon.rotationPeriod = Mathf.Max(StochasticMath.GetNormalValue(moonPrng, 48f, 24f), 5f);
+            moon.rotationPeriod = Mathf.Max(stochasticMath.GetNormalValue(moonPrng, 48f, 24f), 5f);
         }
 
-        moon.orbitalEccentricity = Mathf.Clamp(Mathf.Abs(StochasticMath.GetNormalValue(moonPrng, 0.01f, 0.01f)), 0f, 0.05f);
+        moon.orbitalEccentricity = Mathf.Clamp(Mathf.Abs(stochasticMath.GetNormalValue(moonPrng, 0.01f, 0.01f)), 0f, 0.05f);
         moon.className = astroRules.ClassifyMoon(parentPlanet.orbitalDistance, currentSystemFrostLine, moonPrng);
         
         astroRules.CalculateRings(moon.className, moon.radius, moonPrng, 
             out moon.hasRings, out moon.ringDivisions, out moon.ringInnerRadius, out moon.ringOuterRadius, out moon.ringColor);
         
-        float tempVariance = StochasticMath.GetNormalValue(moonPrng, 1.0f, 0.05f);
+        float tempVariance = stochasticMath.GetNormalValue(moonPrng, 1.0f, 0.05f);
         moon.surfaceTemperature = parentPlanet.surfaceTemperature * tempVariance;
 
         moon.atmosphereType = astroRules.DetermineAtmosphere(moon.className, moon.surfaceGravity, parentPlanet.orbitalDistance, currentSystemFrostLine, moonPrng);
@@ -418,7 +423,7 @@ public class StarSystemGenerator : MonoBehaviour
     private List<AsteroidBeltData> GenerateAsteroidBelts(string baseSeed, List<PlanetData> planets)
     {
         List<AsteroidBeltData> belts = new List<AsteroidBeltData>();
-        System.Random beltPrng = new System.Random(StochasticMath.DeriveNumericalSeed(baseSeed + "_Belts"));
+        System.Random beltPrng = new System.Random(stochasticMath.DeriveNumericalSeed(baseSeed + "_Belts"));
 
         // Sort planets by distance to safely evaluate gaps
         planets.Sort((p1, p2) => p1.orbitalDistance.CompareTo(p2.orbitalDistance));

@@ -14,7 +14,7 @@ public class GenerationData
 
 public interface IAstrophysicsRules
 {
-    void Initialize(GenerationData data);
+    void Initialize(GenerationData data, IStochasticMath mathCore);
     string GetSpectralClassName(int index);
     void CalculateStellarSurface(float temperature, float mass, float radius, float rotationPeriod, System.Random prng, out Color baseColor, out float magneticActivity, out float granulationScale);
     float CalculateOrbitalDistance(int planetIndex, System.Random prng);

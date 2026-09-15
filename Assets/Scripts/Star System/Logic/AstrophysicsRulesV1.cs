@@ -7,14 +7,17 @@ using System;
 public class AstrophysicsRulesV1: IAstrophysicsRules
 {
     private GenerationData generationData;
+    private IStochasticMath math;
 
     /// <summary>
     /// Initializes the astrophysics rules with the provided generation data, which includes stellar weights, means, frost lines, and spectral classes.
     /// </summary>
     /// <param name="data">The generation data.</param>
-    public void Initialize(GenerationData data)
+    /// <param name="mathCore">The stochastic math core.</param>
+    public void Initialize(GenerationData data, IStochasticMath mathCore)
     {
         this.generationData = data;
+        this.math = mathCore;
     }
 
     /// <summary>
@@ -36,7 +39,7 @@ public class AstrophysicsRulesV1: IAstrophysicsRules
     public float CalculateOrbitalDistance(int planetIndex, System.Random prng)
     {
         float baseDistance = (planetIndex > 0) ? (0.4f + 0.3f * Mathf.Pow(2, planetIndex - 1)) : 0.4f;
-        float varianceModifier = StochasticMath.GetNormalValue(prng, 0f, 0.05f);
+        float varianceModifier = math.GetNormalValue(prng, 0f, 0.05f);
         varianceModifier = Mathf.Clamp(varianceModifier, -0.15f, 0.15f); 
         
         return baseDistance * (1f + varianceModifier);
@@ -49,7 +52,7 @@ public class AstrophysicsRulesV1: IAstrophysicsRules
     /// <returns>The calculated eccentricity.</returns>
     public float CalculateEccentricity(System.Random prng)
     {
-        float eccentricity = StochasticMath.GetNormalValue(prng, 0.05f, 0.08f);
+        float eccentricity = math.GetNormalValue(prng, 0.05f, 0.08f);
         return Mathf.Clamp(Mathf.Abs(eccentricity), 0f, 0.99f);
     }
 
@@ -162,7 +165,7 @@ public class AstrophysicsRulesV1: IAstrophysicsRules
         {
             if (chance <= 0.85)
             {
-                ringCount = Mathf.Clamp(Mathf.RoundToInt(StochasticMath.GetNormalValue(prng, 3f, 1f)), 1, 6);
+                ringCount = Mathf.Clamp(Mathf.RoundToInt(math.GetNormalValue(prng, 3f, 1f)), 1, 6);
                 return true;
             }
         }
@@ -244,7 +247,7 @@ public class AstrophysicsRulesV1: IAstrophysicsRules
     /// <returns>The generated atmosphere type.</returns>
     private string GenerateGiantAtmosphere(string className, System.Random prng)
     {
-        float h2 = Mathf.Clamp(StochasticMath.GetNormalValue(prng, 75f, 5f), 65f, 85f);
+        float h2 = Mathf.Clamp(math.GetNormalValue(prng, 75f, 5f), 65f, 85f);
         float he = Mathf.Clamp(99f - h2, 10f, 30f);
         float trace = Mathf.Max(100f - (h2 + he), 0.1f);
         
@@ -272,7 +275,7 @@ public class AstrophysicsRulesV1: IAstrophysicsRules
             
             if (anomaly < 0.3) 
             {
-                float n2 = Mathf.Clamp(StochasticMath.GetNormalValue(prng, 90f, 5f), 80f, 98f);
+                float n2 = Mathf.Clamp(math.GetNormalValue(prng, 90f, 5f), 80f, 98f);
                 float ch4 = Mathf.Max(100f - n2, 0.1f);
                 return $"{density} | N2 ({n2:F1}%), CH4 ({ch4:F1}%)";
             }
@@ -281,20 +284,20 @@ public class AstrophysicsRulesV1: IAstrophysicsRules
         
         if (anomaly < 0.05) 
         {
-            float n2 = Mathf.Clamp(StochasticMath.GetNormalValue(prng, 75f, 5f), 60f, 85f);
-            float o2 = Mathf.Clamp(StochasticMath.GetNormalValue(prng, 21f, 3f), 15f, 30f);
+            float n2 = Mathf.Clamp(math.GetNormalValue(prng, 75f, 5f), 60f, 85f);
+            float o2 = Mathf.Clamp(math.GetNormalValue(prng, 21f, 3f), 15f, 30f);
             float trace = Mathf.Max(100f - (n2 + o2), 0.1f);
             return $"{density} (Habitable) | N2 ({n2:F1}%), O2 ({o2:F1}%), Ar/CO2 ({trace:F1}%)";
         }
 
         if (anomaly < 0.5) 
         {
-            float co2 = Mathf.Clamp(StochasticMath.GetNormalValue(prng, 95f, 2f), 90f, 98f);
+            float co2 = Mathf.Clamp(math.GetNormalValue(prng, 95f, 2f), 90f, 98f);
             float n2 = Mathf.Max(100f - co2, 0.1f);
             return $"{density} (Toxic) | CO2 ({co2:F1}%), N2/SO2 ({n2:F1}%)";
         }
         
-        float co2thin = Mathf.Clamp(StochasticMath.GetNormalValue(prng, 95f, 3f), 90f, 98f);
+        float co2thin = Mathf.Clamp(math.GetNormalValue(prng, 95f, 3f), 90f, 98f);
         return $"{density} | CO2 ({co2thin:F1}%), Ar/N2 ({100f - co2thin:F1}%)";
     }
 
@@ -347,7 +350,7 @@ public class AstrophysicsRulesV1: IAstrophysicsRules
     {
         float surfaceGravity = mass / (radius * radius);
         float baseGranulation = 1f / Mathf.Max(surfaceGravity, 0.01f);
-        float variance = StochasticMath.GetNormalValue(prng, 1.0f, 0.1f);
+        float variance = math.GetNormalValue(prng, 1.0f, 0.1f);
         
         return Mathf.Clamp(baseGranulation * variance, 0.1f, 50f);
     }
@@ -364,7 +367,7 @@ public class AstrophysicsRulesV1: IAstrophysicsRules
         float rotationFactor = 1000f / Mathf.Max(rotationPeriod, 1f); 
         float massFactor = 1f / Mathf.Max(mass, 0.1f);
         float rawActivity = (rotationFactor * 0.4f) + (massFactor * 0.6f);
-        float activityNoise = StochasticMath.GetNormalValue(prng, 0f, 0.15f);
+        float activityNoise = math.GetNormalValue(prng, 0f, 0.15f);
         
         return Mathf.Clamp01((rawActivity / 5f) + activityNoise);
     }
