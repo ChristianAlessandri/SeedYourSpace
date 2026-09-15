@@ -12,5 +12,45 @@
     "G (Yellow - Solar)",
     "K (Orange)",
     "M (Red Dwarf)"
-  ]
+  ],
+  "planetClasses": [
+    {
+      "className": "Terrestrial",
+      "radiusMean": 1.0,
+      "radiusStdDev": 0.3,
+      "densityMean": 1.0,
+      "insideFrostWeight": 25.0,
+      "outsideFrostWeight": 2.0
+    },
+    {
+      "className": "Super-Earth",
+      "radiusMean": 2.0,
+      "radiusStdDev": 0.5,
+      "densityMean": 1.2,
+      "insideFrostWeight": 15.0,
+      "outsideFrostWeight": 5.0
+    },
+    {
+      "className": "Ice Giant",
+      "radiusMean": 4.0,
+      "radiusStdDev": 1.0,
+      "densityMean": 0.3,
+      "insideFrostWeight": 2.0,
+      "outsideFrostWeight": 17.0
+    },
+    {
+      "className": "Gas Giant",
+      "radiusMean": 11.2,
+      "radiusStdDev": 2.5,
+      "densityMean": 0.22,
+      "insideFrostWeight": 2.0,
+      "outsideFrostWeight": 21.0
+    }
+  ],
+  "chanceIcyMoon": 0.75,
+  "chanceGiantRings": 0.85,
+  "chanceTerrestrialRings": 0.04,
+  "anomalyChanceHabitable": 0.05,
+  "anomalyChanceToxic": 0.5,
+  "anomalyChanceFrozen": 0.3
 }

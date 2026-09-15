@@ -9,7 +9,7 @@ using System.Collections.Generic;
 public class StarSystemGenerator : MonoBehaviour
 {
     [Header("Generation Settings")]
-    public string masterSeed = "0xF5a9b2323e7f1C0C40843B33E7cEB2Ef4caAB895";
+    public string masterSeed = "0";
 
     [Header("Diorama Settings")]
     public VisualDioramaBuilder dioramaBuilder;

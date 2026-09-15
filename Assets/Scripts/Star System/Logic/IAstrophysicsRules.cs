@@ -1,15 +1,37 @@
 using UnityEngine;
 using System;
+[Serializable]
+public struct PlanetClassParams
+{
+    public string className;
+    public float radiusMean;
+    public float radiusStdDev;
+    public float densityMean;
+    public float insideFrostWeight;
+    public float outsideFrostWeight;
+}
 
 [Serializable]
 public class GenerationData
 {
+    // --- Base Data ---
     public float[] stellarWeights;
     public float[] massMeans;
     public float[] tempMeans;
     public float[] radiusMeans;
     public float[] baseFrostLines;
     public string[] spectralClasses;
+
+    // --- Procedural Generation Probabilities ---
+    public PlanetClassParams[] planetClasses;
+    
+    public float chanceIcyMoon;
+    public float chanceGiantRings;
+    public float chanceTerrestrialRings;
+    
+    public float anomalyChanceHabitable;
+    public float anomalyChanceToxic;
+    public float anomalyChanceFrozen;
 }
 
 public interface IAstrophysicsRules

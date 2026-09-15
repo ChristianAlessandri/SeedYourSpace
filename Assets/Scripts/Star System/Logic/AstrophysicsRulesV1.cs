@@ -65,27 +65,18 @@ public class AstrophysicsRulesV1: IAstrophysicsRules
     /// <returns>The classified planet profile.</returns>
     public PlanetProfile ClassifyPlanet(float distance, System.Random prng, float systemFrostLine)
     {
-        PlanetProfile terrestrial = new PlanetProfile("Terrestrial", 1.0f, 0.3f, 1.0f, 10f);
-        PlanetProfile superEarth = new PlanetProfile("Super-Earth", 2.0f, 0.5f, 1.2f, 5f);
-        PlanetProfile iceGiant = new PlanetProfile("Ice Giant", 4.0f, 1.0f, 0.3f, 2f);
-        PlanetProfile gasGiant = new PlanetProfile("Gas Giant", 11.2f, 2.5f, 0.22f, 1f);
-
-        if (distance > systemFrostLine)
-        {
-            iceGiant.currentWeight += 15f;
-            gasGiant.currentWeight += 20f;
-            terrestrial.currentWeight = 2f; 
-        }
-        else
-        {
-            terrestrial.currentWeight += 15f;
-            superEarth.currentWeight += 10f;
-            gasGiant.currentWeight += 1f; 
-        }
-
-        PlanetProfile[] profiles = { terrestrial, superEarth, iceGiant, gasGiant };
+        bool isOutsideFrostLine = distance > systemFrostLine;
         float totalWeight = 0f;
-        foreach (var p in profiles) totalWeight += p.currentWeight;
+        
+        PlanetProfile[] profiles = new PlanetProfile[generationData.planetClasses.Length];
+
+        for (int i = 0; i < generationData.planetClasses.Length; i++)
+        {
+            var p = generationData.planetClasses[i];
+            float currentWeight = isOutsideFrostLine ? p.outsideFrostWeight : p.insideFrostWeight;
+            profiles[i] = new PlanetProfile(p.className, p.radiusMean, p.radiusStdDev, p.densityMean, currentWeight);
+            totalWeight += currentWeight;
+        }
 
         float randomSpin = (float)(prng.NextDouble() * totalWeight);
         float cumulativeWeight = 0f;
@@ -96,7 +87,7 @@ public class AstrophysicsRulesV1: IAstrophysicsRules
             if (randomSpin <= cumulativeWeight) return p;
         }
 
-        return terrestrial;
+        return profiles[0]; // Fallback
     }
 
     /// <summary>
@@ -111,7 +102,7 @@ public class AstrophysicsRulesV1: IAstrophysicsRules
     {
         if (planetDistance > systemFrostLine)
         {
-            return (prng.NextDouble() < 0.75) ? "Icy Moon" : "Rocky Moon";
+            return (prng.NextDouble() < generationData.chanceIcyMoon) ? "Icy Moon" : "Rocky Moon";
         }
         return "Rocky Moon"; 
     }
@@ -163,13 +154,13 @@ public class AstrophysicsRulesV1: IAstrophysicsRules
 
         if (planetClass.Contains("Giant"))
         {
-            if (chance <= 0.85)
+            if (chance <= generationData.chanceGiantRings)
             {
                 ringCount = Mathf.Clamp(Mathf.RoundToInt(math.GetNormalValue(prng, 3f, 1f)), 1, 6);
                 return true;
             }
         }
-        else if (chance <= 0.04)
+        else if (chance <= generationData.chanceTerrestrialRings)
         {
             ringCount = 1;
             return true;
@@ -273,7 +264,7 @@ public class AstrophysicsRulesV1: IAstrophysicsRules
         {
             if (gravity > 1.5f) return $"{density} | H2, He (Primordial)";
             
-            if (anomaly < 0.3) 
+            if (anomaly < generationData.anomalyChanceFrozen) 
             {
                 float n2 = Mathf.Clamp(math.GetNormalValue(prng, 90f, 5f), 80f, 98f);
                 float ch4 = Mathf.Max(100f - n2, 0.1f);
@@ -282,7 +273,7 @@ public class AstrophysicsRulesV1: IAstrophysicsRules
             return "Trace (Frozen CO2/CH4)";
         } 
         
-        if (anomaly < 0.05) 
+        if (anomaly < generationData.anomalyChanceHabitable) 
         {
             float n2 = Mathf.Clamp(math.GetNormalValue(prng, 75f, 5f), 60f, 85f);
             float o2 = Mathf.Clamp(math.GetNormalValue(prng, 21f, 3f), 15f, 30f);
@@ -290,7 +281,7 @@ public class AstrophysicsRulesV1: IAstrophysicsRules
             return $"{density} (Habitable) | N2 ({n2:F1}%), O2 ({o2:F1}%), Ar/CO2 ({trace:F1}%)";
         }
 
-        if (anomaly < 0.5) 
+        if (anomaly < generationData.anomalyChanceToxic) 
         {
             float co2 = Mathf.Clamp(math.GetNormalValue(prng, 95f, 2f), 90f, 98f);
             float n2 = Mathf.Max(100f - co2, 0.1f);
