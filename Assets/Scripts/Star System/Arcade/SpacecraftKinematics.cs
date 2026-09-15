@@ -44,8 +44,8 @@ public class SpacecraftKinematics : MonoBehaviour
         if (startBody == null || targetBody == null) return;
 
         // Continuous round-trip progress (0 to 1 and back)
-        float rawT = Mathf.PingPong(Time.unscaledTime * travelSpeed + timeOffset, 1f);
-        float nextRawT = Mathf.PingPong((Time.unscaledTime + 0.016f) * travelSpeed + timeOffset, 1f);
+        float rawT = Mathf.PingPong(Time.deltaTime * travelSpeed + timeOffset, 1f);
+        float nextRawT = Mathf.PingPong((Time.deltaTime + 0.016f) * travelSpeed + timeOffset, 1f);
 
         // Disappear near the planets (rawT < 0.01 or rawT > 0.99) to simulate landing/docking
         bool isDocked = (rawT < 0.01f || rawT > 0.99f);
@@ -72,7 +72,7 @@ public class SpacecraftKinematics : MonoBehaviour
         if (flightDirection != Vector3.zero)
         {
             Quaternion targetRotation = Quaternion.LookRotation(flightDirection, Vector3.up);
-            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.unscaledDeltaTime * 5f);
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * 5f);
         }
     }
 
