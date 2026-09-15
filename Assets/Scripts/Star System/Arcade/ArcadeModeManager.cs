@@ -88,10 +88,6 @@ public class ArcadeModeManager : MonoBehaviour
             
             SetLayerRecursively(shipObj, LayerMask.NameToLayer(dioramaLayerName));
 
-            // Calculate world-space surface radii based on object scale
-            float startRadius = startBody.transform.localScale.x * 0.5f;
-            float targetRadius = targetBody.transform.localScale.x * 0.5f;
-
             // The spaceship's scale is set to half the minimum diameter of the start and target celestial bodies
             float minDiameter = Mathf.Min(startBody.transform.localScale.x, targetBody.transform.localScale.x);
             shipObj.transform.localScale = Vector3.one * (minDiameter * 0.5f);
@@ -106,9 +102,7 @@ public class ArcadeModeManager : MonoBehaviour
                 targetBody.transform, 
                 travelSpeed, 
                 timeOffset, 
-                arcHeight, 
-                startRadius, 
-                targetRadius
+                arcHeight
             );
 
             activeSpacecraft.Add(shipObj);
