@@ -4,21 +4,27 @@ using System;
 /// <summary>
 /// Encapsulates the physical rules and taxonomy logic for celestial bodies.
 /// </summary>
-public static class AstrophysicsRules
+public class AstrophysicsRulesV1: IAstrophysicsRules
 {
-    // ==============================================================================
-    // ORBITAL MECHANICS & CLASSIFICATION
-    // ==============================================================================
+    private GenerationData generationData;
+
+    /// <summary>
+    /// Initializes the astrophysics rules with the provided generation data, which includes stellar weights, means, frost lines, and spectral classes.
+    /// </summary>
+    /// <param name="data">The generation data.</param>
+    public void Initialize(GenerationData data)
+    {
+        this.generationData = data;
+    }
 
     /// <summary>
     /// Gets the spectral class name based on the given index.
     /// </summary>
     /// <param name="index">The index of the spectral class.</param>
     /// <returns>The name of the spectral class.</returns>
-    public static string GetSpectralClassName(int index)
+    public string GetSpectralClassName(int index)
     {
-        string[] classes = { "O (Blue)", "B (Blue-White)", "A (White)", "F (Yellow-White)", "G (Yellow - Solar)", "K (Orange)", "M (Red Dwarf)" };
-        return classes[Mathf.Clamp(index, 0, classes.Length - 1)];
+        return generationData.spectralClasses[Mathf.Clamp(index, 0, generationData.spectralClasses.Length - 1)];
     }
 
     /// <summary>
@@ -27,7 +33,7 @@ public static class AstrophysicsRules
     /// <param name="planetIndex">The index of the planet.</param>
     /// <param name="prng">The random number generator.</param>
     /// <returns>The calculated orbital distance.</returns>
-    public static float CalculateOrbitalDistance(int planetIndex, System.Random prng)
+    public float CalculateOrbitalDistance(int planetIndex, System.Random prng)
     {
         float baseDistance = (planetIndex > 0) ? (0.4f + 0.3f * Mathf.Pow(2, planetIndex - 1)) : 0.4f;
         float varianceModifier = StochasticMath.GetNormalValue(prng, 0f, 0.05f);
@@ -41,7 +47,7 @@ public static class AstrophysicsRules
     /// </summary>
     /// <param name="prng">The random number generator.</param>
     /// <returns>The calculated eccentricity.</returns>
-    public static float CalculateEccentricity(System.Random prng)
+    public float CalculateEccentricity(System.Random prng)
     {
         float eccentricity = StochasticMath.GetNormalValue(prng, 0.05f, 0.08f);
         return Mathf.Clamp(Mathf.Abs(eccentricity), 0f, 0.99f);
@@ -54,7 +60,7 @@ public static class AstrophysicsRules
     /// <param name="prng">The random number generator.</param>
     /// <param name="systemFrostLine">The frost line of the star system.</param>
     /// <returns>The classified planet profile.</returns>
-    public static PlanetProfile ClassifyPlanet(float distance, System.Random prng, float systemFrostLine)
+    public PlanetProfile ClassifyPlanet(float distance, System.Random prng, float systemFrostLine)
     {
         PlanetProfile terrestrial = new PlanetProfile("Terrestrial", 1.0f, 0.3f, 1.0f, 10f);
         PlanetProfile superEarth = new PlanetProfile("Super-Earth", 2.0f, 0.5f, 1.2f, 5f);
@@ -98,7 +104,7 @@ public static class AstrophysicsRules
     /// <param name="systemFrostLine">The frost line of the star system.</param>
     /// <param name="prng">The random number generator.</param>
     /// <returns>The classified moon type.</returns>
-    public static string ClassifyMoon(float planetDistance, float systemFrostLine, System.Random prng)
+    public string ClassifyMoon(float planetDistance, float systemFrostLine, System.Random prng)
     {
         if (planetDistance > systemFrostLine)
         {
@@ -123,7 +129,7 @@ public static class AstrophysicsRules
     /// <param name="innerRadius">Output parameter for the inner radius of the rings.</param>
     /// <param name="outerRadius">Output parameter for the outer radius of the rings.</param>
     /// <param name="ringColor">Output parameter for the color of the rings.</param>
-    public static void CalculateRings(string planetClass, float bodyRadius, System.Random prng, out bool hasRings, out int ringCount, out float innerRadius, out float outerRadius, out Color ringColor)
+    public void CalculateRings(string planetClass, float bodyRadius, System.Random prng, out bool hasRings, out int ringCount, out float innerRadius, out float outerRadius, out Color ringColor)
     {
         hasRings = DetermineRingPresence(planetClass, prng, out ringCount);
 
@@ -147,7 +153,7 @@ public static class AstrophysicsRules
     /// <param name="prng">The random number generator.</param>
     /// <param name="ringCount">Output parameter for the number of rings.</param>
     /// <returns>True if the planet has rings, false otherwise.</returns>
-    private static bool DetermineRingPresence(string planetClass, System.Random prng, out int ringCount)
+    private bool DetermineRingPresence(string planetClass, System.Random prng, out int ringCount)
     {
         ringCount = 0;
         double chance = prng.NextDouble();
@@ -178,7 +184,7 @@ public static class AstrophysicsRules
     /// <param name="prng">The random number generator.</param>
     /// <param name="innerRadius">Output parameter for the inner radius of the rings.</param>
     /// <param name="outerRadius">Output parameter for the outer radius of the rings.</param>
-    private static void CalculateRingBoundaries(string planetClass, float bodyRadius, System.Random prng, out float innerRadius, out float outerRadius)
+    private void CalculateRingBoundaries(string planetClass, float bodyRadius, System.Random prng, out float innerRadius, out float outerRadius)
     {
         if (planetClass.Contains("Giant"))
         {
@@ -197,7 +203,7 @@ public static class AstrophysicsRules
     /// </summary>
     /// <param name="planetClass">The class of the planet.</param>
     /// <returns>The color of the rings.</returns>
-    private static Color GetRingColor(string planetClass)
+    private Color GetRingColor(string planetClass)
     {
         if (planetClass == "Ice Giant") return new Color(0.7f, 0.85f, 0.95f, 0.6f); 
         if (planetClass.Contains("Giant")) return new Color(0.6f, 0.5f, 0.4f, 0.7f); 
@@ -218,7 +224,7 @@ public static class AstrophysicsRules
     /// <param name="frostLine">The frost line of the star system.</param>
     /// <param name="prng">The random number generator.</param>
     /// <returns>The determined atmosphere type.</returns>
-    public static string DetermineAtmosphere(string className, float gravity, float distance, float frostLine, System.Random prng)
+    public string DetermineAtmosphere(string className, float gravity, float distance, float frostLine, System.Random prng)
     {
         if (gravity < 0.25f) return "None (Vacuum)"; 
 
@@ -236,7 +242,7 @@ public static class AstrophysicsRules
     /// <param name="className">The class of the gas giant.</param>
     /// <param name="prng">The random number generator.</param>
     /// <returns>The generated atmosphere type.</returns>
-    private static string GenerateGiantAtmosphere(string className, System.Random prng)
+    private string GenerateGiantAtmosphere(string className, System.Random prng)
     {
         float h2 = Mathf.Clamp(StochasticMath.GetNormalValue(prng, 75f, 5f), 65f, 85f);
         float he = Mathf.Clamp(99f - h2, 10f, 30f);
@@ -255,7 +261,7 @@ public static class AstrophysicsRules
     /// <param name="frostLine">The frost line of the star system.</param>
     /// <param name="prng">The random number generator.</param>
     /// <returns>The generated atmosphere type.</returns>
-    private static string GenerateRockyAtmosphere(float gravity, float distance, float frostLine, System.Random prng)
+    private string GenerateRockyAtmosphere(float gravity, float distance, float frostLine, System.Random prng)
     {
         double anomaly = prng.NextDouble();
         string density = (gravity > 1.2f) ? "Thick" : (gravity < 0.6f) ? "Thin" : "Moderate";
@@ -308,7 +314,7 @@ public static class AstrophysicsRules
     /// <param name="baseColor">Calculated blackbody RGB color.</param>
     /// <param name="magneticActivity">Calculated magnetic activity (0.0 to 1.0).</param>
     /// <param name="granulationScale">Calculated granulation cell size multiplier.</param>
-    public static void CalculateStellarSurface(float temperature, float mass, float radius, float rotationPeriod, System.Random prng, out Color baseColor, out float magneticActivity, out float granulationScale)
+    public void CalculateStellarSurface(float temperature, float mass, float radius, float rotationPeriod, System.Random prng, out Color baseColor, out float magneticActivity, out float granulationScale)
     {
         baseColor = CalculateStellarColor(temperature);
         granulationScale = CalculateStellarGranulation(mass, radius, prng);
@@ -320,7 +326,7 @@ public static class AstrophysicsRules
     /// </summary>
     /// <param name="temperature">The surface temperature in Kelvin.</param>
     /// <returns>The calculated blackbody color.</returns>
-    private static Color CalculateStellarColor(float temperature)
+    private Color CalculateStellarColor(float temperature)
     {
         float t = Mathf.InverseLerp(3000f, 30000f, temperature);
         Color redDwarf = new Color(1.0f, 0.4f, 0.1f);
@@ -337,7 +343,7 @@ public static class AstrophysicsRules
     /// <param name="radius">The radius of the star in Solar Radii.</param>
     /// <param name="prng">The random number generator.</param>
     /// <returns>The calculated granulation scale.</returns>
-    private static float CalculateStellarGranulation(float mass, float radius, System.Random prng)
+    private float CalculateStellarGranulation(float mass, float radius, System.Random prng)
     {
         float surfaceGravity = mass / (radius * radius);
         float baseGranulation = 1f / Mathf.Max(surfaceGravity, 0.01f);
@@ -353,7 +359,7 @@ public static class AstrophysicsRules
     /// <param name="rotationPeriod">The rotation period of the star in hours.</param>
     /// <param name="prng">The random number generator.</param>
     /// <returns>The calculated magnetic activity (0.0 to 1.0).</returns>
-    private static float CalculateStellarMagneticActivity(float mass, float rotationPeriod, System.Random prng)
+    private float CalculateStellarMagneticActivity(float mass, float rotationPeriod, System.Random prng)
     {
         float rotationFactor = 1000f / Mathf.Max(rotationPeriod, 1f); 
         float massFactor = 1f / Mathf.Max(mass, 0.1f);
@@ -375,7 +381,7 @@ public static class AstrophysicsRules
     /// <param name="secondaryColor">Secondary color (oceans, ice caps, or secondary bands).</param>
     /// <param name="hydrofraction">Liquid coverage ratio.</param>
     /// <param name="cloudCoverage">Cloud coverage ratio.</param>
-    public static void CalculatePlanetVisuals(string className, float temperature, string atmosphere, System.Random prng, out Color baseColor, out Color secondaryColor, out float hydrofraction, out float cloudCoverage)
+    public void CalculatePlanetVisuals(string className, float temperature, string atmosphere, System.Random prng, out Color baseColor, out Color secondaryColor, out float hydrofraction, out float cloudCoverage)
     {
         if (className.Contains("Giant"))
         {
@@ -395,7 +401,7 @@ public static class AstrophysicsRules
     /// <param name="secondaryColor">Secondary color (oceans, ice caps, or secondary bands).</param>
     /// <param name="hydrofraction">Liquid coverage ratio.</param>
     /// <param name="cloudCoverage">Cloud coverage ratio.</param>
-    private static void CalculateGiantVisuals(string className, out Color baseColor, out Color secondaryColor, out float hydrofraction, out float cloudCoverage)
+    private void CalculateGiantVisuals(string className, out Color baseColor, out Color secondaryColor, out float hydrofraction, out float cloudCoverage)
     {
         hydrofraction = 0f;
         cloudCoverage = 1.0f; 
@@ -422,7 +428,7 @@ public static class AstrophysicsRules
     /// <param name="secondaryColor">Secondary color (oceans, ice caps, or secondary bands).</param>
     /// <param name="hydrofraction">Liquid coverage ratio.</param>
     /// <param name="cloudCoverage">Cloud coverage ratio.</param>
-    private static void CalculateTerrestrialVisuals(float temperature, string atmosphere, System.Random prng, out Color baseColor, out Color secondaryColor, out float hydrofraction, out float cloudCoverage)
+    private void CalculateTerrestrialVisuals(float temperature, string atmosphere, System.Random prng, out Color baseColor, out Color secondaryColor, out float hydrofraction, out float cloudCoverage)
     {
         bool hasAtmosphere = !atmosphere.Contains("None") && !atmosphere.Contains("Vacuum");
         
@@ -455,7 +461,7 @@ public static class AstrophysicsRules
     /// <summary>
     /// Deduces the visual thickness and color palette of an atmosphere based on its chemical composition.
     /// </summary>
-    public static void CalculateAtmosphereVisuals(string atmosphereType, out Color atmosColor, out Color cloudColor, out float atmosScale)
+    public void CalculateAtmosphereVisuals(string atmosphereType, out Color atmosColor, out Color cloudColor, out float atmosScale)
     {
         // Default fallbacks
         atmosColor = new Color(0.4f, 0.6f, 1.0f); 

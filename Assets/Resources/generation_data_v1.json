@@ -1,0 +1,16 @@
+{
+  "stellarWeights": [0.1, 1.0, 2.0, 4.0, 8.0, 15.0, 70.0],
+  "massMeans": [40.0, 6.0, 2.0, 1.3, 1.0, 0.7, 0.3],
+  "tempMeans": [35000.0, 15000.0, 8500.0, 6500.0, 5500.0, 4500.0, 3000.0],
+  "radiusMeans": [15.0, 4.0, 1.7, 1.3, 1.0, 0.8, 0.3],
+  "baseFrostLines": [15.0, 10.0, 6.0, 4.0, 2.7, 1.5, 0.5],
+  "spectralClasses": [
+    "O (Blue)",
+    "B (Blue-White)",
+    "A (White)",
+    "F (Yellow-White)",
+    "G (Yellow - Solar)",
+    "K (Orange)",
+    "M (Red Dwarf)"
+  ]
+}

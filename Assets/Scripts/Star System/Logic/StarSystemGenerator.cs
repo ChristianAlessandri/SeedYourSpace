@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 /// <summary>
 /// Core procedural orchestrator responsible for deterministic star system generation.
-/// Delegates complex calculations to StochasticMath and AstrophysicsRules.
+/// Delegates complex calculations to StochasticMath and astroRules.
 /// </summary>
 public class StarSystemGenerator : MonoBehaviour
 {
@@ -32,6 +32,8 @@ public class StarSystemGenerator : MonoBehaviour
     public List<AsteroidBeltData> SystemBelts { get; private set; } = new List<AsteroidBeltData>();
 
     private MarkovNameGenerator nameGenerator;
+    private IAstrophysicsRules astroRules;
+    private GenerationData generationData;
     private float currentSystemFrostLine;
 
     private void Start()
@@ -63,21 +65,36 @@ public class StarSystemGenerator : MonoBehaviour
     }
 
     /// <summary>
-    /// Initializes the Markov name generator using a JSON data file. Returns false if the file is missing or corrupted.
+    /// Initializes the name generator and astrophysics rules based on the specified algorithm version.
     /// </summary>
     /// <returns>True if initialization is successful, false otherwise.</returns>
     private bool InitializeGenerators()
     {
-        if (nameGenerator != null) return true;
-
-        TextAsset jsonFile = Resources.Load<TextAsset>("markov_data");
-        if (jsonFile == null)
+        if (nameGenerator == null)
         {
-            Debug.LogError("Critical Error: Markov data file not found in Resources folder!");
-            return false;
+            TextAsset jsonNameFile = Resources.Load<TextAsset>("markov_data");
+            if (jsonNameFile == null)
+            {
+                Debug.LogError("Critical Error: markov_data file not found in Resources folder!");
+                return false;
+            }
+            nameGenerator = new MarkovNameGenerator(jsonNameFile.text);
         }
 
-        nameGenerator = new MarkovNameGenerator(jsonFile.text);
+        if (astroRules == null)
+        {
+            astroRules = AstrophysicsRulesFactory.CreateRules(algorithmVersion);
+            
+            TextAsset jsonRulesFile = Resources.Load<TextAsset>($"generation_data_v{algorithmVersion}");
+            if (jsonRulesFile == null)
+            {
+                Debug.LogError($"Critical Error: generation_data_v{algorithmVersion} file not found in Resources folder!");
+                return false;
+            }
+            generationData = JsonUtility.FromJson<GenerationData>(jsonRulesFile.text);
+            astroRules.Initialize(generationData);
+        }
+
         return true;
     }
 
@@ -148,31 +165,25 @@ public class StarSystemGenerator : MonoBehaviour
         int starNumericalSeed = StochasticMath.DeriveNumericalSeed(starSubSeedInput);
         System.Random starPrng = new System.Random(starNumericalSeed);
 
-        float[] stellarWeights = { 0.1f, 1.0f, 2.0f, 4.0f, 8.0f, 15.0f, 70.0f };
-        int spectralIndex = StochasticMath.GetWeightedIndex(stellarWeights, starPrng);
+        int spectralIndex = StochasticMath.GetWeightedIndex(generationData.stellarWeights, starPrng);
         
-        float[] massMeans = { 40.0f, 6.0f, 2.0f, 1.3f, 1.0f, 0.7f, 0.3f };
-        float[] tempMeans = { 35000f, 15000f, 8500f, 6500f, 5500f, 4500f, 3000f };
-        float[] radiusMeans = { 15.0f, 4.0f, 1.7f, 1.3f, 1.0f, 0.8f, 0.3f };
-
         StarData star = new StarData();
         star.name = rootName + " Prime";
-        star.spectralClass = AstrophysicsRules.GetSpectralClassName(spectralIndex);
+        star.spectralClass = astroRules.GetSpectralClassName(spectralIndex);
         
-        star.mass = Mathf.Max(StochasticMath.GetNormalValue(starPrng, massMeans[spectralIndex], massMeans[spectralIndex] * 0.1f), 0.08f);
-        star.temperature = Mathf.Max(StochasticMath.GetNormalValue(starPrng, tempMeans[spectralIndex], tempMeans[spectralIndex] * 0.05f), 2000f);
-        star.radius = Mathf.Max(StochasticMath.GetNormalValue(starPrng, radiusMeans[spectralIndex], radiusMeans[spectralIndex] * 0.1f), 0.1f);
+        star.mass = Mathf.Max(StochasticMath.GetNormalValue(starPrng, generationData.massMeans[spectralIndex], generationData.massMeans[spectralIndex] * 0.1f), 0.08f);
+        star.temperature = Mathf.Max(StochasticMath.GetNormalValue(starPrng, generationData.tempMeans[spectralIndex], generationData.tempMeans[spectralIndex] * 0.05f), 2000f);
+        star.radius = Mathf.Max(StochasticMath.GetNormalValue(starPrng, generationData.radiusMeans[spectralIndex], generationData.radiusMeans[spectralIndex] * 0.1f), 0.1f);
 
-        float[] baseFrostLines = { 15.0f, 10.0f, 6.0f, 4.0f, 2.7f, 1.5f, 0.5f };
         float oscillation = Mathf.Clamp(StochasticMath.GetNormalValue(starPrng, 0f, 0.05f), -0.20f, 0.20f);
         
-        currentSystemFrostLine = baseFrostLines[spectralIndex] * (1f + oscillation);
+        currentSystemFrostLine = generationData.baseFrostLines[spectralIndex] * (1f + oscillation);
         star.frostLine = currentSystemFrostLine;
 
         star.axialTilt = Mathf.Abs(StochasticMath.GetNormalValue(starPrng, 7.25f, 2f));
         star.rotationPeriod = Mathf.Max(StochasticMath.GetNormalValue(starPrng, 600f, 150f), 100f);
 
-        AstrophysicsRules.CalculateStellarSurface(
+        astroRules.CalculateStellarSurface(
             star.temperature, star.mass, star.radius, star.rotationPeriod, starPrng, 
             out star.baseColor, out star.magneticActivity, out star.granulationScale
         );
@@ -225,9 +236,9 @@ public class StarSystemGenerator : MonoBehaviour
 
         PlanetData planet = new PlanetData();
         planet.name = rootName + " " + nameGenerator.ToRoman(planetIndex + 1);
-        planet.orbitalDistance = AstrophysicsRules.CalculateOrbitalDistance(planetIndex, planetPrng);
+        planet.orbitalDistance = astroRules.CalculateOrbitalDistance(planetIndex, planetPrng);
 
-        PlanetProfile selectedClass = AstrophysicsRules.ClassifyPlanet(planet.orbitalDistance, planetPrng, currentSystemFrostLine);
+        PlanetProfile selectedClass = astroRules.ClassifyPlanet(planet.orbitalDistance, planetPrng, currentSystemFrostLine);
         planet.className = selectedClass.className;
         
         planet.radius = Mathf.Max(StochasticMath.GetNormalValue(planetPrng, selectedClass.radiusMean, selectedClass.radiusStdDev), 0.1f);
@@ -240,15 +251,15 @@ public class StarSystemGenerator : MonoBehaviour
         
         planet.axialTilt = Mathf.Abs(StochasticMath.GetNormalValue(planetPrng, 23.5f, 15f));
         planet.orbitalInclination = StochasticMath.GetNormalValue(planetPrng, 0f, 3f);
-        planet.atmosphereType = AstrophysicsRules.DetermineAtmosphere(planet.className, planet.surfaceGravity, planet.orbitalDistance, currentSystemFrostLine, planetPrng);
-        AstrophysicsRules.CalculateAtmosphereVisuals(
+        planet.atmosphereType = astroRules.DetermineAtmosphere(planet.className, planet.surfaceGravity, planet.orbitalDistance, currentSystemFrostLine, planetPrng);
+        astroRules.CalculateAtmosphereVisuals(
             planet.atmosphereType,
             out planet.atmosphereColor, 
             out planet.cloudColor, 
             out planet.atmosphereScale
         );
 
-        AstrophysicsRules.CalculatePlanetVisuals(
+        astroRules.CalculatePlanetVisuals(
             planet.className, planet.surfaceTemperature, planet.atmosphereType, planetPrng, 
             out planet.baseColor, out planet.secondaryColor, out planet.hydrofraction, out planet.cloudCoverage
         );
@@ -264,8 +275,8 @@ public class StarSystemGenerator : MonoBehaviour
             planet.rotationPeriod = planet.revolutionPeriod * 24f; 
         }
         
-        planet.orbitalEccentricity = AstrophysicsRules.CalculateEccentricity(planetPrng);
-        AstrophysicsRules.CalculateRings(planet.className, planet.radius, planetPrng, 
+        planet.orbitalEccentricity = astroRules.CalculateEccentricity(planetPrng);
+        astroRules.CalculateRings(planet.className, planet.radius, planetPrng, 
             out planet.hasRings, out planet.ringDivisions, out planet.ringInnerRadius, out planet.ringOuterRadius, out planet.ringColor);
         
         TotalPlanets++;
@@ -343,23 +354,23 @@ public class StarSystemGenerator : MonoBehaviour
         }
 
         moon.orbitalEccentricity = Mathf.Clamp(Mathf.Abs(StochasticMath.GetNormalValue(moonPrng, 0.01f, 0.01f)), 0f, 0.05f);
-        moon.className = AstrophysicsRules.ClassifyMoon(parentPlanet.orbitalDistance, currentSystemFrostLine, moonPrng);
+        moon.className = astroRules.ClassifyMoon(parentPlanet.orbitalDistance, currentSystemFrostLine, moonPrng);
         
-        AstrophysicsRules.CalculateRings(moon.className, moon.radius, moonPrng, 
+        astroRules.CalculateRings(moon.className, moon.radius, moonPrng, 
             out moon.hasRings, out moon.ringDivisions, out moon.ringInnerRadius, out moon.ringOuterRadius, out moon.ringColor);
         
         float tempVariance = StochasticMath.GetNormalValue(moonPrng, 1.0f, 0.05f);
         moon.surfaceTemperature = parentPlanet.surfaceTemperature * tempVariance;
 
-        moon.atmosphereType = AstrophysicsRules.DetermineAtmosphere(moon.className, moon.surfaceGravity, parentPlanet.orbitalDistance, currentSystemFrostLine, moonPrng);
-        AstrophysicsRules.CalculateAtmosphereVisuals(
+        moon.atmosphereType = astroRules.DetermineAtmosphere(moon.className, moon.surfaceGravity, parentPlanet.orbitalDistance, currentSystemFrostLine, moonPrng);
+        astroRules.CalculateAtmosphereVisuals(
             moon.atmosphereType,
             out moon.atmosphereColor, 
             out moon.cloudColor, 
             out moon.atmosphereScale
         );
 
-        AstrophysicsRules.CalculatePlanetVisuals(
+        astroRules.CalculatePlanetVisuals(
             moon.className, moon.surfaceTemperature, moon.atmosphereType, moonPrng, 
             out moon.baseColor, out moon.secondaryColor, out moon.hydrofraction, out moon.cloudCoverage
         );
