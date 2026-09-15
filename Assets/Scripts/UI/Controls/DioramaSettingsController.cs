@@ -28,7 +28,7 @@ public class DioramaSettingsController : MonoBehaviour
         starSizeSlider.wholeNumbers = true;
         starSizeSlider.minValue = 10f;
         starSizeSlider.maxValue = 500f;
-        starSizeSlider.value = 100f;
+        starSizeSlider.value = 75f;
 
         // PLANET SIZE (Default: 1 | Range: 1 - 20)
         planetSizeSlider.wholeNumbers = true;
@@ -40,13 +40,13 @@ public class DioramaSettingsController : MonoBehaviour
         planetDistSlider.wholeNumbers = true;
         planetDistSlider.minValue = 50f;
         planetDistSlider.maxValue = 1000f;
-        planetDistSlider.value = 200f;
+        planetDistSlider.value = 900f;
 
-        // MOON DISTANCE (Default: 0.15 | Range: 0.05 - 2.0)
+        // MOON DISTANCE (Default: 0.15 | Range: 0.05 - 5.0)
         moonDistSlider.wholeNumbers = false; 
         moonDistSlider.minValue = 0.05f;
-        moonDistSlider.maxValue = 2f;
-        moonDistSlider.value = 0.15f;
+        moonDistSlider.maxValue = 5f;
+        moonDistSlider.value = 0.75f;
 
         // Subscribe to slider value changes to update the diorama settings in real-time
         starSizeSlider.onValueChanged.AddListener(UpdateSettings);
