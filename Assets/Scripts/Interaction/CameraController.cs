@@ -1,10 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-/// <summary>
-/// Camera controller that allows for free movement and rotation in a 3D space.
-/// Supports WASD movement, mouse look, scroll zoom, and target focusing (F key).
-/// </summary>
 public class CameraController : MonoBehaviour
 {
     [Header("Movement Settings")]
@@ -72,10 +68,6 @@ public class CameraController : MonoBehaviour
     private void OnPlanetSelected(PlanetData data) => SetTarget(data.name);
     private void OnMoonSelected(MoonData data) => SetTarget(data.name);
 
-    /// <summary>
-    /// Sets the active target based on the provided body name. If the body is found in the scene, it updates the active target and its radius for focusing.
-    /// </summary>
-    /// <param name="bodyName">The name of the body to set as the target.</param>
     private void SetTarget(string bodyName)
     {
         GameObject targetObj = GameObject.Find(bodyName);
@@ -86,9 +78,6 @@ public class CameraController : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Clears the active target, typically called when clicking empty space.
-    /// </summary>
     public void ClearTarget()
     {
         activeTarget = null;
@@ -103,10 +92,6 @@ public class CameraController : MonoBehaviour
         HandleMovement();
     }
 
-    /// <summary>
-    /// Handles the input for focusing on the active target when the F key is pressed.
-    /// If a target is set, the camera will move to a position that frames the target based on its radius and the focus distance multiplier.
-    /// </summary>
     private void HandleFocusInput()
     {
         // FOCUS ACTION (Press F)
@@ -116,10 +101,6 @@ public class CameraController : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Handles camera rotation based on mouse movement when the middle mouse button is pressed.
-    /// The camera's pitch is clamped to prevent flipping over.
-    /// </summary>
     private void HandleRotation()
     {
         if (Mouse.current.middleButton.isPressed)
@@ -134,10 +115,6 @@ public class CameraController : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Handles camera movement based on WASD input, allowing for free navigation in the scene.
-    /// Movement speed is scaled by panSpeed and Time.unscaledDeltaTime to ensure consistent movement regardless of time scale changes.
-    /// </summary>
     private void HandleMovement()
     {
         Vector3 movement = Vector3.zero;
@@ -152,9 +129,6 @@ public class CameraController : MonoBehaviour
         transform.position += movement * panSpeed * Time.unscaledDeltaTime;
     }
 
-    /// <summary>
-    /// Teleports the camera to frame the target perfectly without changing rotation.
-    /// </summary>
     private void FocusOnTarget()
     {
         float safeDistance = activeTargetRadius * focusDistanceMultiplier;

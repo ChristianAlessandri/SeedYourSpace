@@ -1,11 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-/// <summary>
-/// Controls the cinematic time-lapse mode. 
-/// Handles hiding UI, accelerating time, automating camera orbit, and flattening camera pitch.
-/// Dynamically orbits and tracks the currently selected moving celestial body.
-/// </summary>
 public class CinematicModeController : MonoBehaviour
 {
     [Header("System References")]
@@ -133,11 +128,6 @@ public class CinematicModeController : MonoBehaviour
             DeactivateCinematicMode();
         }
     }
-
-    /// <summary>
-    /// Rotates the offset vector and applies it to the pivot's current moving position,
-    /// ensuring the camera flawlessly tracks the celestial body through space.
-    /// </summary>
     private void ExecuteCinematicCameraMovement()
     {
         if (activePivot == null || cameraController == null) return;

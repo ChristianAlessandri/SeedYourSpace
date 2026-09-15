@@ -64,7 +64,7 @@ public class MarkovNameGeneratorV1 : INameGenerator
 
     public string ToRoman(int number)
     {
-        // Safe fallback if JSON doesn't provide them or index is out of bounds
+        // Fallback if JSON doesn't provide them or index is out of bounds
         if (romanNumerals != null && number > 0 && number < romanNumerals.Length) 
             return romanNumerals[number];
             

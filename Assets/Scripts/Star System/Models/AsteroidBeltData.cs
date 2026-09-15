@@ -1,6 +1,3 @@
-/// <summary>
-/// Data container for a procedurally generated asteroid belt.
-/// </summary>
 public class AsteroidBeltData
 {
     public string name;

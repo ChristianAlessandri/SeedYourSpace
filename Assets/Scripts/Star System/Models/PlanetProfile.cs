@@ -1,6 +1,3 @@
-/// <summary>
-/// Represents the statistical profile of a planetary taxonomy class.
-/// </summary>
 public class PlanetProfile
 {
     public string className;

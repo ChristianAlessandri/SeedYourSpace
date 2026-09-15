@@ -5,10 +5,6 @@ using System.Reflection;
 using UnityEngine.UI;
 using TMPro;
 
-/// <summary>
-/// Allows runtime toggling and modification of the Pixelize Render Feature via a UI Slider.
-/// 0 = Off, 1-10 = Pixelation scale.
-/// </summary>
 public class PixelArtController : MonoBehaviour
 {
     [Header("URP Asset Reference")]
@@ -26,9 +22,6 @@ public class PixelArtController : MonoBehaviour
         InitializeUI();
     }
 
-    /// <summary>
-    /// Searches the URP Renderer data using reflection to find our custom pixel art feature.
-    /// </summary>
     private void FindPixelFeature()
     {
         if (urpAsset == null)
@@ -51,9 +44,6 @@ public class PixelArtController : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Configures the slider bounds and syncs the UI with the current rendering state.
-    /// </summary>
     private void InitializeUI()
     {
         if (pixelSlider == null) return;
@@ -76,10 +66,6 @@ public class PixelArtController : MonoBehaviour
         pixelSlider.onValueChanged.AddListener(UpdatePixelationState);
     }
 
-    /// <summary>
-    /// Updates the text and the render feature when the slider is dragged.
-    /// </summary>
-    /// <param name="value">The new value from the slider.</param>
     private void UpdatePixelationState(float value)
     {
         int scale = Mathf.RoundToInt(value);

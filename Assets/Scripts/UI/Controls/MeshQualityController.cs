@@ -2,9 +2,6 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
-/// <summary>
-/// Controls the global procedural mesh quality of all celestial bodies.
-/// </summary>
 public class MeshQualityController : MonoBehaviour
 {
     [Header("UI References")]
@@ -25,10 +22,6 @@ public class MeshQualityController : MonoBehaviour
         UpdateMeshQuality(detailSlider.value);
     }
 
-    /// <summary>
-    /// Updates the mesh subdivisions globally and updates the UI text.
-    /// </summary>
-    /// <param name="newDetail">The new subdivision level (0 to 3).</param>
     private void UpdateMeshQuality(float newDetail)
     {
         int subdivisions = Mathf.RoundToInt(newDetail);

@@ -2,10 +2,6 @@ using UnityEngine;
 using System;
 using System.Collections.Generic;
 
-/// <summary>
-/// Core procedural orchestrator responsible for deterministic star system generation.
-/// Delegates complex calculations to stochasticMath and astroRules.
-/// </summary>
 public class StarSystemGenerator : MonoBehaviour
 {
     [Header("Generation Settings")]
@@ -21,7 +17,7 @@ public class StarSystemGenerator : MonoBehaviour
     public OrreryController orreryController;
     
     [HideInInspector]
-    public int algorithmVersion = 1; // Maintained for Web3 Smart Contract backward compatibility
+    public int algorithmVersion = 1; // Web3 Smart Contract backward compatibility
 
     public int TotalPlanets { get; private set; }
     public int TotalMoons { get; private set; }
@@ -42,10 +38,6 @@ public class StarSystemGenerator : MonoBehaviour
         GenerateCompleteStarSystem(masterSeed);
     }
 
-    /// <summary>
-    /// Generates a complete star system based on the provided seed.
-    /// </summary>
-    /// <param name="seed">Seed for deterministic generation.</param>
     public void GenerateCompleteStarSystem(string seed)
     {
         if (!InitializeGenerators()) return;
@@ -65,15 +57,6 @@ public class StarSystemGenerator : MonoBehaviour
         BuildVisualRepresentation();
     }
 
-    /// <summary>
-    /// Initializes the name generator and astrophysics rules based on the specified algorithm version.
-    /// </summary>
-    /// <returns>True if initialization is successful, false otherwise.</returns>
-    /// <summary>
-    /// Initializes the generators and astrophysics rules based on the specified algorithm version.
-    /// Uses factories to load the appropriate strategy for Web3 backward compatibility.
-    /// </summary>
-    /// <returns>True if initialization is successful, false otherwise.</returns>
     private bool InitializeGenerators()
     {
         // Initialize Math Core
@@ -113,9 +96,6 @@ public class StarSystemGenerator : MonoBehaviour
         return true;
     }
 
-    /// <summary>
-    /// Resets the counters for planets, moons, and rings to zero before generating a new system.
-    /// </summary> 
     private void ResetCounters()
     {
         TotalPlanets = 0;
@@ -123,10 +103,6 @@ public class StarSystemGenerator : MonoBehaviour
         TotalRings = 0;
     }
 
-    /// <summary>
-    /// Generates the skybox for the star system, restricted to deep space colors and softer intensities.
-    /// </summary>
-    /// <param name="systemPrng">The random number generator for the system.</param>
     private void GenerateSkybox(System.Random systemPrng)
     {
         float starDistance = (float)systemPrng.NextDouble() * 25f + 75f; 
@@ -162,12 +138,6 @@ public class StarSystemGenerator : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Generates the central star of the system based on the provided seed and root name.
-    /// </summary>
-    /// <param name="baseSeed">The base seed for the star generation.</param>
-    /// <param name="rootName">The root name for the star.</param>
-    /// <returns>The generated star data.</returns>
     private StarData GenerateCentralStar(string baseSeed, string rootName)
     {
         string starSubSeedInput = baseSeed + "_Star_Entity";
@@ -200,13 +170,6 @@ public class StarSystemGenerator : MonoBehaviour
         return star;
     }
 
-    /// <summary>
-    /// Generates the planetary system for the star system.
-    /// </summary>
-    /// <param name="baseSeed">The base seed for the planetary system generation.</param>
-    /// <param name="rootName">The root name for the planetary system.</param>
-    /// <param name="centralStar">The central star of the system.</param>
-    /// <returns>The list of generated planets.</returns>
     private List<PlanetData> GeneratePlanetarySystem(string baseSeed, string rootName, StarData centralStar)
     {
         string layoutSubSeedInput = baseSeed + "_Planets_Layout";
@@ -231,14 +194,6 @@ public class StarSystemGenerator : MonoBehaviour
         return generatedPlanets;
     }
 
-    /// <summary>
-    /// Generates a single planet entity based on the provided seed and root name.
-    /// </summary>
-    /// <param name="planetSeedInput">The seed input for the planet generation.</param>
-    /// <param name="rootName">The root name for the planet.</param>
-    /// <param name="planetIndex">The index of the planet in the system.</param>
-    /// <param name="centralStar">The central star of the system.</param>
-    /// <returns>The generated planet data.</returns>
     private PlanetData GeneratePlanetEntity(string planetSeedInput, string rootName, int planetIndex, StarData centralStar)
     {
         int planetNumericalSeed = stochasticMath.DeriveNumericalSeed(planetSeedInput);
@@ -298,12 +253,6 @@ public class StarSystemGenerator : MonoBehaviour
         return planet;
     }
 
-    /// <summary>
-    /// Generates the moons for a given planet.
-    /// </summary>
-    /// <param name="planetSeedInput">The seed input for the planet generation.</param>
-    /// <param name="parentPlanet">The parent planet for which to generate moons.</param>
-    /// <returns>The list of generated moon data.</returns>
     private List<MoonData> GenerateMoons(string planetSeedInput, PlanetData parentPlanet)
     {
         List<MoonData> generatedMoons = new List<MoonData>();
@@ -327,14 +276,6 @@ public class StarSystemGenerator : MonoBehaviour
         return generatedMoons;
     }
 
-    /// <summary>
-    /// Generates a single moon entity based on the provided seed and parent planet.
-    /// </summary>
-    /// <param name="moonSeedInput">The seed input for the moon generation.</param>
-    /// <param name="parentPlanet">The parent planet for which the moon is generated.</param>
-    /// <param name="moonIndex">The index of the moon in the planet's moon list.</param>
-    /// <param name="currentOrbitalDistance">Reference to the current orbital distance for moon placement, updated after each moon generation.</param>
-    /// <returns>The generated moon data.</returns>
     private MoonData GenerateMoonEntity(string moonSeedInput, PlanetData parentPlanet, int moonIndex, ref float currentOrbitalDistance)
     {
         System.Random moonPrng = new System.Random(stochasticMath.DeriveNumericalSeed(moonSeedInput));
@@ -398,9 +339,6 @@ public class StarSystemGenerator : MonoBehaviour
         return moon;
     }
 
-    /// <summary>
-    /// Builds the visual representation of the star system and initializes global orbital lines.
-    /// </summary>
     private void BuildVisualRepresentation()
     {
         if (dioramaBuilder != null)
@@ -419,16 +357,6 @@ public class StarSystemGenerator : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Scans the planetary orbits to find stable gravitational gaps (wider than 1.0 AU) 
-    /// and populates them with asteroid belts. Adds a Kuiper-like belt at the edge.
-    /// </summary>
-    /// <param name="baseSeed">The base seed for deterministic generation.</param>
-    /// <param name="planets">The list of planets in the system.</param>
-    /// <summary>
-    /// Scans the planetary orbits to find stable gravitational gaps (wider than 1.0 AU) 
-    /// and populates them with asteroid belts. Adds a Kuiper-like belt at the edge.
-    /// </summary>
     private List<AsteroidBeltData> GenerateAsteroidBelts(string baseSeed, List<PlanetData> planets)
     {
         List<AsteroidBeltData> belts = new List<AsteroidBeltData>();

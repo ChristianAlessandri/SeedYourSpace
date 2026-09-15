@@ -2,9 +2,6 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
-/// <summary>
-/// UI Manager for controlling the scale and distance multipliers of the diorama.
-/// </summary>
 public class DioramaSettingsController : MonoBehaviour
 {
     [Header("Core References")]
@@ -58,9 +55,6 @@ public class DioramaSettingsController : MonoBehaviour
         UpdateSettings(0f); 
     }
 
-    /// <summary>
-    /// Called whenever any of the sliders change value. Updates the multipliers in the diorama builder and refreshes the UI text labels.
-    /// </summary>
     private void UpdateSettings(float dummyValue)
     {
         float starSize = starSizeSlider.value;

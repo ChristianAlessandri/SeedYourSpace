@@ -2,10 +2,6 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.EventSystems;
 
-/// <summary>
-/// Handles 3D raycasting to select celestial bodies by clicking them in the scene.
-/// Acts as a bridge between physical interaction and the UI selection logic.
-/// </summary>
 public class MouseInteractionController : MonoBehaviour
 {
     [Header("Camera Reference")]
@@ -17,11 +13,10 @@ public class MouseInteractionController : MonoBehaviour
     public CelestialBodyDetailHUD detailHUD;
     public SelectionVisualizer visualizer;
     public CameraController cameraController;
-    public CinematicModeController cinematicModeController; // <-- Added Reference
+    public CinematicModeController cinematicModeController;
 
     private void Update()
     {
-        // Ensure input system and mouse exist
         if (Mouse.current == null || !Mouse.current.leftButton.wasPressedThisFrame) return;
 
         // Prevent clicking through the UI (e.g., clicking a button shouldn't click the space behind it)
@@ -33,9 +28,6 @@ public class MouseInteractionController : MonoBehaviour
         ProcessClick();
     }
 
-    /// <summary>
-    /// Executes the raycast into the 3D scene to find a target.
-    /// </summary>
     private void ProcessClick()
     {
         Ray ray = mainCamera.ScreenPointToRay(Mouse.current.position.ReadValue());
@@ -50,10 +42,6 @@ public class MouseInteractionController : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Routes the selected hit name to the appropriate UI lists.
-    /// </summary>
-    /// <param name="hitName">The name of the clicked physics collider.</param>
     private void HandleBodySelection(string hitName)
     {
         bool selectedInSystem = systemListHUD != null && systemListHUD.TrySelectBody(hitName);
@@ -72,9 +60,6 @@ public class MouseInteractionController : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Resets all visual states and hides context panels.
-    /// </summary>
     private void DeselectEverything()
     {
         if (systemListHUD != null) systemListHUD.DeselectAll();

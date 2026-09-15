@@ -3,11 +3,6 @@ using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.Rendering.RenderGraphModule;
 
-/// <summary>
-/// A modern URP Custom Renderer Feature using the Render Graph API.
-/// Downsamples the 3D scene to create a crisp pixel-art aesthetic,
-/// while leaving the Overlay UI rendered at full resolution.
-/// </summary>
 public class PixelizeRenderFeature : ScriptableRendererFeature
 {
     [System.Serializable]
@@ -52,20 +47,13 @@ public class PixelizePass : ScriptableRenderPass
         this.settings = settings;
     }
 
-    // A struct to hold our texture handles during the Render Graph execution
     private class PassData
     {
         public TextureHandle source;
     }
 
-    /// <summary>
-    /// Record the render graph commands for this pass. This is where we define the downsampling and upsampling steps.
-    /// </summary>
-    /// <param name="renderGraph">The render graph instance.</param>
-    /// <param name="frameData">The context container holding frame-specific data.</param>
     public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
     {
-        // Get the current frame's camera and resource data
         UniversalResourceData resourceData = frameData.Get<UniversalResourceData>();
         UniversalCameraData cameraData = frameData.Get<UniversalCameraData>();
 
@@ -76,16 +64,10 @@ public class PixelizePass : ScriptableRenderPass
         TextureDesc tempDesc = CreateTextureDescriptor(cameraData.cameraTargetDescriptor);
         TextureHandle tempTexture = renderGraph.CreateTexture(tempDesc);
 
-        // Orchestrate the rendering passes
         AddDownsamplePass(renderGraph, activeColor, tempTexture);
         AddUpsamplePass(renderGraph, tempTexture, activeColor);
     }
 
-    /// <summary>
-    /// Calculates the scaled-down dimensions and creates the texture descriptor.
-    /// </summary>
-    /// <param name="cameraDescriptor">The descriptor of the main camera's render target.</param>
-    /// <returns>A TextureDesc for the downscaled temporary texture.</returns>
     private TextureDesc CreateTextureDescriptor(RenderTextureDescriptor cameraDescriptor)
     {
         int downscaledWidth = Mathf.Max(1, cameraDescriptor.width / settings.pixelScale);
@@ -100,12 +82,6 @@ public class PixelizePass : ScriptableRenderPass
         return tempDesc;
     }
 
-    /// <summary>
-    /// Adds a raster pass to copy and scale down the main camera output to the tiny texture.
-    /// </summary>
-    /// <param name="renderGraph">The render graph instance.</param>
-    /// <param name="sourceTexture">The source texture (main camera output).</param>
-    /// <param name="targetTexture">The target texture (downscaled temporary texture).</param>
     private void AddDownsamplePass(RenderGraph renderGraph, TextureHandle sourceTexture, TextureHandle targetTexture)
     {
         using (var builder = renderGraph.AddRasterRenderPass<PassData>("Pixelize Downsample", out var passData))
@@ -123,13 +99,6 @@ public class PixelizePass : ScriptableRenderPass
         }
     }
 
-    /// <summary>
-    /// Adds a raster pass to copy and scale up the tiny texture back to the main camera output.
-    /// </summary>
-    /// <param name="renderGraph">The render graph instance.</param>
-    /// <param name="sourceTexture">The low-resolution texture to upsample.</param>
-    /// <param name="targetTexture">The main camera's render target to write the up
-    /// sampled result to.</param>
     private void AddUpsamplePass(RenderGraph renderGraph, TextureHandle sourceTexture, TextureHandle targetTexture)
     {
         using (var builder = renderGraph.AddRasterRenderPass<PassData>("Pixelize Upsample", out var passData))

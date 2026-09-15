@@ -2,10 +2,6 @@ using UnityEngine;
 using System.Collections.Generic;
 using TMPro;
 
-/// <summary>
-/// Manages the deterministic spawning of interplanetary traffic lines
-/// when toggled via the UI.
-/// </summary>
 public class ArcadeModeManager : MonoBehaviour
 {
     [Header("Arcade Assets")]
@@ -30,9 +26,6 @@ public class ArcadeModeManager : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Toggles the arcade mode on or off, updating the UI and generating or clearing interplanetary traffic accordingly.
-    /// </summary>
     public void ToggleArcadeMode()
     {
         isArcadeActive = !isArcadeActive;
@@ -51,10 +44,6 @@ public class ArcadeModeManager : MonoBehaviour
             ClearTraffic();
         }
     }
-
-    /// <summary>
-    /// Generates interplanetary traffic by instantiating spacecraft between random celestial bodies in the scene.
-    /// </summary>
     private void GenerateTraffic()
     {
         if (spacecraftPrefabs == null || spacecraftPrefabs.Length == 0) return;
@@ -109,9 +98,6 @@ public class ArcadeModeManager : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Clears all active interplanetary traffic by destroying instantiated spacecraft and resetting the active list.
-    /// </summary>
     private void ClearTraffic()
     {
         foreach (GameObject ship in activeSpacecraft)
@@ -121,11 +107,6 @@ public class ArcadeModeManager : MonoBehaviour
         activeSpacecraft.Clear();
     }
 
-    /// <summary>
-    /// Sets the layer of the given GameObject and all its children recursively to the specified new layer.
-    /// </summary>
-    /// <param name="obj">The GameObject to set the layer for.</param>
-    /// <param name="newLayer">The new layer to assign.</param>
     private void SetLayerRecursively(GameObject obj, int newLayer)
     {
         if (newLayer == -1 || obj == null) return;

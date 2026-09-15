@@ -1,6 +1,3 @@
-/// <summary>
-/// Base data container for any orbiting celestial body (Planets and Moons).
-/// </summary>
 public class CelestialBodyData
 {
     // Identifiers & Physical traits
