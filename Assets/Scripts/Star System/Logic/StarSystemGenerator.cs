@@ -132,14 +132,14 @@ public class StarSystemGenerator : MonoBehaviour
         float starDistance = (float)systemPrng.NextDouble() * 25f + 75f; 
         float starVisibility = (float)systemPrng.NextDouble() * 50f + 225f; 
 
-        // Primary Hue (Deep Space colors: 0.55 to 0.85)
-        float hue1 = Mathf.Lerp(0.55f, 0.85f, (float)systemPrng.NextDouble());
+        // Primary Hue (Deep Space colors extracted to JSON)
+        float hue1 = Mathf.Lerp(generationData.skyboxHueMin, generationData.skyboxHueMax, (float)systemPrng.NextDouble());
         
         // Secondary Hue (Shifted slightly to create beautiful analog gradients, e.g., Blue to Magenta)
         float hueShift = Mathf.Lerp(0.1f, 0.25f, (float)systemPrng.NextDouble());
         float hue2 = Mathf.Repeat(hue1 + hueShift, 1.0f);
 
-        float sat = Mathf.Lerp(0.6f, 0.9f, (float)systemPrng.NextDouble());
+        float sat = Mathf.Lerp(generationData.skyboxSaturationMin, generationData.skyboxSaturationMax, (float)systemPrng.NextDouble());
         float val = Mathf.Lerp(0.05f, 0.15f, (float)systemPrng.NextDouble()); 
         
         Color baseColor1 = Color.HSVToRGB(hue1, sat, val);
@@ -149,17 +149,11 @@ public class StarSystemGenerator : MonoBehaviour
         float alphaTransparency = Mathf.Lerp(0.2f, 0.4f, (float)systemPrng.NextDouble());
 
         Color hdrNebulaColor1 = new Color(
-            baseColor1.r * hdrIntensity, 
-            baseColor1.g * hdrIntensity, 
-            baseColor1.b * hdrIntensity, 
-            alphaTransparency
+            baseColor1.r * hdrIntensity, baseColor1.g * hdrIntensity, baseColor1.b * hdrIntensity, alphaTransparency
         );
 
         Color hdrNebulaColor2 = new Color(
-            baseColor2.r * hdrIntensity, 
-            baseColor2.g * hdrIntensity, 
-            baseColor2.b * hdrIntensity, 
-            alphaTransparency
+            baseColor2.r * hdrIntensity, baseColor2.g * hdrIntensity, baseColor2.b * hdrIntensity, alphaTransparency
         );
 
         if (dioramaBuilder != null)
@@ -219,8 +213,9 @@ public class StarSystemGenerator : MonoBehaviour
         int layoutNumericalSeed = stochasticMath.DeriveNumericalSeed(layoutSubSeedInput);
         System.Random layoutPrng = new System.Random(layoutNumericalSeed);
 
-        float rawPlanetCount = stochasticMath.GetNormalValue(layoutPrng, 5.5f, 2.0f);
-        int planetCount = Mathf.Clamp(Mathf.RoundToInt(rawPlanetCount), 1, 12);
+        // Planet count logic driven by JSON data
+        float rawPlanetCount = stochasticMath.GetNormalValue(layoutPrng, generationData.planetCountMean, generationData.planetCountStdDev);
+        int planetCount = Mathf.Clamp(Mathf.RoundToInt(rawPlanetCount), generationData.minPlanets, generationData.maxPlanets);
         
         List<PlanetData> generatedPlanets = new List<PlanetData>();
 
@@ -314,8 +309,12 @@ public class StarSystemGenerator : MonoBehaviour
         List<MoonData> generatedMoons = new List<MoonData>();
         System.Random layoutPrng = new System.Random(stochasticMath.DeriveNumericalSeed(planetSeedInput + "_MoonLayout"));
         
-        float maxTheoreticalMoons = parentPlanet.radius * 3.0f;
-        int moonCount = Mathf.Clamp(Mathf.RoundToInt(stochasticMath.GetNormalValue(layoutPrng, maxTheoreticalMoons * 0.3f, maxTheoreticalMoons * 0.2f)), 0, Mathf.FloorToInt(maxTheoreticalMoons));
+        float maxTheoreticalMoons = parentPlanet.radius * generationData.maxTheoreticalMoonsMultiplier;
+        
+        float mean = maxTheoreticalMoons * generationData.moonCountMeanMultiplier;
+        float stdDev = maxTheoreticalMoons * generationData.moonCountStdDevMultiplier;
+        
+        int moonCount = Mathf.Clamp(Mathf.RoundToInt(stochasticMath.GetNormalValue(layoutPrng, mean, stdDev)), 0, Mathf.FloorToInt(maxTheoreticalMoons));
         float currentOrbitalDistance = parentPlanet.radius * 2.0f;
 
         for (int m = 0; m < moonCount; m++)
@@ -356,7 +355,7 @@ public class StarSystemGenerator : MonoBehaviour
         moon.axialTilt = Mathf.Abs(stochasticMath.GetNormalValue(moonPrng, 5f, 5f));
 
         moon.revolutionPeriod = 3.0f * Mathf.Sqrt(Mathf.Pow(moon.orbitalDistance, 3) / Mathf.Max(parentPlanet.mass, 0.001f));
-        moon.isTidallyLocked = (moonPrng.NextDouble() <= 0.85);
+        moon.isTidallyLocked = (moonPrng.NextDouble() <= generationData.moonTidalLockChance);
 
         if (moon.isTidallyLocked)
         {
@@ -435,43 +434,39 @@ public class StarSystemGenerator : MonoBehaviour
         List<AsteroidBeltData> belts = new List<AsteroidBeltData>();
         System.Random beltPrng = new System.Random(stochasticMath.DeriveNumericalSeed(baseSeed + "_Belts"));
 
-        // Sort planets by distance to safely evaluate gaps
         planets.Sort((p1, p2) => p1.orbitalDistance.CompareTo(p2.orbitalDistance));
-
         float safeMargin = 0.4f; 
 
         for (int i = 0; i < planets.Count - 1; i++)
         {
             float gap = planets[i + 1].orbitalDistance - planets[i].orbitalDistance;
 
-            // The gap must be wide enough to host an asteroid belt, but not too wide to be unstable
-            if (gap > 1.2f && gap < 5.0f && beltPrng.NextDouble() > 0.5)
+            if (gap > 1.2f && gap < 5.0f && beltPrng.NextDouble() <= generationData.innerBeltChance)
             {
                 AsteroidBeltData belt = new AsteroidBeltData();
                 belt.name = $"{SystemName} Inner Belt";
                 belt.innerRadius = planets[i].orbitalDistance + safeMargin;
                 belt.outerRadius = planets[i + 1].orbitalDistance - safeMargin;
                 
-                belt.asteroidCount = Mathf.Clamp(Mathf.RoundToInt(gap * 400f), 300, 1200);
+                belt.asteroidCount = Mathf.Clamp(Mathf.RoundToInt(gap * 400f), generationData.minBeltAsteroids, 1200);
                 belt.seed = beltPrng.Next();
                 
                 belts.Add(belt);
             }
         }
 
-        // Kuiper Belt: 30% chance, and ONLY if the last planet is not excessively far away (e.g., > 35 AU)
-        if (planets.Count > 0 && beltPrng.NextDouble() > 0.7)
+        if (planets.Count > 0 && beltPrng.NextDouble() <= generationData.kuiperBeltChance)
         {
             float lastOrbit = planets[planets.Count - 1].orbitalDistance;
             
-            if (lastOrbit < 35f)
+            if (lastOrbit < generationData.maxKuiperDistance)
             {
                 AsteroidBeltData outerBelt = new AsteroidBeltData();
                 outerBelt.name = $"{SystemName} Kuiper Belt";
                 outerBelt.innerRadius = lastOrbit + 2.0f;
                 outerBelt.outerRadius = outerBelt.innerRadius + (float)(beltPrng.NextDouble() * 2f + 1f);
                 
-                outerBelt.asteroidCount = Mathf.Clamp(Mathf.RoundToInt(outerBelt.outerRadius * 50f), 800, 2500);
+                outerBelt.asteroidCount = Mathf.Clamp(Mathf.RoundToInt(outerBelt.outerRadius * 50f), generationData.minBeltAsteroids * 2, 2500);
                 outerBelt.seed = beltPrng.Next();
                 
                 belts.Add(outerBelt);

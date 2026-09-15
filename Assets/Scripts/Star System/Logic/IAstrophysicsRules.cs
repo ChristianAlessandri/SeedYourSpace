@@ -32,6 +32,29 @@ public class GenerationData
     public float anomalyChanceHabitable;
     public float anomalyChanceToxic;
     public float anomalyChanceFrozen;
+
+    // --- Layout and Population Probabilities ---
+    public float planetCountMean;
+    public float planetCountStdDev;
+    public int minPlanets;
+    public int maxPlanets;
+    
+    public float maxTheoreticalMoonsMultiplier;
+    public float moonCountMeanMultiplier;
+    public float moonCountStdDevMultiplier;
+    public float moonTidalLockChance;
+
+    // --- Asteroid Belts ---
+    public float innerBeltChance;
+    public float kuiperBeltChance;
+    public float maxKuiperDistance;
+    public int minBeltAsteroids;
+
+    // --- Skybox Aesthetics ---
+    public float skyboxHueMin;
+    public float skyboxHueMax;
+    public float skyboxSaturationMin;
+    public float skyboxSaturationMax;
 }
 
 public interface IAstrophysicsRules

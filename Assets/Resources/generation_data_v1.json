@@ -13,6 +13,7 @@
     "K (Orange)",
     "M (Red Dwarf)"
   ],
+
   "planetClasses": [
     {
       "className": "Terrestrial",
@@ -52,5 +53,25 @@
   "chanceTerrestrialRings": 0.04,
   "anomalyChanceHabitable": 0.05,
   "anomalyChanceToxic": 0.5,
-  "anomalyChanceFrozen": 0.3
+  "anomalyChanceFrozen": 0.3,
+
+  "planetCountMean": 5.5,
+  "planetCountStdDev": 2.0,
+  "minPlanets": 1,
+  "maxPlanets": 12,
+
+  "maxTheoreticalMoonsMultiplier": 3.0,
+  "moonCountMeanMultiplier": 0.3,
+  "moonCountStdDevMultiplier": 0.2,
+  "moonTidalLockChance": 0.85,
+
+  "innerBeltChance": 0.5,
+  "kuiperBeltChance": 0.3,
+  "maxKuiperDistance": 35.0,
+  "minBeltAsteroids": 300,
+
+  "skyboxHueMin": 0.55,
+  "skyboxHueMax": 0.85,
+  "skyboxSaturationMin": 0.6,
+  "skyboxSaturationMax": 0.9
 }
