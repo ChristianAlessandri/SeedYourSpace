@@ -572,7 +572,6 @@ MonoBehaviour:
   ringMaterial: {fileID: 2100000, guid: de0b8d1fef82a6449a9e9c476563f03e, type: 2}
   asteroidPrefab: {fileID: 1728705312383283999, guid: c8458d2baec7dcd4e96aca6019c206e8, type: 3}
   baseSkyboxMaterial: {fileID: 2100000, guid: 97ba7ef56e212f349b8353c6c25b98b1, type: 2}
-  starLensFlareData: {fileID: 0}
   starSizeMultiplier: 75
   planetSizeMultiplier: 1
   planetDistanceMultiplier: 900
@@ -4684,7 +4683,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'Mesh Detail: High (320 Faces)'
+  m_text: 'Mesh Detail: Ultra (1280 Faces)'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 2b940a1d11cee5b48a2a98b982c9bd75, type: 2}
   m_sharedMaterial: {fileID: 9140340394604385720, guid: 2b940a1d11cee5b48a2a98b982c9bd75, type: 2}
@@ -4850,7 +4849,7 @@ MonoBehaviour:
   m_MinValue: 0
   m_MaxValue: 3
   m_WholeNumbers: 1
-  m_Value: 2
+  m_Value: 3
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls: []
