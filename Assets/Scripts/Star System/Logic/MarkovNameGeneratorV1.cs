@@ -63,13 +63,16 @@ public class MarkovNameGeneratorV1 : INameGenerator
     }
 
     public string ToRoman(int number)
-    {
-        // Fallback if JSON doesn't provide them or index is out of bounds
-        if (romanNumerals != null && number > 0 && number < romanNumerals.Length) 
-            return romanNumerals[number];
-            
-        return number.ToString();
-    }
+{
+    // Convert 1-based number to 0-based array index
+    int index = number - 1;
+
+    // Fallback if JSON doesn't provide them or index is out of bounds
+    if (romanNumerals != null && index >= 0 && index < romanNumerals.Length) 
+        return romanNumerals[index];
+        
+    return number.ToString();
+}
 
     public string ToAlphabet(int index)
     {
