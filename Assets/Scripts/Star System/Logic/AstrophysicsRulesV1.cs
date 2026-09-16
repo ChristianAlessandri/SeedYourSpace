@@ -206,6 +206,7 @@ public class AstrophysicsRulesV1: IAstrophysicsRules
     {
         baseColor = CalculateStellarColor(temperature);
         granulationScale = CalculateStellarGranulation(mass, radius, prng);
+        granulationScale *= 25f;
         magneticActivity = CalculateStellarMagneticActivity(mass, rotationPeriod, prng);
     }
 

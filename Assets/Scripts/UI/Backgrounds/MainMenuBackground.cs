@@ -63,18 +63,24 @@ public class MainMenuBackground : MonoBehaviour
         star.name = "Menu_Anomaly";
         star.spectralClass = astroRules.GetSpectralClassName(spectralIndex);
         
-        // Fixed radius for consistent menu framing, random temperature/mass for color variety
-        star.radius = menuStarRadius; 
-        star.mass = Mathf.Max(stochasticMath.GetNormalValue(prng, generationData.massMeans[spectralIndex], 0.5f), 0.5f);
-        star.temperature = Mathf.Max(stochasticMath.GetNormalValue(prng, generationData.tempMeans[spectralIndex], generationData.tempMeans[spectralIndex] * 0.1f), 2000f);
+        star.mass = Mathf.Max(stochasticMath.GetNormalValue(prng, generationData.massMeans[spectralIndex], generationData.massMeans[spectralIndex] * 0.1f), 0.08f);
+        star.radius = Mathf.Max(stochasticMath.GetNormalValue(prng, generationData.radiusMeans[spectralIndex], generationData.radiusMeans[spectralIndex] * 0.1f), 0.1f);
+        star.temperature = Mathf.Max(stochasticMath.GetNormalValue(prng, generationData.tempMeans[spectralIndex], generationData.tempMeans[spectralIndex] * 0.05f), 2000f);
         
-        star.axialTilt = 15f; // Slight tilt looks cinematic
-        star.rotationPeriod = menuRotationSpeed; // Fast enough to see the spin
+        star.axialTilt = 15f; 
+        star.rotationPeriod = menuRotationSpeed; 
 
         astroRules.CalculateStellarSurface(
             star.temperature, star.mass, star.radius, star.rotationPeriod, prng, 
             out star.baseColor, out star.magneticActivity, out star.granulationScale
         );
+
+        star.granulationScale *= 25f; 
+
+        if (dioramaBuilder != null)
+        {
+            dioramaBuilder.UpdateMultipliers(menuStarRadius * 100f, 1f, 1f, 1f);
+        }
 
         return star;
     }
