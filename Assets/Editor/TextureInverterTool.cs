@@ -41,7 +41,7 @@ public class TextureInverterTool
                 // Alpha remains untouched
             }
 
-            // CRITICAL FIX - Create a temporary uncompressed texture to accept the new pixels
+            // Create a temporary uncompressed texture to accept the new pixels
             Texture2D tempTexture = new Texture2D(originalTexture.width, originalTexture.height, TextureFormat.RGBA32, false);
             tempTexture.SetPixels(pixels);
             tempTexture.Apply();
