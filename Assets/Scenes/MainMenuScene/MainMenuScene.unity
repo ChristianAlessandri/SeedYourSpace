@@ -1985,13 +1985,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 819342604}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 0, y: 300, z: 0}
+  m_LocalRotation: {x: 0.5624222, y: -0.23296289, z: 0.3036032, w: 0.73296297}
+  m_LocalPosition: {x: -825, y: 1015, z: -365}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 75, y: 0, z: 45}
 --- !u!114 &819342609
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2619,6 +2619,78 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1325254551}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1333603466
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1333603469}
+  - component: {fileID: 1333603468}
+  - component: {fileID: 1333603467}
+  m_Layer: 0
+  m_Name: BackgroundBuilder
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1333603467
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1333603466}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c385697f052e47742ad3bcedd5804b0a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MainMenuBackground
+  dioramaBuilder: {fileID: 1333603468}
+  algorithmVersion: 1
+  menuRotationSpeed: 240
+  menuStarRadius: 5
+--- !u!114 &1333603468
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1333603466}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6d7dddd68b49974d9ac7cc37d308158, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::VisualDioramaBuilder
+  celestialPrefab: {fileID: 72994822405351375, guid: 14a5fdcefdad6904a99413637e459c92, type: 3}
+  starMaterial: {fileID: 2100000, guid: 741a4b1dd44891249936b10799c548b2, type: 2}
+  planetMaterial: {fileID: 0}
+  atmosphereMaterial: {fileID: 0}
+  ringMaterial: {fileID: 0}
+  asteroidPrefab: {fileID: 0}
+  baseSkyboxMaterial: {fileID: 2100000, guid: 97ba7ef56e212f349b8353c6c25b98b1, type: 2}
+  starSizeMultiplier: 100
+  planetSizeMultiplier: 1
+  planetDistanceMultiplier: 200
+  moonDistanceMultiplier: 0.15
+--- !u!4 &1333603469
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1333603466}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
@@ -4654,4 +4726,5 @@ SceneRoots:
   - {fileID: 1325254554}
   - {fileID: 1533583862}
   - {fileID: 819342607}
+  - {fileID: 1333603469}
   - {fileID: 269265273}
