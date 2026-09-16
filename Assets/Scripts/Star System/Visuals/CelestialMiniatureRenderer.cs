@@ -1,10 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-/// <summary>
-/// Renders a dynamic 3D miniature of the selected celestial body for the UI, 
-/// or displays a 2D procedural atlas map.
-/// </summary>
 public class CelestialMiniatureRenderer : MonoBehaviour
 {
     [Header("UI Reference")]
@@ -44,9 +40,6 @@ public class CelestialMiniatureRenderer : MonoBehaviour
         InitializeRenderStudio();
     }
 
-    /// <summary>
-    /// Initializes the off-screen rendering setup, including the camera, render texture, and lighting for the miniature display.
-    /// </summary>
     private void InitializeRenderStudio()
     {
         renderTexture = new RenderTexture(512, 512, 16);
@@ -83,27 +76,18 @@ public class CelestialMiniatureRenderer : MonoBehaviour
         miniLight.cullingMask = renderCamera.cullingMask;
     }
 
-    /// <summary>
-    /// Toggles between 3D miniature view and 2D atlas view.
-    /// </summary>
     public void ToggleViewMode()
     {
         IsAtlasMode = !IsAtlasMode;
         RefreshDisplayMode();
     }
 
-    /// <summary>
-    /// Resets the display to 3D miniature mode, disabling atlas mode and re-enabling the render camera.
-    /// </summary>
     public void ResetTo3DMode()
     {
         IsAtlasMode = false;
         RefreshDisplayMode();
     }
 
-    /// <summary>
-    /// Refreshes the display mode based on the current settings, updating the material and texture of the RawImage accordingly.
-    /// </summary>
     private void RefreshDisplayMode()
     {
         if (miniatureDisplay == null) return;
@@ -133,10 +117,6 @@ public class CelestialMiniatureRenderer : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Builds a 3D miniature of the specified celestial body, applying procedural properties, rings, and atmosphere as needed.
-    /// </summary>
-    /// <param name="bodyData">The data defining the celestial body, including surface, ring, and atmosphere parameters.</param>
     public void BuildMiniature(CelestialBodyData bodyData)
     {
         if (bodyData == null || celestialPrefab == null) return;
@@ -168,10 +148,6 @@ public class CelestialMiniatureRenderer : MonoBehaviour
         RefreshDisplayMode();
     }
 
-    /// <summary>
-    /// Builds a 3D miniature of the specified star, applying procedural properties and emission settings.
-    /// </summary>
-    /// <param name="starData">The data defining the star, including color and granulation parameters.</param>
     public void BuildMiniature(StarData starData)
     {
         if (starData == null || celestialPrefab == null) return;
@@ -193,11 +169,6 @@ public class CelestialMiniatureRenderer : MonoBehaviour
         RefreshDisplayMode();
     }
 
-    /// <summary>
-    /// Sets up the base miniature object by instantiating the celestial prefab, positioning it, and applying the specified axial tilt. Cleans up any previous miniature objects.
-    /// </summary>
-    /// <param name="objectName">The name to assign to the miniature object.</param>
-    /// <param name="axialTilt">The axial tilt to apply to the miniature object.</param>
     private void SetupBaseMiniatureObject(string objectName, float axialTilt)
     {
         if (currentMiniatureBody != null) Destroy(currentMiniatureBody);

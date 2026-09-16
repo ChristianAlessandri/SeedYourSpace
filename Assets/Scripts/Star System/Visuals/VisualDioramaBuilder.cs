@@ -11,6 +11,7 @@ public class VisualDioramaBuilder : MonoBehaviour
     [Tooltip("A 3D Sphere prefab with the CelestialBody script attached.")]
     public GameObject celestialPrefab; 
 
+    [Header("Materials")]
     public Material starMaterial;
     public Material planetMaterial;
     public Material atmosphereMaterial;
@@ -35,12 +36,6 @@ public class VisualDioramaBuilder : MonoBehaviour
     private List<PlanetCache> activePlanets = new List<PlanetCache>();
     private List<MoonCache> activeMoons = new List<MoonCache>();
 
-    /// <summary>
-    /// Builds the entire star system diorama, including the central star, planets, moons, and asteroid belts.
-    /// </summary>
-    /// <param name="starData">The data for the central star.</param>
-    /// <param name="planets">A list of planet data to instantiate.</param>
-    /// <param name="belts">A list of asteroid belt data to instantiate.</param>
     public void BuildUniverse(StarData starData, List<PlanetData> planets, List<AsteroidBeltData> belts)
     {
         // Clean up any previously instantiated objects before building a new diorama
@@ -70,14 +65,6 @@ public class VisualDioramaBuilder : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Updates all scaling multipliers dynamically and applies them to instantiated objects.
-    /// Called by the DioramaSettingsController UI.
-    /// </summary>
-    /// <param name="newStarSize">The new multiplier for star size.</param>
-    /// <param name="newPlanetSize">The new multiplier for planet size.</param>
-    /// <param name="newPlanetDist">The new multiplier for planet distance.</param>
-    /// <param name="newMoonDist">The new multiplier for moon distance.</param>
     public void UpdateMultipliers(float newStarSize, float newPlanetSize, float newPlanetDist, float newMoonDist)
     {
         starSizeMultiplier = newStarSize;
@@ -113,11 +100,6 @@ public class VisualDioramaBuilder : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Builds the central star GameObject based on the provided StarData and applies visual properties.
-    /// </summary>
-    /// <param name="starData">The data for the central star.</param>
-    /// <returns>The transform of the created star GameObject.</returns>
     private Transform BuildCentralStar(StarData starData)
     {
         GameObject starObj = Instantiate(celestialPrefab, Vector3.zero, Quaternion.identity);
@@ -149,12 +131,6 @@ public class VisualDioramaBuilder : MonoBehaviour
         return starObj.transform;
     }
 
-    /// <summary>
-    /// Builds a planet GameObject based on the provided PlanetData and attaches it to the star's transform.
-    /// </summary>
-    /// <param name="planet">The data for the planet.</param>
-    /// <param name="starTransform">The transform of the central star to which the planet will orbit.</param>
-    /// <returns>The transform of the created planet GameObject.</returns>
     private Transform BuildPlanet(PlanetData planet, Transform starTransform)
     {
         GameObject planetObj = Instantiate(celestialPrefab, Vector3.zero, Quaternion.identity);
@@ -186,11 +162,6 @@ public class VisualDioramaBuilder : MonoBehaviour
         return planetObj.transform;
     }
 
-    /// <summary>
-    /// Builds a moon GameObject based on the provided MoonData and attaches it to the planet's transform.
-    /// </summary>
-    /// <param name="moon">The data for the moon.</param>
-    /// <param name="planetTransform">The transform of the planet to which the moon will orbit.</param>
     private void BuildMoon(MoonData moon, Transform planetTransform)
     {
         GameObject moonObj = Instantiate(celestialPrefab, Vector3.zero, Quaternion.identity);
@@ -220,13 +191,6 @@ public class VisualDioramaBuilder : MonoBehaviour
         activeMoons.Add(new MoonCache { obj = moonObj, data = moon, orbit = moonOrbit });
     }
 
-    /// <summary>
-    /// Builds a procedural skybox material based on the provided nebula colors and star visibility settings.
-    /// </summary>
-    /// <param name="nebulaColor1">The primary color for the nebula.</param>
-    /// <param name="nebulaColor2">The secondary color for the nebula.</param>
-    /// <param name="starDistance">The distance of the stars from the viewer.</param>
-    /// <param name="starVisibility">The visibility of the stars.</param>
     public void BuildSkybox(Color nebulaColor1, Color nebulaColor2, float starDistance, float starVisibility)
     {
         if (baseSkyboxMaterial != null)

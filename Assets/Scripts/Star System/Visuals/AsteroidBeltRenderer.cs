@@ -1,11 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
 
-/// <summary>
-/// Extracts a multi-part prefab, combines it into a single mesh, and renders thousands 
-/// of instances via GPU Instancing. Handles both the global orbit of the belt and 
-/// the individual local rotation (spin) of each asteroid without floating-point drift.
-/// </summary>
 public class AsteroidBeltRenderer : MonoBehaviour
 {
     private struct AsteroidState

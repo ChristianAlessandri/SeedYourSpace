@@ -1,16 +1,7 @@
 using UnityEngine;
 
-/// <summary>
-/// A utility class to centralize the logic for calculating and applying procedural 
-/// material properties for celestial bodies across different renderers.
-/// </summary>
 public static class CelestialMaterialHelper
 {
-    /// <summary>
-    /// Calculates procedural colors and applies them along with base data to a MaterialPropertyBlock.
-    /// </summary>
-    /// <param name="bodyData">The data defining the celestial body.</param>
-    /// <param name="props">The MaterialPropertyBlock to apply the properties to.</param>
     public static void ApplySurfaceProperties(CelestialBodyData bodyData, MaterialPropertyBlock props)
     {
         if (bodyData == null || props == null) return;
@@ -49,11 +40,6 @@ public static class CelestialMaterialHelper
         props.SetVector("_Offset", new Vector4(seedOffset, seedOffset * 2.5f, seedOffset * -1.3f, 0f));
     }
 
-    /// <summary>
-    /// Overload for applying properties directly to a Material instance (used by the Atlas).
-    /// </summary>
-    /// <param name="bodyData">The data defining the celestial body.</param>
-    /// <param name="material">The Material to apply the properties to.</param>
     public static void ApplySurfaceProperties(CelestialBodyData bodyData, Material material)
     {
         if (bodyData == null || material == null) return;

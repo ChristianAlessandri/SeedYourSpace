@@ -6,11 +6,6 @@ using UnityEngine;
 /// </summary>
 public static class CelestialVisualUtility
 {
-    /// <summary>
-    /// Applies procedural properties to a Star's material.
-    /// </summary>
-    /// <param name="starData">The data defining the star, including color and granulation parameters.</param>
-    /// <param name="mr">The Renderer component of the star GameObject.</param>
     public static void ApplyStarProperties(StarData starData, Renderer mr)
     {
         if (mr == null || starData == null) return;
@@ -24,14 +19,6 @@ public static class CelestialVisualUtility
         mr.SetPropertyBlock(props);
     }
 
-    /// <summary>
-    /// Instantiates a scaled-up transparent sphere to represent the atmosphere, clouds, and auroras.
-    /// </summary>
-    /// <param name="parentObj">The celestial body GameObject to attach the atmosphere to.</param>
-    /// <param name="bodyData">The data defining the celestial body, including atmosphere parameters.</param>
-    /// <param name="prefab">The prefab to use for the atmosphere.</param>
-    /// <param name="mat">The material to apply to the atmosphere.</param>
-    /// <param name="layerIndex">Optional layer index to assign to the atmosphere.</param>
     public static void BuildAtmosphere(GameObject parentObj, CelestialBodyData bodyData, GameObject prefab, Material mat, int layerIndex = -1)
     {
         // Check for missing or non-existent atmospheres
@@ -104,13 +91,6 @@ public static class CelestialVisualUtility
         }
     }
 
-    /// <summary>
-    /// Procedurally generates a double-sided ring mesh around a celestial body.
-    /// </summary>
-    /// <param name="parentObj">The celestial body GameObject to attach the rings to.</param>
-    /// <param name="bodyData">The data defining the celestial body, including ring parameters.</param>
-    /// <param name="mat">The material to apply to the rings.</param>
-    /// <param name="layerIndex">Optional layer index to assign to the rings.</param>
     public static GameObject BuildRingSystem(GameObject parentObj, CelestialBodyData bodyData, Material mat, int layerIndex = -1)
     {
         if (!bodyData.hasRings) return null;
@@ -196,11 +176,6 @@ public static class CelestialVisualUtility
         return ringObj;
     }
 
-    /// <summary>
-    /// Helper method to ensure the prefab and all its contents are properly isolated on a specific layer.
-    /// </summary>
-    /// <param name="obj">The root GameObject to set the layer for.</param>
-    /// <param name="newLayer">The layer index to assign.</param>
     public static void SetLayerRecursively(GameObject obj, int newLayer)
     {
         if (newLayer == -1 || obj == null) return;

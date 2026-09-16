@@ -18,11 +18,6 @@ public class LowPolyMeshGenerator : MonoBehaviour
         GenerateFlatIcosphere();
     }
 
-    /// <summary>
-    /// Updates the subdivision level and regenerates the mesh if necessary.
-    /// Called globally by the MeshQualityController.
-    /// </summary>
-    /// <param name="newSubdivisions">The requested subdivision level.</param>
     public void SetSubdivisions(int newSubdivisions)
     {
         if (newSubdivisions != subdivisions)
@@ -32,9 +27,6 @@ public class LowPolyMeshGenerator : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Generates the icosphere geometry and unwelds vertices for flat shading.
-    /// </summary>
     public void GenerateFlatIcosphere()
     {
         if (meshFilter == null)
@@ -119,14 +111,6 @@ public class LowPolyMeshGenerator : MonoBehaviour
         meshFilter.sharedMesh = generatedMesh;
     }
 
-    /// <summary>
-    /// Calculates the midpoint between two vertices and caches the result to avoid duplicate vertices.
-    /// </summary>
-    /// <param name="vertices">The list of vertices to add the midpoint to.</param>
-    /// <param name="cache">A dictionary to cache midpoints for efficiency.</param>
-    /// <param name="v1">The index of the first vertex.</param>
-    /// <param name="v2">The index of the second vertex.</param>
-    /// <returns>The index of the midpoint vertex in the vertices list.</returns>
     private int GetMidPoint(List<Vector3> vertices, Dictionary<long, int> cache, int v1, int v2)
     {
         long smallerIndex = Mathf.Min(v1, v2);

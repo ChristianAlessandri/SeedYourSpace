@@ -1,9 +1,5 @@
 using UnityEngine;
 
-/// <summary>
-/// Draws the orbital path and physical axis sticks (globe-style) for the selected celestial body.
-/// Adjusts visual properties dynamically based on the type of celestial body selected.
-/// </summary>
 public class SelectionVisualizer : MonoBehaviour
 {
     [Header("Event Listeners")]
@@ -61,9 +57,6 @@ public class SelectionVisualizer : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Initializes the visual components: orbit line and axis sticks, setting up their materials and default states.
-    /// </summary>
     private void InitializeVisuals()
     {
         if (lineMaterial == null)
@@ -92,12 +85,6 @@ public class SelectionVisualizer : MonoBehaviour
         southPoleStick = CreateAxisStick("SouthPole");
     }
 
-    /// <summary>
-    /// Creates a cylindrical stick to represent the axis of the celestial body.
-    /// The stick is initially inactive and will be positioned and scaled based on the selected body's properties.
-    /// </summary>
-    /// <param name="stickName">The name of the axis stick to create.</param>
-    /// <returns>The created axis stick GameObject.</returns>
     private GameObject CreateAxisStick(string stickName)
     {
         GameObject stick = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
@@ -118,12 +105,6 @@ public class SelectionVisualizer : MonoBehaviour
     private void OnPlanetSelected(PlanetData data) => TargetCelestialBody(data.name, planetOrbitLineWidth);
     private void OnMoonSelected(MoonData data) => TargetCelestialBody(data.name, moonOrbitLineWidth);
 
-    /// <summary>
-    /// Targets the specified celestial body by name, enabling its orbit line and axis sticks if applicable
-    /// and adjusting the orbit line width based on the type of celestial body selected.
-    /// </summary>
-    /// <param name="bodyName">The name of the celestial body to target.</param>
-    /// <param name="targetLineWidth">The desired width for the orbit line.</param>
     private void TargetCelestialBody(string bodyName, float targetLineWidth)
     {
         GameObject targetObj = GameObject.Find(bodyName);
@@ -163,10 +144,6 @@ public class SelectionVisualizer : MonoBehaviour
         UpdateOrbitLine();
     }
 
-    /// <summary>
-    /// Updates the position, orientation, and scale of the axis sticks based on the active celestial
-    /// body's radius and orientation. The sticks are positioned at the north and south poles of the body.
-    /// </summary>
     private void UpdateAxisSticks()
     {
         if (!northPoleStick.activeSelf) return;
@@ -188,9 +165,6 @@ public class SelectionVisualizer : MonoBehaviour
         southPoleStick.transform.localScale = stickScale;
     }
 
-    /// <summary>
-    /// Updates the positions of the orbit line segments based on the active celestial body's orbital parameters.
-    /// </summary>
     private void UpdateOrbitLine()
     {
         if (!orbitLine.enabled || activeBody.centralStar == null) return;
@@ -212,9 +186,6 @@ public class SelectionVisualizer : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Hides all visualization lines and sticks when empty space is clicked.
-    /// </summary>
     public void ClearVisuals()
     {
         activeBody = null;

@@ -2,10 +2,6 @@ using UnityEngine;
 using System.Collections.Generic;
 using TMPro;
 
-/// <summary>
-/// Manages the global visibility of all orbital paths in the star system.
-/// Uses world-space calculations to prevent inheriting parent rotation and scaling artifacts.
-/// </summary>
 public class OrreryController : MonoBehaviour
 {
     [Header("Visual Settings")]
@@ -32,10 +28,6 @@ public class OrreryController : MonoBehaviour
     private List<OrreryOrbitData> activeOrreryOrbits = new List<OrreryOrbitData>();
     private bool isOrreryActive = false;
 
-    /// <summary>
-    /// Scans the scene for all CelestialBody instances and builds their orbit lines.
-    /// Call this immediately after VisualDioramaBuilder.BuildUniverse() finishes.
-    /// </summary>
     public void InitializeOrrery()
     {
         ClearOrrery();
@@ -50,10 +42,6 @@ public class OrreryController : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Toggles the visibility of all generated orbital lines.
-    /// </summary>
-    /// <param name="state">True to show orbits, false to hide.</param>
     public void ToggleOrbits(bool state)
     {
         isOrreryActive = state;
@@ -72,17 +60,11 @@ public class OrreryController : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Flips the current state of the orrery visibility for standard UI Buttons.
-    /// </summary>
     public void ToggleOrbitsButtonClicked()
     {
         ToggleOrbits(!isOrreryActive);
     }
 
-    /// <summary>
-    /// Creates a world-space LineRenderer for a given celestial body.
-    /// </summary>
     private void CreateOrbitLine(CelestialBody body)
     {
         GameObject orbitObj = new GameObject($"OrreryLine_{body.gameObject.name}");
@@ -126,9 +108,6 @@ public class OrreryController : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Updates the positions of the orbit line segments in world space based on Keplerian parameters.
-    /// </summary>
     private void UpdateOrbitPoints(CelestialBody body, LineRenderer line)
     {
         float semiMinorAxis = body.semiMajorAxis * Mathf.Sqrt(1f - body.eccentricity * body.eccentricity);
@@ -149,10 +128,6 @@ public class OrreryController : MonoBehaviour
             line.SetPosition(i, finalPoint);
         }
     }
-
-    /// <summary>
-    /// Cleans up existing data.
-    /// </summary>
     private void ClearOrrery()
     {
         foreach (var orbit in activeOrreryOrbits)

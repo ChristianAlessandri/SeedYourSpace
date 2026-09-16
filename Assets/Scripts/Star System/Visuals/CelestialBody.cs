@@ -1,9 +1,5 @@
 using UnityEngine;
 
-/// <summary>
-/// Computational kinematic engine for celestial bodies.
-/// Handles Keplerian orbital revolution in 3D space and precise axial rotation.
-/// </summary>
 public class CelestialBody : MonoBehaviour
 {
     [Header("Simulation Time")]
