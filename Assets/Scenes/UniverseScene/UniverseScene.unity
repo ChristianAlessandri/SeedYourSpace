@@ -572,6 +572,7 @@ MonoBehaviour:
   ringMaterial: {fileID: 2100000, guid: de0b8d1fef82a6449a9e9c476563f03e, type: 2}
   asteroidPrefab: {fileID: 1728705312383283999, guid: c8458d2baec7dcd4e96aca6019c206e8, type: 3}
   baseSkyboxMaterial: {fileID: 2100000, guid: 97ba7ef56e212f349b8353c6c25b98b1, type: 2}
+  volumetricNebulaMaterial: {fileID: 2100000, guid: 3946c65009731f242ad08763dd45a3be, type: 2}
   starSizeMultiplier: 75
   planetSizeMultiplier: 1
   planetDistanceMultiplier: 900
@@ -4064,7 +4065,7 @@ Camera:
     width: 1
     height: 1
   near clip plane: 0.3
-  far clip plane: 1000
+  far clip plane: 1000000
   field of view: 60
   orthographic: 0
   orthographic size: 5
@@ -4710,8 +4711,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 16
-  m_fontSizeBase: 16
+  m_fontSize: 14
+  m_fontSizeBase: 14
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18

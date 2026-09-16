@@ -1,10 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
 
-/// <summary>
-/// Translates the generated data layer into physical 3D GameObjects.
-/// Applies visual scaling to make the astronomical distances readable on screen.
-/// </summary>
 public class VisualDioramaBuilder : MonoBehaviour
 {
     [Header("3D Assets")]
@@ -18,6 +14,10 @@ public class VisualDioramaBuilder : MonoBehaviour
     public Material ringMaterial;
     public GameObject asteroidPrefab;
     public Material baseSkyboxMaterial;
+
+    [Header("Environment FX")]
+    [Tooltip("Material for 3D Nebula Clouds (URP/Particles/Unlit, Transparent, Alpha or Additive)")]
+    public Material volumetricNebulaMaterial;
 
     [Header("Diorama Scale Multipliers")]
     [Tooltip("Adjust these values to balance the visual representation in the scene.")]
