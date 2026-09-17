@@ -85,6 +85,7 @@ public class VisualDioramaBuilder : MonoBehaviour
             {
                 p.obj.transform.localScale = Vector3.one * (p.data.radius * planetSizeMultiplier);
                 p.orbit.semiMajorAxis = p.data.orbitalDistance * planetDistanceMultiplier;
+                SyncColliderToMesh(p.obj);
             }
         }
 
@@ -96,6 +97,7 @@ public class VisualDioramaBuilder : MonoBehaviour
                 // Note: Planet size multiplier is used for moons as well to maintain relative scale
                 m.obj.transform.localScale = Vector3.one * (m.data.radius * planetSizeMultiplier);
                 m.orbit.semiMajorAxis = m.data.orbitalDistance * moonDistanceMultiplier;
+                SyncColliderToMesh(m.obj);
             }
         }
     }
@@ -128,6 +130,8 @@ public class VisualDioramaBuilder : MonoBehaviour
         currentStarData = starData;
         currentStarObj = starObj;
 
+        SyncColliderToMesh(starObj);
+
         return starObj.transform;
     }
 
@@ -159,6 +163,8 @@ public class VisualDioramaBuilder : MonoBehaviour
         // Save in Cache for future updates when multipliers change
         activePlanets.Add(new PlanetCache { obj = planetObj, data = planet, orbit = planetOrbit });
 
+        SyncColliderToMesh(planetObj);
+
         return planetObj.transform;
     }
 
@@ -189,6 +195,8 @@ public class VisualDioramaBuilder : MonoBehaviour
 
         // Save in Cache for future updates when multipliers change
         activeMoons.Add(new MoonCache { obj = moonObj, data = moon, orbit = moonOrbit });
+
+        SyncColliderToMesh(moonObj);
     }
 
     public void BuildSkybox(Color nebulaColor1, Color nebulaColor2, float starDistance, float starVisibility)
@@ -207,6 +215,21 @@ public class VisualDioramaBuilder : MonoBehaviour
         else
         {
             Debug.LogWarning("Warning: Base Skybox Material is missing from the Diorama Builder.");
+        }
+    }
+
+    private void SyncColliderToMesh(GameObject celestialObj)
+    {
+        SphereCollider col = celestialObj.GetComponent<SphereCollider>();
+        MeshFilter meshFilter = celestialObj.GetComponent<MeshFilter>();
+        
+        if (col != null && meshFilter != null && meshFilter.sharedMesh != null)
+        {
+            col.radius = Mathf.Max(
+                meshFilter.sharedMesh.bounds.extents.x, 
+                meshFilter.sharedMesh.bounds.extents.y, 
+                meshFilter.sharedMesh.bounds.extents.z
+            );
         }
     }
 }
