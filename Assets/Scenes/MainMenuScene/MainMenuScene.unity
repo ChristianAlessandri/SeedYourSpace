@@ -2680,6 +2680,7 @@ MonoBehaviour:
   ringMaterial: {fileID: 0}
   asteroidPrefab: {fileID: 0}
   baseSkyboxMaterial: {fileID: 2100000, guid: 97ba7ef56e212f349b8353c6c25b98b1, type: 2}
+  volumetricNebulaMaterial: {fileID: 0}
   starSizeMultiplier: 100
   planetSizeMultiplier: 1
   planetDistanceMultiplier: 200
