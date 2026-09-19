@@ -4,6 +4,7 @@ using TMPro;
 using System;
 using Nethereum.Web3;
 using Nethereum.Web3.Accounts;
+using TMPro;
 
 public class Web3AuthManager : MonoBehaviour
 {
@@ -31,6 +32,8 @@ public class Web3AuthManager : MonoBehaviour
         cardsPanel.SetActive(true);
         loginModalPanel.SetActive(false);
         web3HubPanel.SetActive(false);
+
+        privateKeyInput.contentType = TMP_InputField.ContentType.Password;
 
         // Assign button listeners
         cardConnectButton.onClick.AddListener(ShowLoginModal);
@@ -78,6 +81,7 @@ public class Web3AuthManager : MonoBehaviour
             // Success: Transition to the Web3 Hub
             loginModalPanel.SetActive(false);
             web3HubPanel.SetActive(true);
+            FindFirstObjectByType<Web3InventoryManager>().LoadUserInventory();
         }
         catch (Exception e)
         {

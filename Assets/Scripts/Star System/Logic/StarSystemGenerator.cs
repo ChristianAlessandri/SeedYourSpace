@@ -35,6 +35,16 @@ public class StarSystemGenerator : MonoBehaviour
 
     private void Start()
     {
+        // Check if we arrived here from the Web3 Hub
+        if (!string.IsNullOrEmpty(SystemDataBridge.TargetSeed))
+        {
+            masterSeed = SystemDataBridge.TargetSeed;
+            algorithmVersion = SystemDataBridge.TargetVersion;
+            
+            // Clear the bridge data so it doesn't affect future scene reloads
+            SystemDataBridge.TargetSeed = string.Empty;
+        }
+
         GenerateCompleteStarSystem(masterSeed);
     }
 
