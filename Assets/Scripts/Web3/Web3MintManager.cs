@@ -101,10 +101,13 @@ public class Web3MintManager : MonoBehaviour
             HexBigInteger estimatedGas = await web3.Eth.Transactions.EstimateGas.SendRequestAsync(txInput);
             HexBigInteger currentGasPrice = await web3.Eth.GasPrice.SendRequestAsync();
 
-            txInput.Gas = estimatedGas;
-            txInput.GasPrice = currentGasPrice;
+            BigInteger safeGasLimit = (estimatedGas.Value * 120) / 100;
+            BigInteger safeGasPrice = (currentGasPrice.Value * 115) / 100;
 
-            BigInteger totalGasFeeWei = estimatedGas.Value * currentGasPrice.Value;
+            txInput.Gas = new HexBigInteger(safeGasLimit);
+            txInput.GasPrice = new HexBigInteger(safeGasPrice);
+
+            BigInteger totalGasFeeWei = safeGasLimit * safeGasPrice;
             decimal totalGasFeeEth = Web3.Convert.FromWei(totalGasFeeWei);
             decimal totalCostEth = mintPriceEth + totalGasFeeEth;
 
@@ -158,10 +161,13 @@ public class Web3MintManager : MonoBehaviour
             HexBigInteger estimatedGas = await web3.Eth.Transactions.EstimateGas.SendRequestAsync(txInput);
             HexBigInteger currentGasPrice = await web3.Eth.GasPrice.SendRequestAsync();
 
-            txInput.Gas = estimatedGas;
-            txInput.GasPrice = currentGasPrice;
+            BigInteger safeGasLimit = (estimatedGas.Value * 120) / 100;
+            BigInteger safeGasPrice = (currentGasPrice.Value * 115) / 100;
 
-            BigInteger totalGasFeeWei = estimatedGas.Value * currentGasPrice.Value;
+            txInput.Gas = new HexBigInteger(safeGasLimit);
+            txInput.GasPrice = new HexBigInteger(safeGasPrice);
+
+            BigInteger totalGasFeeWei = safeGasLimit * safeGasPrice;
             decimal totalGasFeeEth = Web3.Convert.FromWei(totalGasFeeWei);
 
             feeBreakdownText.text = 
@@ -248,13 +254,28 @@ public class Web3MintManager : MonoBehaviour
             var txInput = (Nethereum.RPC.Eth.DTOs.TransactionInput)cachedTxInput;
             string txHash = await web3.Eth.TransactionManager.SendTransactionAsync(txInput);
             
-            statusText.text = "Claim successful! Refreshing inventory...";
             Debug.Log($"SYS: Claim Hash: {txHash}");
+            statusText.text = "Claim sent! Waiting for block confirmation...";
+
+            Nethereum.RPC.Eth.DTOs.TransactionReceipt receipt = null;
+            while (receipt == null)
+            {
+                await Task.Delay(3000);
+                receipt = await web3.Eth.Transactions.GetTransactionReceipt.SendRequestAsync(txHash);
+            }
+
+            statusText.text = "Claim successful! Refreshing inventory...";
 
             claimSystemButton.gameObject.SetActive(false);
             discoverNewSystemButton.interactable = true;
             
             FindFirstObjectByType<Web3InventoryManager>().LoadUserInventory();
+
+            await Task.Delay(3000);
+            if (statusText.text == "Claim successful! Refreshing inventory...")
+            {
+                statusText.text = "";
+            }
         }
         catch (System.Exception e)
         {
@@ -276,7 +297,7 @@ public class Web3MintManager : MonoBehaviour
             Nethereum.RPC.Eth.DTOs.TransactionReceipt receipt = null;
             while (receipt == null)
             {
-                await Task.Delay(3000);
+                await Task.Delay(4000);
                 receipt = await web3.Eth.Transactions.GetTransactionReceipt.SendRequestAsync(txHash);
             }
 
@@ -291,19 +312,31 @@ public class Web3MintManager : MonoBehaviour
             }
 
             activeRequestId = decodedEvents[0].Event.RequestId;
-            statusText.text = $"Link established (ID: {activeRequestId}).\nWaiting for Quantum Entropy from Chainlink...";
-
+            
             var vrfRequestsFunc = contract.GetFunction("vrfRequests");
             bool isFulfilled = false;
+            int attemptCounter = 0;
 
             while (!isFulfilled)
             {
-                await Task.Delay(4000);
-                var reqData = await vrfRequestsFunc.CallDeserializingToObjectAsync<PendingRequestDTO>(activeRequestId);
+                attemptCounter++;
+                statusText.text = $"Link established (ID: {activeRequestId}).\nWaiting for Chainlink VRF... (Check {attemptCounter})";
                 
-                if (reqData.IsFulfilled)
+                // Chainlink takes an average of 3–5 blocks (40–60 seconds).
+                // We check every 12 seconds to avoid being blocked by the RPC node.
+                await Task.Delay(12000); 
+
+                try
                 {
-                    isFulfilled = true;
+                    var reqData = await vrfRequestsFunc.CallDeserializingToObjectAsync<PendingRequestDTO>(activeRequestId);
+                    if (reqData.IsFulfilled)
+                    {
+                        isFulfilled = true;
+                    }
+                }
+                catch (System.Exception reqEx)
+                {
+                    Debug.LogWarning($"SYS RPC Polling timeout (Attempt {attemptCounter}): {reqEx.Message}");
                 }
             }
 
@@ -407,15 +440,26 @@ public class Web3MintManager : MonoBehaviour
         try
         {
             bool isFulfilled = false;
+            int attemptCounter = 0;
 
             while (!isFulfilled)
             {
-                await Task.Delay(4000);
-                var reqData = await vrfRequestsFunc.CallDeserializingToObjectAsync<PendingRequestDTO>(reqId);
+                attemptCounter++;
+                statusText.text = $"Pending request found.\nWaiting for Chainlink VRF... (Check {attemptCounter})";
                 
-                if (reqData.IsFulfilled)
+                await Task.Delay(12000);
+                
+                try 
                 {
-                    isFulfilled = true;
+                    var reqData = await vrfRequestsFunc.CallDeserializingToObjectAsync<PendingRequestDTO>(reqId);
+                    if (reqData.IsFulfilled)
+                    {
+                        isFulfilled = true;
+                    }
+                }
+                catch (System.Exception reqEx)
+                {
+                    Debug.LogWarning($"SYS RPC Polling timeout (Attempt {attemptCounter}): {reqEx.Message}");
                 }
             }
 
@@ -425,8 +469,8 @@ public class Web3MintManager : MonoBehaviour
         catch (System.Exception e)
         {
             statusText.text = "Connection lost during monitoring.";
-            Debug.LogError($"SYS Monitor Error: {e.Message}");
             discoverNewSystemButton.interactable = true;
+            Debug.LogError($"SYS Monitor Error: {e.Message}");
         }
     }
 }
