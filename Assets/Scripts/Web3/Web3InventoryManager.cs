@@ -8,11 +8,6 @@ using Nethereum.ABI.FunctionEncoding.Attributes;
 
 public class Web3InventoryManager : MonoBehaviour
 {
-    [Header("Contract Configuration")]
-    public string contractAddress = "YOUR_CONTRACT_ADDRESS_HERE";
-    [TextArea(2, 5)]
-    public string contractABI = "PASTE_YOUR_LONG_ABI_HERE";
-
     [Header("UI Spawning")]
     public GameObject cardPrefab;
     public Transform scrollViewContent;
@@ -43,7 +38,7 @@ public class Web3InventoryManager : MonoBehaviour
 
         var web3 = Web3AuthManager.Web3Instance;
         string userAddress = Web3AuthManager.CurrentAccount.Address;
-        var contract = web3.Eth.GetContract(contractABI, contractAddress);
+        var contract = web3.Eth.GetContract(Web3Config.ContractABI, Web3Config.ContractAddress);
 
         try
         {

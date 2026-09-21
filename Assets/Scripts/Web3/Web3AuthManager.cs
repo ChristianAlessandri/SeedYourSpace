@@ -4,7 +4,6 @@ using TMPro;
 using System;
 using Nethereum.Web3;
 using Nethereum.Web3.Accounts;
-using TMPro;
 
 public class Web3AuthManager : MonoBehaviour
 {
@@ -28,6 +27,8 @@ public class Web3AuthManager : MonoBehaviour
 
     private void Start()
     {
+        Web3Config.LoadConfiguration();
+
         // Initial State: Show cards, hide everything else
         cardsPanel.SetActive(true);
         loginModalPanel.SetActive(false);
