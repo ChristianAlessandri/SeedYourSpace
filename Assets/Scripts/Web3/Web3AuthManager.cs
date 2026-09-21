@@ -83,6 +83,7 @@ public class Web3AuthManager : MonoBehaviour
             loginModalPanel.SetActive(false);
             web3HubPanel.SetActive(true);
             FindFirstObjectByType<Web3InventoryManager>().LoadUserInventory();
+            FindFirstObjectByType<Web3MintManager>().CheckForPendingRequests();
         }
         catch (Exception e)
         {
