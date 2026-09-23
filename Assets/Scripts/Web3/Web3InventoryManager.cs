@@ -54,22 +54,24 @@ public class Web3InventoryManager : MonoBehaviour
                 Destroy(child.gameObject);
             }
             userInventory.Clear();
+            var previewSvgFunc = contract.GetFunction("previewSVG");
 
             for (int i = 0; i < balance; i++)
             {
                 BigInteger tokenId = await tokenOfOwnerByIndexFunc.CallAsync<BigInteger>(userAddress, i);
                 var systemData = await systemsMappingFunc.CallDeserializingToObjectAsync<SystemDataDTO>(tokenId);
 
+                string rawSvgString = await previewSvgFunc.CallAsync<string>(systemData.Seed);
+
                 userInventory.Add(new SystemNFT { TokenId = tokenId, Seed = systemData.Seed, AlgorithmVersion = systemData.AlgorithmVersion });
 
-                // Clone the Prefab and put it inside the ScrollView
                 GameObject newCard = Instantiate(cardPrefab, scrollViewContent);
-                newCard.GetComponent<InventoryUICard>().SetupCard(tokenId, systemData.Seed, systemData.AlgorithmVersion);
+                newCard.GetComponent<InventoryUICard>().SetupCard(tokenId, systemData.Seed, systemData.AlgorithmVersion, rawSvgString);
             }
         }
         catch (System.Exception e)
         {
-            Debug.LogError($"SYS: Failed to load inventory: {e.Message}");
+            Debug.LogError($"Error: Failed to load inventory: {e.Message}");
         }
     }
 }

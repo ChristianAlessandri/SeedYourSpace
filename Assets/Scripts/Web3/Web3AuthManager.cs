@@ -79,8 +79,6 @@ public class Web3AuthManager : MonoBehaviour
             var balanceWei = await Web3Instance.Eth.GetBalance.SendRequestAsync(CurrentAccount.Address);
             var balanceEth = Web3.Convert.FromWei(balanceWei.Value);
             
-            Debug.Log($"Connected! Address: {CurrentAccount.Address} | Balance: {balanceEth} ETH");
-            
             if (walletAddressText != null) 
                 walletAddressText.text = FormatAddress(CurrentAccount.Address);
             

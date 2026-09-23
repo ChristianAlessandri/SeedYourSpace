@@ -19,7 +19,7 @@ public static class Web3Config
         }
         else
         {
-            Debug.LogError("SYS: smart_contract_address.txt not found in Resources!");
+            Debug.LogError("Error: smart_contract_address.txt not found in Resources!");
         }
 
         if (abiFile != null)
@@ -28,7 +28,7 @@ public static class Web3Config
         }
         else
         {
-            Debug.LogError("SYS: smart_contract_abi.json not found in Resources!");
+            Debug.LogError("Error: smart_contract_abi.json not found in Resources!");
         }
 
         IsLoaded = true;
