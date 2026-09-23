@@ -13,6 +13,7 @@ public class Web3AuthManager : MonoBehaviour
     public GameObject web3HubPanel;     
 
     [Header("UI Elements")]
+    public Button backButton;      
     public Button cardConnectButton;      
     public TMP_InputField privateKeyInput;
     public Button executeLoginButton;     
@@ -42,8 +43,17 @@ public class Web3AuthManager : MonoBehaviour
         loginModalPanel.SetActive(false);
         web3HubPanel.SetActive(false);
 
+        backButton.onClick.AddListener(GoBack);
         cardConnectButton.onClick.AddListener(ShowLoginModal);
         executeLoginButton.onClick.AddListener(AttemptConnection);
+
+        privateKeyInput.contentType = TMP_InputField.ContentType.Password;
+    }
+
+    private void GoBack()
+    {
+        cardsPanel.SetActive(true);
+        loginModalPanel.SetActive(false);
     }
 
     private void ShowLoginModal()
@@ -70,7 +80,6 @@ public class Web3AuthManager : MonoBehaviour
 
         try
         {
-            executeLoginButton.interactable = false;
             feedbackText.text = "Connecting to Sepolia Network...";
 
             CurrentAccount = new Account(pKey, SEPOLIA_CHAIN_ID);
@@ -88,6 +97,8 @@ public class Web3AuthManager : MonoBehaviour
             loginModalPanel.SetActive(false);
             web3HubPanel.SetActive(true);
 
+            privateKeyInput.text = "";
+
             FindFirstObjectByType<Web3InventoryManager>().LoadUserInventory();
             FindFirstObjectByType<Web3MintManager>().CheckForPendingRequests();
         }
@@ -95,7 +106,6 @@ public class Web3AuthManager : MonoBehaviour
         {
             feedbackText.text = "Connection failed. Check your key or internet connection.";
             Debug.LogError($"Web3 Initialization Error: {e.Message}");
-            executeLoginButton.interactable = true;
         }
     }
 

@@ -15,6 +15,7 @@ public class LocalExplorationManager : MonoBehaviour
     [Header("UI Elements")]
     public Button continueButton;
     public TMP_InputField seedInputField;
+    public Button backButton;
     public Button diceButton;
     public Button finalExploreButton;
 
@@ -23,9 +24,16 @@ public class LocalExplorationManager : MonoBehaviour
         cardsPanel.SetActive(true);
         seedInputPanel.SetActive(false);
 
+        backButton.onClick.AddListener(GoBack);
         continueButton.onClick.AddListener(ShowInputPanel);
         diceButton.onClick.AddListener(RandomizeSeedInput);
         finalExploreButton.onClick.AddListener(LaunchExploration);
+    }
+
+    private void GoBack()
+    {
+        cardsPanel.SetActive(true);
+        seedInputPanel.SetActive(false);
     }
 
     private void ShowInputPanel()

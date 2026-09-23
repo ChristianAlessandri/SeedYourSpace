@@ -12,8 +12,12 @@ public class Web3MintManager : MonoBehaviour
 {
     private readonly decimal mintPriceEth = 0.001m;
 
+    [Header("UI Elements")]
+    public GameObject web3LoginPanel;
+
     [Header("Hub Interface")]
     public GameObject web3HubPanel;
+    public Button backButton;
     public Button discoverNewSystemButton;
     public Button claimSystemButton;
     public TextMeshProUGUI statusText; 
@@ -23,6 +27,11 @@ public class Web3MintManager : MonoBehaviour
     public TextMeshProUGUI feeBreakdownText;
     public Button confirmTransactionButton;
     public Button cancelTransactionButton;
+
+    [Header("Status UI (Chip & Knob)")]
+    public TextMeshProUGUI walletAddressText;
+    public Image connectionKnobImage;
+    public Color disconnectedColor = new Color(0.86f, 0.15f, 0.15f);
 
     private object cachedTxInput; 
     private BigInteger activeRequestId;
@@ -66,8 +75,17 @@ public class Web3MintManager : MonoBehaviour
         discoverNewSystemButton.onClick.AddListener(PrepareMintTransaction);
         claimSystemButton.onClick.AddListener(PrepareClaimTransaction);
         
+        backButton.onClick.AddListener(GoBack);
         confirmTransactionButton.onClick.AddListener(ExecutePendingTransaction);
         cancelTransactionButton.onClick.AddListener(CancelTransaction);
+    }
+
+    private void GoBack()
+    {
+        web3HubPanel.SetActive(false);
+        web3LoginPanel.SetActive(true);
+        if (walletAddressText != null) walletAddressText.text = "Disconnected";
+        if (connectionKnobImage != null) connectionKnobImage.color = disconnectedColor;
     }
 
     // --- PHASE 1: MINTING ---
