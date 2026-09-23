@@ -20,7 +20,7 @@
 
 ## 🔭 Overview
 
-**SYS** is a procedural space diorama builder and astrophysics engine forged in Unity 6 using the Universal Render Pipeline (URP). It transmutes deterministic seeds into fully realized, visually breathtaking 3D star systems. The engine dynamically orchestrates central stars, planets, moons, and asteroid belts, driven by a rigorous framework of astrophysical rules and stochastic mathematics.
+**SYS** is a procedural space diorama builder and astrophysics engine forged in Unity 6 using the Universal Render Pipeline (URP). It transmutes deterministic seeds into fully realized, visually 3D star systems. The engine dynamically orchestrates central stars, planets, moons, and asteroid belts, driven by a rigorous framework of astrophysical rules and stochastic mathematics.
 
 Designed to seamlessly blend high visual fidelity with blockchain technology, the architecture guarantees that a single master seed will consistently generate the exact same cosmic layout, ensuring absolute backward compatibility across different generation algorithm versions.
 
@@ -45,25 +45,27 @@ Designed to seamlessly blend high visual fidelity with blockchain technology, th
 
 - **Cinematic Mode 🎥:** Hides the UI and engages a smooth, automated camera orbit around selected celestial bodies for a breathtaking showcase.
 - **Orrery Mode 🧭:** Projects navigational orbital lines and rotational axes directly into the 3D space to visualize the system's mechanics.
-- **Arcade Mode 🚀:** Populates the system with procedural spaceships actively shuttling between planets. _(Huge thanks to [Kenney](https://kenney.nl/) for the amazing Space Kit assets used here!)_
+- **Arcade Mode 🚀:** Populates the system with procedural spaceships actively shuttling between planets. _(Thanks to [Kenney](https://kenney.nl/) for the Space Kit assets used here!)_
 - **Temporal Control ⏳:** Granular time manipulation allows users to freeze the simulation entirely or accelerate cosmic time up to 100x.
 - **Planetary Atlas & UI 🗺️:** Interacting with any celestial body reveals detailed astrophysical data and unfolds an interactive 2D atlas map, directly mirroring the 3D procedural mesh.
 - **Retro Pixel Filter 👾:** A custom URP Scriptable Render Feature that applies a scalable pixelation effect (up to 10x intensity) for a nostalgic, low-res aesthetic.
-
-### 🛠 Architecture & Tooling
-
-- **Factory Pattern:** Clean, modular instantiation of `AstrophysicsRules` and generators to support multiple concurrent algorithm versions.
-- **Dynamic Multipliers:** The `VisualDioramaBuilder` effortlessly translates astronomical scales into readable, aesthetically pleasing 3D environments with real-time scaling controls.
 
 ## 🔗 Web3 & Blockchain Integration
 
 SYS is engineered to operate seamlessly with the Ethereum blockchain, currently deployed on the **Sepolia Testnet**. The architecture fiercely embraces the philosophy of "minimal on-chain data, maximal off-chain fidelity."
 
-- **Minting & Chainlink VRF:** Users interact with the smart contract to mint a new star system NFT. Upon transaction, the contract queries **Chainlink VRF** for a verifiably random seed.
-- **Ultra-Lightweight On-Chain Storage:** The resulting NFT is highly optimized. Its on-chain metadata stores only two critical pieces of information:
-  1. The randomly generated `masterSeed` (string).
-  2. The `algorithmVersion` (integer) active at the time of creation.
-- **Deterministic Off-Chain Reconstruction:** When a player views or owns the NFT, the Unity client reads the seed and algorithm version. Because the SYS engine is strictly deterministic, it mathematically reconstructs the exact same planetary system, atmospheric compositions, and orbital layouts every single time—bypassing the need for centralized servers or bloated metadata files.
+### 📝 Smart Contract Architecture
+
+The custom ERC-721 enumerable smart contract (`SeedYourSpace.sol`) orchestrates a secure, asynchronous **Request-Fulfill-Claim** pipeline to guarantee true on-chain randomness while protecting users from transaction reverts.
+
+- **Request:** Users initiate minting by covering a fixed ETH fee, which locks their address in an active mapping to prevent queue saturation.
+- **Fulfill (Chainlink VRF v2.5):** The oracle securely returns quantum-derived entropy. The contract caches the raw seed deterministically.
+- **Claim:** The user triggers a gas-only transaction to safely mint the NFT containing the verified seed and the active `algorithmVersion` snapshot.
+
+### 🎨 100% On-Chain Generative SVG Art
+
+To ensure permanence without relying on external IFPS gateways, the contract acts as a generative artist. It mathematically hashes the Chainlink seed to deterministically select a color palette and render a clean, 5x5 pixel-art SVG preview of the solar system directly into the `tokenURI`.
+Unity dynamically queries this SVG off-chain, parses the color data, and reconstructs the pixel-art asset natively in the C# UI inventory.
 
 ## 📦 Prerequisites & Dependencies
 
@@ -82,5 +84,7 @@ The project is built on **Unity 6000.3.22f1** and utilizes the following major p
 
 ## 📄 License
 
-This project is licensed under the **GNU Affero General Public License v3.0 (AGPL-3.0)**.
+The Unity Engine Application and C# source code is licensed under the **GNU Affero General Public License v3.0 (AGPL-3.0)**.
+The Solidity Smart Contract (`SeedYourSpace.sol`) is released under the **MIT License**.
+
 See the [LICENSE](LICENSE) file for more details.
