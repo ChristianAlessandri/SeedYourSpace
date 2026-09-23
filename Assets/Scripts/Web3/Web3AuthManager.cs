@@ -8,15 +8,21 @@ using Nethereum.Web3.Accounts;
 public class Web3AuthManager : MonoBehaviour
 {
     [Header("UI Panels (The 3 States)")]
-    public GameObject cardsPanel;
-    public GameObject loginModalPanel;
-    public GameObject web3HubPanel;
+    public GameObject cardsPanel;       
+    public GameObject loginModalPanel;  
+    public GameObject web3HubPanel;     
 
     [Header("UI Elements")]
-    public Button cardConnectButton;
+    public Button cardConnectButton;      
     public TMP_InputField privateKeyInput;
-    public Button executeLoginButton;
+    public Button executeLoginButton;     
     public TextMeshProUGUI feedbackText;
+
+    [Header("Status UI (Chip & Knob)")]
+    public TextMeshProUGUI walletAddressText;
+    public Image connectionKnobImage;
+    public Color connectedColor = new Color(0.02f, 0.59f, 0.41f);
+    public Color disconnectedColor = new Color(0.86f, 0.15f, 0.15f);
 
     [Header("Web3 Configuration")]
     private const string SEPOLIA_RPC_URL = "https://ethereum-sepolia-rpc.publicnode.com"; 
@@ -27,26 +33,24 @@ public class Web3AuthManager : MonoBehaviour
 
     private void Start()
     {
+        if (walletAddressText != null) walletAddressText.text = "Disconnected";
+        if (connectionKnobImage != null) connectionKnobImage.color = disconnectedColor;
+
         Web3Config.LoadConfiguration();
 
-        // Initial State: Show cards, hide everything else
         cardsPanel.SetActive(true);
         loginModalPanel.SetActive(false);
         web3HubPanel.SetActive(false);
 
-        privateKeyInput.contentType = TMP_InputField.ContentType.Password;
-
-        // Assign button listeners
         cardConnectButton.onClick.AddListener(ShowLoginModal);
         executeLoginButton.onClick.AddListener(AttemptConnection);
     }
 
     private void ShowLoginModal()
     {
-        // Transition: Hide cards, show the login modal
         cardsPanel.SetActive(false);
         loginModalPanel.SetActive(true);
-        feedbackText.text = ""; // Clear any previous messages
+        feedbackText.text = ""; 
     }
 
     private async void AttemptConnection()
@@ -69,19 +73,23 @@ public class Web3AuthManager : MonoBehaviour
             executeLoginButton.interactable = false;
             feedbackText.text = "Connecting to Sepolia Network...";
 
-            // Initialize Nethereum
             CurrentAccount = new Account(pKey, SEPOLIA_CHAIN_ID);
             Web3Instance = new Web3(CurrentAccount, SEPOLIA_RPC_URL);
 
-            // Network Test
             var balanceWei = await Web3Instance.Eth.GetBalance.SendRequestAsync(CurrentAccount.Address);
             var balanceEth = Web3.Convert.FromWei(balanceWei.Value);
             
             Debug.Log($"Connected! Address: {CurrentAccount.Address} | Balance: {balanceEth} ETH");
             
-            // Success: Transition to the Web3 Hub
+            if (walletAddressText != null) 
+                walletAddressText.text = FormatAddress(CurrentAccount.Address);
+            
+            if (connectionKnobImage != null) 
+                connectionKnobImage.color = connectedColor;
+
             loginModalPanel.SetActive(false);
             web3HubPanel.SetActive(true);
+
             FindFirstObjectByType<Web3InventoryManager>().LoadUserInventory();
             FindFirstObjectByType<Web3MintManager>().CheckForPendingRequests();
         }
@@ -91,5 +99,12 @@ public class Web3AuthManager : MonoBehaviour
             Debug.LogError($"Web3 Initialization Error: {e.Message}");
             executeLoginButton.interactable = true;
         }
+    }
+
+    private string FormatAddress(string address)
+    {
+        if (string.IsNullOrEmpty(address) || address.Length < 10) return address;
+        
+        return $"{address.Substring(0, 6)}...{address.Substring(address.Length - 4)}";
     }
 }
