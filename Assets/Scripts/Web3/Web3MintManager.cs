@@ -33,13 +33,17 @@ public class Web3MintManager : MonoBehaviour
     public Image connectionKnobImage;
     public Color disconnectedColor = new Color(0.86f, 0.15f, 0.15f);
 
+    // Stores the transaction input payload temporarily before execution.
+    // Crucial for the two-step confirmation flow where estimation and execution are separated.
     private object cachedTxInput; 
     private BigInteger activeRequestId;
 
+    // Tracks whether the user is confirming a Mint or a Claim operation in the shared modal.
     private enum TransactionType { None, Mint, Claim }
     private TransactionType pendingAction = TransactionType.None;
 
     // --- DATA TRANSFER OBJECTS (DTOs) ---
+    // These DTOs define the structure for Nethereum to deserialize raw blockchain data (events and structs) into C# objects.
 
     [Event("SystemRequested")]
     public class SystemRequestedEventDTO : IEventDTO
@@ -88,8 +92,10 @@ public class Web3MintManager : MonoBehaviour
         if (connectionKnobImage != null) connectionKnobImage.color = disconnectedColor;
     }
 
-    // --- PHASE 1: MINTING ---
+    // --- MINTING PHASE ---
 
+    /// Constructs the raw minting transaction payload, requests gas estimation from the RPC node,
+    /// applies safety buffers, and presents the cost breakdown to the user via the confirmation modal.
     private async void PrepareMintTransaction()
     {
         if (Web3AuthManager.Web3Instance == null || !Web3Config.IsLoaded) return;
@@ -106,6 +112,8 @@ public class Web3MintManager : MonoBehaviour
         try
         {
             BigInteger valueInWei = Web3.Convert.ToWei(mintPriceEth);
+            
+            // Extract ABI-encoded function data directly to bypass Nethereum's ambiguous overloaded methods
             string txData = requestFunction.GetData();
 
             var txInput = new Nethereum.RPC.Eth.DTOs.TransactionInput()
@@ -119,9 +127,12 @@ public class Web3MintManager : MonoBehaviour
             HexBigInteger estimatedGas = await web3.Eth.Transactions.EstimateGas.SendRequestAsync(txInput);
             HexBigInteger currentGasPrice = await web3.Eth.GasPrice.SendRequestAsync();
 
+            // Apply a 20% buffer to the gas limit to prevent "Out of Gas" reverts during contract execution
             BigInteger safeGasLimit = (estimatedGas.Value * 120) / 100;
+            // Apply a 15% buffer to the gas price to ensure priority inclusion by miners and avoid mempool stagnation
             BigInteger safeGasPrice = (currentGasPrice.Value * 115) / 100;
 
+            // Inject the buffered values back into the payload before caching
             txInput.Gas = new HexBigInteger(safeGasLimit);
             txInput.GasPrice = new HexBigInteger(safeGasPrice);
 
@@ -150,8 +161,10 @@ public class Web3MintManager : MonoBehaviour
         }
     }
 
-    // --- PHASE 2: CLAIMING ---
+    // --- CLAIMING PHASE ---
 
+    /// Constructs the transaction payload to claim the generated NFT, estimates the required gas (0 ETH value),
+    /// applies safety buffers, and routes the user to the confirmation modal.
     private async void PrepareClaimTransaction()
     {
         if (Web3AuthManager.Web3Instance == null || !Web3Config.IsLoaded) return;
@@ -211,10 +224,11 @@ public class Web3MintManager : MonoBehaviour
 
     // --- TRANSACTION ROUTER ---
 
+    /// Routes the execution path based on the cached action type when the user confirms the transaction in the modal.
     private void ExecutePendingTransaction()
     {
         confirmationModal.SetActive(false);
-        web3HubPanel.SetActive(true); // Return to hub to see status
+        web3HubPanel.SetActive(true); 
 
         if (pendingAction == TransactionType.Mint)
         {
@@ -241,6 +255,7 @@ public class Web3MintManager : MonoBehaviour
 
     // --- EXECUTION & TRACKING ---
 
+    /// Broadcasts the signed mint transaction to the network and begins the asynchronous polling process.
     private async void ExecuteMintTransaction()
     {
         statusText.text = "Sending Request to Sepolia...";
@@ -262,6 +277,7 @@ public class Web3MintManager : MonoBehaviour
         }
     }
 
+    /// Broadcasts the final claim transaction and waits for network confirmation before updating the UI inventory.
     private async void ExecuteFinalClaimTransaction()
     {
         statusText.text = "Materializing System (Claiming NFT)...";
@@ -275,6 +291,7 @@ public class Web3MintManager : MonoBehaviour
             Debug.Log($"SYS: Claim Hash: {txHash}");
             statusText.text = "Claim sent! Waiting for block confirmation...";
 
+            // Poll the RPC node until the transaction receipt is available, indicating the block is mined
             Nethereum.RPC.Eth.DTOs.TransactionReceipt receipt = null;
             while (receipt == null)
             {
@@ -303,6 +320,9 @@ public class Web3MintManager : MonoBehaviour
         }
     }
 
+    /// Orchestrates the two-part asynchronous monitoring:
+    /// 1. Waits for the local mint transaction to be mined to extract the Request ID.
+    /// 2. Polls the smart contract to check if Chainlink VRF has fulfilled the randomness request.
     private async void MonitorMintingProcess(string txHash)
     {
         var web3 = Web3AuthManager.Web3Instance;
@@ -312,6 +332,7 @@ public class Web3MintManager : MonoBehaviour
 
         try
         {
+            // Await transaction mining
             Nethereum.RPC.Eth.DTOs.TransactionReceipt receipt = null;
             while (receipt == null)
             {
@@ -319,6 +340,7 @@ public class Web3MintManager : MonoBehaviour
                 receipt = await web3.Eth.Transactions.GetTransactionReceipt.SendRequestAsync(txHash);
             }
 
+            // Decode the logs to extract the unique requestId assigned by Chainlink Coordinator
             var eventHandler = web3.Eth.GetEvent<SystemRequestedEventDTO>(Web3Config.ContractAddress);
             var decodedEvents = eventHandler.DecodeAllEventsForEvent(receipt.Logs);
 
@@ -335,17 +357,18 @@ public class Web3MintManager : MonoBehaviour
             bool isFulfilled = false;
             int attemptCounter = 0;
 
+            // Await Chainlink fulfillment
             while (!isFulfilled)
             {
                 attemptCounter++;
                 statusText.text = $"Link established (ID: {activeRequestId}).\nWaiting for Chainlink VRF... (Check {attemptCounter})";
                 
-                // Chainlink takes an average of 3–5 blocks (40–60 seconds).
-                // We check every 12 seconds to avoid being blocked by the RPC node.
+                // Polling interval set to 12s to prevent RPC node rate-limiting and false-cached responses
                 await Task.Delay(12000); 
 
                 try
                 {
+                    // Check the contract state directly
                     var reqData = await vrfRequestsFunc.CallDeserializingToObjectAsync<PendingRequestDTO>(activeRequestId);
                     if (reqData.IsFulfilled)
                     {
@@ -371,6 +394,8 @@ public class Web3MintManager : MonoBehaviour
 
     // --- RECOVERY SYSTEM (EDGE CASES) ---
 
+    /// Scans the blockchain logs upon login to detect if the user has an unresolved mint request
+    /// (e.g., they closed the app before claiming). Resumes the process gracefully if found.
     public async void CheckForPendingRequests()
     {
         if (Web3AuthManager.Web3Instance == null || !Web3Config.IsLoaded) return;
@@ -384,15 +409,13 @@ public class Web3MintManager : MonoBehaviour
             statusText.text = "Checking blockchain for pending systems...";
             discoverNewSystemButton.interactable = false;
 
-            // Get the current block number to avoid RPC limits
             var currentBlock = await web3.Eth.Blocks.GetBlockNumber.SendRequestAsync();
             
-            // Look back 40,000 blocks (roughly 5-6 days on Sepolia) to stay under the 50k limit
+            // Constrain the historical search to 40,000 blocks to comply with public RPC node limits
             BigInteger fromBlockValue = currentBlock.Value - 40000;
             if (fromBlockValue < 0) fromBlockValue = 0;
             var fromBlock = new Nethereum.Hex.HexTypes.HexBigInteger(fromBlockValue);
 
-            // Fetch historical SystemRequested events within the safe range
             var eventHandler = web3.Eth.GetEvent<SystemRequestedEventDTO>(Web3Config.ContractAddress);
             var filter = eventHandler.CreateFilterInput(
                 new Nethereum.RPC.Eth.DTOs.BlockParameter(fromBlock), 
@@ -402,7 +425,6 @@ public class Web3MintManager : MonoBehaviour
             var events = await eventHandler.GetAllChangesAsync(filter);
             BigInteger? lastFoundRequestId = null;
 
-            // Find the most recent request for this specific user
             foreach (var ev in events)
             {
                 if (ev.Event.Requester.ToLower() == userAddress.ToLower())
@@ -413,11 +435,10 @@ public class Web3MintManager : MonoBehaviour
 
             if (lastFoundRequestId.HasValue)
             {
-                // Check the current status of this request in the contract
                 var vrfRequestsFunc = contract.GetFunction("vrfRequests");
                 var reqData = await vrfRequestsFunc.CallDeserializingToObjectAsync<PendingRequestDTO>(lastFoundRequestId.Value);
 
-                // If Minter is not empty (0x0...), the request is still active and unclaimed
+                // Verify the request has not already been processed (minter address is not null)
                 if (!string.IsNullOrEmpty(reqData.Minter) && reqData.Minter != "0x0000000000000000000000000000000000000000")
                 {
                     activeRequestId = lastFoundRequestId.Value;
@@ -432,23 +453,22 @@ public class Web3MintManager : MonoBehaviour
                         statusText.text = "Pending request found. Waiting for Oracle...";
                         MonitorExistingRequest(activeRequestId); 
                     }
-                    return; // Exit here, we successfully recovered the state
+                    return; 
                 }
             }
 
-            // No pending requests found
             statusText.text = "Ready to discover.";
             discoverNewSystemButton.interactable = true;
         }
         catch (System.Exception e)
         {
-            // If the RPC fails the history check, we fallback to ready state
             statusText.text = "Ready to discover.";
             Debug.LogError($"SYS Pending Check Error: {e.Message}");
             discoverNewSystemButton.interactable = true;
         }
     }
 
+    /// Resumes the Chainlink polling loop for an existing unresolved request discovered during login.
     private async void MonitorExistingRequest(BigInteger reqId)
     {
         var web3 = Web3AuthManager.Web3Instance;
