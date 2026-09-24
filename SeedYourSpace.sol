@@ -138,7 +138,7 @@ contract SeedYourSpace is ERC721Enumerable, VRFConsumerBaseV2Plus {
     }
 
     /**
-     * @notice Step 3: User claims the NFT safely. Uses _safeMint securely.
+     * @notice Step 3: User claims the NFT safely.
      */
     function claimSystem(uint256 requestId) external {
         PendingRequest memory req = vrfRequests[requestId];
@@ -155,7 +155,7 @@ contract SeedYourSpace is ERC721Enumerable, VRFConsumerBaseV2Plus {
             algorithmVersion: req.algorithmVersionSnapshot
         });
 
-        // State cleanup before external call (Checks-Effects-Interactions pattern)
+        // State cleanup before external call
         delete vrfRequests[requestId];
         pendingRequestsByUser[msg.sender]--;
         activeGlobalRequests--;
