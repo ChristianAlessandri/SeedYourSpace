@@ -1,25 +1,21 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.34;
 
-// OpenZeppelin Imports (v5)
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {ERC721Enumerable} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {Base64} from "@openzeppelin/contracts/utils/Base64.sol";
-
-// Chainlink VRF v2.5 Imports
 import {VRFConsumerBaseV2Plus} from "@chainlink/contracts/src/v0.8/vrf/dev/VRFConsumerBaseV2Plus.sol";
 import {VRFV2PlusClient} from "@chainlink/contracts/src/v0.8/vrf/dev/libraries/VRFV2PlusClient.sol";
 
 /**
  * @title SeedYourSpace
  * @dev Procedural Solar System NFT generator using Chainlink VRF.
- * Implements a highly secure asynchronous Request-Fulfill-Claim pattern.
  */
 contract SeedYourSpace is ERC721Enumerable, VRFConsumerBaseV2Plus {
     using Strings for uint256;
 
-    // --- CUSTOM ERRORS (Gas Optimization) ---
+    // Custom errors
     error ExactMintPriceRequired(uint256 sent, uint256 required);
     error TooManyGlobalPendingRequests();
     error UserAlreadyHasPendingRequest();
@@ -29,15 +25,15 @@ contract SeedYourSpace is ERC721Enumerable, VRFConsumerBaseV2Plus {
     error NoBalanceToWithdraw();
     error WithdrawalFailed();
 
-    // --- STRUCTS & MAPPINGS ---
     struct SystemData {
         uint256 seed;
         uint256 algorithmVersion;
     }
 
-    // Unified struct to snapshot data and track fulfillment state
     struct PendingRequest {
         address minter;
+        // Snapshots the algorithm version at the exact time of request. 
+        // This guarantees backward compatibility if the admin updates the engine version while VRF is pending.
         uint256 algorithmVersionSnapshot;
         uint256 generatedSeed;
         bool isFulfilled;
@@ -46,10 +42,9 @@ contract SeedYourSpace is ERC721Enumerable, VRFConsumerBaseV2Plus {
     mapping(uint256 => SystemData) public systems;
     mapping(uint256 => PendingRequest) public vrfRequests;
     
-    // Per-user limit mapping to prevent Sybil DoS
+    // Sybil resistance mechanism: prevents a single malicious user from flooding the Chainlink VRF queue.
     mapping(address => uint256) public pendingRequestsByUser;
 
-    // --- STATE VARIABLES ---
     uint256 public nextTokenId = 1;
     uint256 public algorithmVersion = 1;
     uint256 public mintPrice = 0.001 ether; 
@@ -58,14 +53,12 @@ contract SeedYourSpace is ERC721Enumerable, VRFConsumerBaseV2Plus {
     uint256 public maxPendingRequests = 100;
     uint256 public constant MAX_PENDING_PER_USER = 1;
 
-    // --- CHAINLINK VRF VARIABLES ---
     uint256 public s_subscriptionId;
     bytes32 public constant SEPOLIA_KEY_HASH = 0x787d74caea10b2b357790d5b5247c2f63d1d91572a9846f780606e4d953677ae; 
     uint32 public callbackGasLimit = 400000; 
     uint16 public constant REQUEST_CONFIRMATIONS = 3;
     uint32 public constant NUM_WORDS = 1;
 
-    // --- EVENTS ---
     event SystemRequested(uint256 indexed requestId, address indexed requester, uint256 algorithmVersion);
     event RandomnessArrived(uint256 indexed requestId, uint256 seed);
     event SystemClaimed(uint256 indexed requestId, uint256 indexed tokenId, address indexed owner, uint256 seed);
@@ -74,10 +67,6 @@ contract SeedYourSpace is ERC721Enumerable, VRFConsumerBaseV2Plus {
     event AlgorithmVersionUpdated(uint256 oldVersion, uint256 newVersion);
     event MaxPendingRequestsUpdated(uint256 oldMax, uint256 newMax);
 
-    /**
-     * @dev Constructor
-     * @param _subscriptionId The Chainlink VRF v2.5 subscription ID
-     */
     constructor(uint256 _subscriptionId) 
         ERC721("Seed Your Space", "SYS")
         VRFConsumerBaseV2Plus(0x9DdfaCa8183c41ad55329BdeeD9F6A8d53168B1B) 
@@ -87,9 +76,6 @@ contract SeedYourSpace is ERC721Enumerable, VRFConsumerBaseV2Plus {
 
     // --- CORE LOGIC (REQUEST -> FULFILL -> CLAIM) ---
 
-    /**
-     * @notice Step 1: User requests randomness. 
-     */
     function requestSystemMint() external payable returns (uint256 requestId) {
         if (msg.value != mintPrice) revert ExactMintPriceRequired(msg.value, mintPrice);
         if (activeGlobalRequests >= maxPendingRequests) revert TooManyGlobalPendingRequests();
@@ -102,13 +88,13 @@ contract SeedYourSpace is ERC721Enumerable, VRFConsumerBaseV2Plus {
                 requestConfirmations: REQUEST_CONFIRMATIONS,
                 callbackGasLimit: callbackGasLimit,
                 numWords: NUM_WORDS,
+                // nativePayment set to false implies VRF fees are paid in LINK tokens, not SepoliaETH.
                 extraArgs: VRFV2PlusClient._argsToBytes(
                     VRFV2PlusClient.ExtraArgsV1({nativePayment: false})
                 )
             })
         );
 
-        // Snapshot state to guarantee determinism
         vrfRequests[requestId] = PendingRequest({
             minter: msg.sender,
             algorithmVersionSnapshot: algorithmVersion,
@@ -122,24 +108,21 @@ contract SeedYourSpace is ERC721Enumerable, VRFConsumerBaseV2Plus {
         emit SystemRequested(requestId, msg.sender, algorithmVersion);
     }
 
-    /**
-     * @notice Step 2: Chainlink securely returns the seed. We ONLY store it to prevent callback reverts.
-     */
     function fulfillRandomWords(uint256 requestId, uint256[] calldata randomWords) internal override {
         PendingRequest storage req = vrfRequests[requestId];
         
-        // If request is invalid, silently return to not revert Chainlink's callback
+        // Silent return on invalid requests protects the Chainlink node from gas reverts.
         if (req.minter == address(0)) return;
 
+        // We ONLY store the seed here. We NEVER execute _safeMint in this callback. 
+        // If minting logic were to fail (e.g., receiver contract rejection), the VRF callback would revert, 
+        // permanently locking the user's funds and request slot.
         req.generatedSeed = randomWords[0];
         req.isFulfilled = true;
 
         emit RandomnessArrived(requestId, randomWords[0]);
     }
 
-    /**
-     * @notice Step 3: User claims the NFT safely.
-     */
     function claimSystem(uint256 requestId) external {
         PendingRequest memory req = vrfRequests[requestId];
         
@@ -155,7 +138,8 @@ contract SeedYourSpace is ERC721Enumerable, VRFConsumerBaseV2Plus {
             algorithmVersion: req.algorithmVersionSnapshot
         });
 
-        // State cleanup before external call
+        // State is cleared BEFORE the external _safeMint call to mitigate
+        // any potential reentrancy attacks from malicious receiver contracts.
         delete vrfRequests[requestId];
         pendingRequestsByUser[msg.sender]--;
         activeGlobalRequests--;
@@ -168,12 +152,13 @@ contract SeedYourSpace is ERC721Enumerable, VRFConsumerBaseV2Plus {
     // --- ON-CHAIN SVG GENERATION ---
 
     function _generateColor(uint256 _seed, uint256 _shift) internal pure returns (string memory) {
+        // Extracts a 24-bit color from a specific byte offset of the seed using bitshifting.
         uint24 colorNumber = uint24((_seed >> _shift) & 0xFFFFFF);
         string memory hexString = Strings.toHexString(uint256(colorNumber), 3);
         
         bytes memory hexBytes = bytes(hexString);
         bytes memory colorBytes = new bytes(7);
-        colorBytes[0] = 0x23; 
+        colorBytes[0] = 0x23; // ASCII for '#'
         for (uint i = 0; i < 6; i++) {
             colorBytes[i + 1] = hexBytes[i + 2];
         }
@@ -181,12 +166,9 @@ contract SeedYourSpace is ERC721Enumerable, VRFConsumerBaseV2Plus {
         return string(colorBytes);
     }
 
-    /**
-     * @dev Generates a 5x5 pixel-art style grid. 
-     * Hashes the VRF seed to decorrelate the visual output, 
-     * then deterministically derives palette colors and grid cells.
-     */
     function _generateSVG(uint256 _seed) internal pure returns (string memory) {
+        // We hash the raw VRF seed with keccak256 to 'stretch' the entropy. 
+        // This decorrelates the bytes, preventing noticeable visual repeating patterns across the 25 grid cells.
         uint256 fullSeed = uint256(keccak256(abi.encodePacked(_seed)));
 
         string[4] memory palette = [
@@ -232,6 +214,7 @@ contract SeedYourSpace is ERC721Enumerable, VRFConsumerBaseV2Plus {
         SystemData memory data = systems[tokenId];
         string memory svg = _generateSVG(data.seed);
 
+        // Base64 encoding transforms the SVG markup into a data URI that browsers and wallets can render directly.
         string memory base64Svg = string(
             abi.encodePacked(
                 "data:image/svg+xml;base64,",
@@ -239,6 +222,7 @@ contract SeedYourSpace is ERC721Enumerable, VRFConsumerBaseV2Plus {
             )
         );
 
+        // Assembles the complete JSON metadata payload
         string memory json = string(
             abi.encodePacked(
                 '{"name": "SYStem #', tokenId.toString(), '", ',
@@ -273,8 +257,10 @@ contract SeedYourSpace is ERC721Enumerable, VRFConsumerBaseV2Plus {
         emit MintPriceUpdated(oldPrice, _newPrice);
     }
 
-    // Added to prevent global queue locking if users never claim their NFTs
     function setMaxPendingRequests(uint256 _newMax) external onlyOwner {
+        // If users request mints but abandon the claim phase, the global queue could 
+        // reach maximum capacity and permanently deadlock the application.
+        // This allows admins to expand the queue.
         uint256 oldMax = maxPendingRequests;
         maxPendingRequests = _newMax;
         emit MaxPendingRequestsUpdated(oldMax, _newMax);
