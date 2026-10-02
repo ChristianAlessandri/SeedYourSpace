@@ -33,7 +33,7 @@ public class CelestialBody : MonoBehaviour
             rotationSpeed = 360f / rotPeriodDays;
         }
 
-        currentMeanAnomaly = Random.Range(0f, Mathf.PI * 2f);
+        currentMeanAnomaly = 0;
     }
 
     private void Update()
