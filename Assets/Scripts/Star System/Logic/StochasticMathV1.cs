@@ -34,7 +34,11 @@ public class StochasticMathV1 : IStochasticMath
         using (SHA256 sha256Hash = SHA256.Create())
         {
             byte[] bytes = sha256Hash.ComputeHash(Encoding.UTF8.GetBytes(input));
-            return BitConverter.ToInt32(bytes, 0);
+
+            return bytes[0]
+                | (bytes[1] << 8)
+                | (bytes[2] << 16)
+                | (bytes[3] << 24);
         }
     }
 }
