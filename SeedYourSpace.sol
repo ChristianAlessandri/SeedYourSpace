@@ -41,8 +41,6 @@ contract SeedYourSpace is ERC721Enumerable, VRFConsumerBaseV2Plus {
 
     mapping(uint256 => SystemData) public systems;
     mapping(uint256 => PendingRequest) public vrfRequests;
-    
-    // Sybil resistance mechanism: prevents a single malicious user from flooding the Chainlink VRF queue.
     mapping(address => uint256) public pendingRequestsByUser;
 
     uint256 public nextTokenId = 1;
@@ -167,8 +165,6 @@ contract SeedYourSpace is ERC721Enumerable, VRFConsumerBaseV2Plus {
     }
 
     function _generateSVG(uint256 _seed) internal pure returns (string memory) {
-        // We hash the raw VRF seed with keccak256 to 'stretch' the entropy. 
-        // This decorrelates the bytes, preventing noticeable visual repeating patterns across the 25 grid cells.
         uint256 fullSeed = uint256(keccak256(abi.encodePacked(_seed)));
 
         string[4] memory palette = [
