@@ -291,12 +291,41 @@ public class Web3MintManager : MonoBehaviour
             Debug.Log($"SYS: Claim Hash: {txHash}");
             statusText.text = "Claim sent! Waiting for block confirmation...";
 
-            // Poll the RPC node until the transaction receipt is available, indicating the block is mined
+            // Waiting for the transaction to be mined and confirmed on-chain before proceeding.
             Nethereum.RPC.Eth.DTOs.TransactionReceipt receipt = null;
+
             while (receipt == null)
             {
                 await Task.Delay(3000);
-                receipt = await web3.Eth.Transactions.GetTransactionReceipt.SendRequestAsync(txHash);
+
+                receipt = await web3.Eth.Transactions
+                    .GetTransactionReceipt.SendRequestAsync(txHash);
+            }
+
+            // Verify the transaction status to ensure it was successful before updating the UI and inventory.
+            if (receipt.Status == null)
+            {
+                statusText.text = "Unable to verify claim transaction status.";
+                claimSystemButton.interactable = true;
+
+                Debug.LogError(
+                    $"SYS: Claim receipt has no status. TxHash: {txHash}"
+                );
+
+                return;
+            }
+
+            if (receipt.Status.Value != BigInteger.One)
+            {
+                statusText.text = "Claim transaction failed. Try again.";
+                claimSystemButton.interactable = true;
+
+                Debug.LogError(
+                    $"SYS: Claim transaction reverted. " +
+                    $"TxHash: {txHash}, Status: {receipt.Status.Value}"
+                );
+
+                return;
             }
 
             statusText.text = "Claim successful! Refreshing inventory...";
@@ -332,16 +361,48 @@ public class Web3MintManager : MonoBehaviour
 
         try
         {
-            // Await transaction mining
+            // Wait for the mint transaction to be mined and confirmed on-chain before proceeding to extract the Request ID.
             Nethereum.RPC.Eth.DTOs.TransactionReceipt receipt = null;
+
             while (receipt == null)
             {
                 await Task.Delay(4000);
-                receipt = await web3.Eth.Transactions.GetTransactionReceipt.SendRequestAsync(txHash);
+
+                receipt = await web3.Eth.Transactions
+                    .GetTransactionReceipt.SendRequestAsync(txHash);
             }
 
-            // Decode the logs to extract the unique requestId assigned by Chainlink Coordinator
-            var eventHandler = web3.Eth.GetEvent<SystemRequestedEventDTO>(Web3Config.ContractAddress);
+            // Verify the transaction status to ensure it was successful before proceeding to decode logs and extract the Request ID.
+            if (receipt.Status == null)
+            {
+                statusText.text = "Unable to verify mint transaction status.";
+                discoverNewSystemButton.interactable = true;
+
+                Debug.LogError(
+                    $"SYS: Mint receipt has no status. TxHash: {txHash}"
+                );
+
+                return;
+            }
+
+            if (receipt.Status.Value != BigInteger.One)
+            {
+                statusText.text = "Mint transaction failed. No request was created.";
+                discoverNewSystemButton.interactable = true;
+
+                Debug.LogError(
+                    $"SYS: Mint transaction reverted. " +
+                    $"TxHash: {txHash}, Status: {receipt.Status.Value}"
+                );
+
+                return;
+            }
+
+            // Decode the logs to extract the Request ID emitted by the SystemRequested event
+            var eventHandler = web3.Eth.GetEvent<SystemRequestedEventDTO>(
+                Web3Config.ContractAddress
+            );
+
             var decodedEvents = eventHandler.DecodeAllEventsForEvent(receipt.Logs);
 
             if (decodedEvents.Count == 0)
@@ -411,17 +472,23 @@ public class Web3MintManager : MonoBehaviour
 
             var currentBlock = await web3.Eth.Blocks.GetBlockNumber.SendRequestAsync();
             
-            // Constrain the historical search to 40,000 blocks to comply with public RPC node limits
-            BigInteger fromBlockValue = currentBlock.Value - 40000;
+            // Constrain the historical search to 5,000 blocks to comply with public RPC node limits
+            BigInteger fromBlockValue = currentBlock.Value - 5000;
             if (fromBlockValue < 0) fromBlockValue = 0;
             var fromBlock = new Nethereum.Hex.HexTypes.HexBigInteger(fromBlockValue);
 
-            var eventHandler = web3.Eth.GetEvent<SystemRequestedEventDTO>(Web3Config.ContractAddress);
+            var eventHandler =
+                web3.Eth.GetEvent<SystemRequestedEventDTO>(
+                    Web3Config.ContractAddress
+                );
+
             var filter = eventHandler.CreateFilterInput(
-                new Nethereum.RPC.Eth.DTOs.BlockParameter(fromBlock), 
+                (object[])null,
+                new object[] { userAddress },
+                new Nethereum.RPC.Eth.DTOs.BlockParameter(fromBlock),
                 Nethereum.RPC.Eth.DTOs.BlockParameter.CreateLatest()
             );
-            
+
             var events = await eventHandler.GetAllChangesAsync(filter);
             BigInteger? lastFoundRequestId = null;
 

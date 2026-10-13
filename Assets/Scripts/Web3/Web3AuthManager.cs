@@ -82,6 +82,16 @@ public class Web3AuthManager : MonoBehaviour
         {
             feedbackText.text = "Connecting to Sepolia Network...";
 
+            Web3Config.LoadConfiguration();
+
+            if (!Web3Config.IsLoaded)
+            {
+                feedbackText.text =
+                    "Configuration error: check the contract address and ABI in Resources.";
+
+                return;
+            }
+
             CurrentAccount = new Account(pKey, SEPOLIA_CHAIN_ID);
             Web3Instance = new Web3(CurrentAccount, SEPOLIA_RPC_URL);
 
