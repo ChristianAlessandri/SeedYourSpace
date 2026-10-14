@@ -56,7 +56,9 @@ public static class CelestialVisualUtility
             props.SetColor("_BaseColor", bodyData.atmosphereColor);
             props.SetColor("_CloudColor", bodyData.cloudColor);
 
-            System.Random atmosPrng = new System.Random(bodyData.name.GetHashCode());
+            System.Random atmosPrng = new System.Random(
+                new StochasticMathV1().DeriveNumericalSeed(bodyData.name)
+            );
             
             float speedX = (float)(atmosPrng.NextDouble() * 0.04 + 0.01) * (atmosPrng.NextDouble() > 0.5 ? 1f : -1f);
             float speedY = (float)(atmosPrng.NextDouble() * 0.015 + 0.001) * (atmosPrng.NextDouble() > 0.5 ? 1f : -1f);

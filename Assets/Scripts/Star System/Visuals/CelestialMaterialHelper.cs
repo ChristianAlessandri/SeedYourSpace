@@ -36,7 +36,8 @@ public static class CelestialMaterialHelper
         props.SetColor("_PeakColor", peak);
         
         // Offset for procedural noise mapping
-        float seedOffset = (bodyData.name.GetHashCode() % 1000) / 1000f;
+        int nameSeed = new StochasticMathV1().DeriveNumericalSeed(bodyData.name);
+        float seedOffset = (nameSeed % 1000) / 1000f;
         props.SetVector("_Offset", new Vector4(seedOffset, seedOffset * 2.5f, seedOffset * -1.3f, 0f));
     }
 
@@ -71,7 +72,8 @@ public static class CelestialMaterialHelper
         material.SetColor("_HighlandColor", highland);
         material.SetColor("_PeakColor", peak);
         
-        float seedOffset = (bodyData.name.GetHashCode() % 1000) / 1000f;
+        int nameSeed = new StochasticMathV1().DeriveNumericalSeed(bodyData.name);
+        float seedOffset = (nameSeed % 1000) / 1000f;
         material.SetVector("_Offset", new Vector4(seedOffset, seedOffset * 2.5f, seedOffset * -1.3f, 0f));
     }
 }

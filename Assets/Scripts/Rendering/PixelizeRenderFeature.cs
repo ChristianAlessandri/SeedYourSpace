@@ -70,8 +70,10 @@ public class PixelizePass : ScriptableRenderPass
 
     private TextureDesc CreateTextureDescriptor(RenderTextureDescriptor cameraDescriptor)
     {
-        int downscaledWidth = Mathf.Max(1, cameraDescriptor.width / settings.pixelScale);
-        int downscaledHeight = Mathf.Max(1, cameraDescriptor.height / settings.pixelScale);
+        int pixelScale = Mathf.Max(1, settings.pixelScale);
+
+        int downscaledWidth = Mathf.Max(1, cameraDescriptor.width / pixelScale);
+        int downscaledHeight = Mathf.Max(1, cameraDescriptor.height / pixelScale);
 
         TextureDesc tempDesc = new TextureDesc(downscaledWidth, downscaledHeight);
         tempDesc.colorFormat = cameraDescriptor.graphicsFormat;

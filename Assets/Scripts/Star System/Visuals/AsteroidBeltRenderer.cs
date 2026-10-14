@@ -138,4 +138,10 @@ public class AsteroidBeltRenderer : MonoBehaviour
             Graphics.DrawMeshInstanced(instancedMesh, 0, instancedMaterial, batch, batchSize);
         }
     }
+
+    private void OnDestroy()
+    {
+        if (instancedMesh != null)
+            Destroy(instancedMesh);
+    }
 }

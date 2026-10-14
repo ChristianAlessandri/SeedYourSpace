@@ -18,6 +18,7 @@ public class StarSystemGenerator : MonoBehaviour
     
     [HideInInspector]
     public int algorithmVersion = 1; // Web3 Smart Contract backward compatibility
+    private int initializedAlgorithmVersion = -1;
 
     public int TotalPlanets { get; private set; }
     public int TotalMoons { get; private set; }
@@ -69,6 +70,14 @@ public class StarSystemGenerator : MonoBehaviour
 
     private bool InitializeGenerators()
     {
+        if (initializedAlgorithmVersion != algorithmVersion)
+        {
+            stochasticMath = null;
+            nameGenerator = null;
+            astroRules = null;
+            generationData = null;
+        }
+
         // Initialize Math Core
         if (stochasticMath == null)
         {
@@ -103,6 +112,7 @@ public class StarSystemGenerator : MonoBehaviour
             astroRules.Initialize(generationData, stochasticMath);
         }
 
+        initializedAlgorithmVersion = algorithmVersion;
         return true;
     }
 

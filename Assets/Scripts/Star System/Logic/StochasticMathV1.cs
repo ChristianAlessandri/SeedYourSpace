@@ -24,7 +24,7 @@ public class StochasticMathV1 : IStochasticMath
         for (int i = 0; i < weights.Length; i++)
         {
             cumulative += weights[i];
-            if (randomSpin <= cumulative) return i;
+            if (randomSpin < cumulative) return i;
         }
         return weights.Length - 1;
     }

@@ -38,7 +38,36 @@ public class VisualDioramaBuilder : MonoBehaviour
 
     public void BuildUniverse(StarData starData, List<PlanetData> planets, List<AsteroidBeltData> belts)
     {
-        // Clean up any previously instantiated objects before building a new diorama
+        if (currentStarObj != null)
+        {
+            currentStarObj.SetActive(false);
+            Destroy(currentStarObj);
+        }
+
+        foreach (var p in activePlanets)
+        {
+            if (p.obj != null)
+            {
+                p.obj.SetActive(false);
+                Destroy(p.obj);
+            }
+        }
+
+        foreach (var m in activeMoons)
+        {
+            if (m.obj != null)
+            {
+                m.obj.SetActive(false);
+                Destroy(m.obj);
+            }
+        }
+
+        foreach (var belt in GetComponentsInChildren<AsteroidBeltRenderer>())
+        {
+            belt.gameObject.SetActive(false);
+            Destroy(belt.gameObject);
+        }
+
         activePlanets.Clear();
         activeMoons.Clear();
 
