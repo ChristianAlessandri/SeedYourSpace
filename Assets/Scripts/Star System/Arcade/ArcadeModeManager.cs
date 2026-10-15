@@ -60,7 +60,7 @@ public class ArcadeModeManager : MonoBehaviour
 
         validDestinations.Sort((a, b) => string.CompareOrdinal(a.name, b.name));
 
-        System.Random arcadePrng = new System.Random(validDestinations.Count * 42);
+        System.Random arcadePrng = new System.Random(validDestinations.Count);
         int totalShips = Mathf.RoundToInt(validDestinations.Count * 2.5f * globalTrafficDensity);
 
         for (int i = 0; i < totalShips; i++)
