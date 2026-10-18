@@ -4,6 +4,7 @@ using TMPro;
 using System;
 using Nethereum.Web3;
 using Nethereum.Web3.Accounts;
+using System.Text.RegularExpressions;
 
 public class Web3AuthManager : MonoBehaviour
 {
@@ -67,13 +68,13 @@ public class Web3AuthManager : MonoBehaviour
     {
         string pKey = privateKeyInput.text.Trim();
 
-        if (string.IsNullOrEmpty(pKey) || (pKey.Length != 64 && pKey.Length != 66))
+        if (string.IsNullOrEmpty(pKey) || !Regex.IsMatch(pKey, @"^(0x|0X)?[0-9a-fA-F]{64}$"))
         {
             feedbackText.text = "Error: Invalid Private Key format.";
             return;
         }
 
-        if (!pKey.StartsWith("0x"))
+        if (!pKey.StartsWith("0x", System.StringComparison.OrdinalIgnoreCase))
         {
             pKey = "0x" + pKey;
         }
