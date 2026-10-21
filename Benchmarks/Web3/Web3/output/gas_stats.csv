@@ -1,0 +1,4 @@
+operation,receipts,successful,mean_gas,std_gas,min_gas,max_gas
+request,30,30,624078,0.0,624078,624078
+vrf,30,30,360337.133,6167.259,356232,378459
+claim,30,30,834790.6,2.191,834779,834791

@@ -1,0 +1,11 @@
+utc=2026-10-21T11:39:22.6770158Z
+test=unity
+unity=6000.3.22f1
+platform=WindowsEditor
+cpu=AMD Ryzen 5 7600X 6-Core Processor 
+gpu=NVIDIA GeForce RTX 4060
+ram_mb=31849
+resolution=1920x1080
+quality=PC
+vsync=0
+target_frame_rate=-1

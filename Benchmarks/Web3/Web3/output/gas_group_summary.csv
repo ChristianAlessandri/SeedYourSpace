@@ -1,0 +1,4 @@
+operation,storage_case,low_samples,high_samples,low_max_bodies,high_min_bodies,low_mean_gas,high_mean_gas,abs_delta_gas
+request,request:pending0,15,15,32,34,624078,624078,0
+vrf,vrf:fulfilled,15,15,32,34,359970.133,360704.133,734.0
+claim,claim:balance_positive,15,15,32,34,834791,834790.2,0.8

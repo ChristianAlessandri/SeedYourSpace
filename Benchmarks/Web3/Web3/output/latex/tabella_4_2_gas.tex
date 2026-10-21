@@ -1,0 +1,16 @@
+\begin{table}[htbp]
+\centering
+\small
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{p{0.31\linewidth}p{0.26\linewidth}p{0.21\linewidth}p{0.14\linewidth}}
+\toprule
+\textbf{Operazione} & \textbf{Media $\pm$ dev. st. [gas]} & \textbf{Min--max [gas]} & \textbf{Scarto gruppi [gas]} \\
+\midrule
+\texttt{requestSystemMint} & $624078 \pm 0$ & $624078$--$624078$ & $0$ \\
+Callback \texttt{fulfillRandomWords} & $360337 \pm 6167$ & $356232$--$378459$ & $734$ \\
+\texttt{claimSystem} & $834791 \pm 2$ & $834779$--$834791$ & $1$ \\
+\bottomrule
+\end{tabular}
+\caption{Gas consumato dalle transazioni del ciclo di coniazione su Sepolia. Lo scarto confronta gruppi con diversa numerosità di corpi a parità di percorso di storage, quando i dati consentono il confronto; il trattino indica un confronto non determinabile. Il gas della callback VRF non coincide con l'addebito della sottoscrizione Chainlink.}
+\label{tab:eval-gas}
+\end{table}

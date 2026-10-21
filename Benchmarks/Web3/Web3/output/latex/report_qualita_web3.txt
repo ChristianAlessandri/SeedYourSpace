@@ -1,0 +1,30 @@
+CONTROLLO QUALITA' DEL BATCH SYS SEPOLIA
+
+Cicli completi: 30/30
+Tentativi mancanti: []
+Recuperi manuali del claim (esclusi solo da claim/E2E nominale): [8, 20]
+Riconnessioni RPC programmate: 10/10 riuscite
+Tentativi di riconnessione registrati: 10; falliti: 0; primi tentativi riusciti: 10
+Roundtrip on-chain seed/versione: 30/30
+Bridge Unity seed/versione: 0/0 osservati (su 30 token)
+La voce 'Integrità seed/versione nel bridge Unity' in tabella non equivale all'integrità on-chain.
+
+Fasi (campioni temporali utilizzati; esiti riusciti / eleggibili):
+  request: 30 tempi; successi 30/30
+  vrf: 30 tempi; successi 30/30
+  poll: 30 tempi; successi 30/30
+  claim: 28 tempi; successi 30/30
+  import: 26 tempi; successi 30/30
+  e2e: 24 tempi; successi 30/30
+  recovery: 10 tempi; successi 10/10
+
+Confronto gas fra gruppi:
+  request: caso request:pending0, gruppi 15/15, delta 0.00 gas
+  vrf: caso vrf:fulfilled, gruppi 15/15, delta 734.00 gas
+  claim: caso claim:balance_positive, gruppi 15/15, delta 0.80 gas
+
+NOTE METODOLOGICHE:
+- Il completamento del batch non rende nominali i cicli con recovery manuale.
+- I recuperi di claim dei cicli 8 e 20 NON sono le 10 riconnessioni RPC programmate.
+- Valutare eventuali altri intervalli di inattivita'/errori prima di assumere che tutte le altre durate siano nominali.
+- Misure di polling con timestamp catena/client sono sensibili alla sincronizzazione degli orologi.
