@@ -20,6 +20,10 @@ public class StarSystemGenerator : MonoBehaviour
     public int algorithmVersion = 1; // Web3 Smart Contract backward compatibility
     private int initializedAlgorithmVersion = -1;
 
+    // Measure hooks
+    [NonSerialized] public Action<string> BenchmarkPhase;
+    public bool benchmarkLogicOnly = false;
+
     public int TotalPlanets { get; private set; }
     public int TotalMoons { get; private set; }
     public int TotalRings { get; private set; }
@@ -54,18 +58,30 @@ public class StarSystemGenerator : MonoBehaviour
         if (!InitializeGenerators()) return;
 
         ResetCounters();
+        BenchmarkPhase?.Invoke("logic_begin");
 
         System.Random systemPrng = new System.Random(stochasticMath.DeriveNumericalSeed(seed));
         SystemName = nameGenerator.GenerateSystemName(systemPrng);
         
-        GenerateSkybox(systemPrng);
+        if (!benchmarkLogicOnly)
+        {
+            BenchmarkPhase?.Invoke("skybox_begin");
+            GenerateSkybox(systemPrng);
+            BenchmarkPhase?.Invoke("skybox_end");
+        }
         SystemStar = GenerateCentralStar(seed, SystemName);
         SystemPlanets = GeneratePlanetarySystem(seed, SystemName, SystemStar);
         SystemBelts = GenerateAsteroidBelts(seed, SystemPlanets);
 
-        // Notify UI and render the diorama only after all calculations are complete
-        OnSystemGenerated?.Invoke();
-        BuildVisualRepresentation();
+        BenchmarkPhase?.Invoke("logic_end");
+        if (!benchmarkLogicOnly)
+        {
+            // Notify UI and render the diorama only after all calculations are complete
+            OnSystemGenerated?.Invoke();
+            BenchmarkPhase?.Invoke("build_begin");
+            BuildVisualRepresentation();
+            BenchmarkPhase?.Invoke("build_end");
+        }
     }
 
     private bool InitializeGenerators()

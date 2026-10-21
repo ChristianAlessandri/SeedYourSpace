@@ -1,0 +1,32 @@
+--- a/Assets/Scripts/Web3/InventoryUICard.cs
++++ b/Assets/Scripts/Web3/InventoryUICard.cs
+@@ -16,9 +16,11 @@
+     [Header("NFT Data")]
+     public BigInteger systemSeed;
+     public BigInteger algorithmVersion;
++    private BigInteger systemTokenId;
+ 
+     public void SetupCard(BigInteger tokenId, BigInteger seed, BigInteger version, string rawSvgString)
+     {
++        systemTokenId = tokenId;
+         systemSeed = seed;
+         algorithmVersion = version;
+         
+@@ -81,6 +83,7 @@
+     {
+         if (eventData.clickCount == 2)
+         {
++            Web3BridgeBenchmarkLog.Staged(systemTokenId, systemSeed, algorithmVersion);
+             SystemDataBridge.TargetSeed = systemSeed.ToString();
+             SystemDataBridge.TargetVersion = (int)algorithmVersion;
+             SceneManager.LoadScene("UniverseScene");
+--- a/Assets/Scripts/Star System/Logic/StarSystemGenerator.cs
++++ b/Assets/Scripts/Star System/Logic/StarSystemGenerator.cs
+@@ -41,6 +41,7 @@
+         {
+             masterSeed = SystemDataBridge.TargetSeed;
+             algorithmVersion = SystemDataBridge.TargetVersion;
++            Web3BridgeBenchmarkLog.OnConsumed(masterSeed, algorithmVersion);
+             
+             // Clear the bridge data so it doesn't affect future scene reloads
+             SystemDataBridge.TargetSeed = string.Empty;

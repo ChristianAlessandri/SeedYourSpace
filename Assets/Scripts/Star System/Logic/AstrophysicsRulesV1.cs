@@ -5,6 +5,9 @@ public class AstrophysicsRulesV1: IAstrophysicsRules
 {
     private GenerationData generationData;
     private IStochasticMath math;
+    // Benchmark
+    public static Action<float, float, string, float> BenchmarkClassified;
+    public static Action<float, float, PlanetProfile[]> BenchmarkWeightVector;
 
     public void Initialize(GenerationData data, IStochasticMath mathCore)
     {
@@ -53,15 +56,21 @@ public class AstrophysicsRulesV1: IAstrophysicsRules
             totalWeight += currentWeight;
         }
 
+        BenchmarkWeightVector?.Invoke(distance, systemFrostLine, profiles);
         float randomSpin = (float)(prng.NextDouble() * totalWeight);
         float cumulativeWeight = 0f;
 
         foreach (var p in profiles)
         {
             cumulativeWeight += p.currentWeight;
-            if (randomSpin <= cumulativeWeight) return p;
+            if (randomSpin <= cumulativeWeight)
+            {
+                BenchmarkClassified?.Invoke(distance, systemFrostLine, p.className, p.currentWeight);
+                return p;
+            }
         }
 
+        BenchmarkClassified?.Invoke(distance, systemFrostLine, profiles[0].className, profiles[0].currentWeight);
         return profiles[0]; // Fallback
     }
 
